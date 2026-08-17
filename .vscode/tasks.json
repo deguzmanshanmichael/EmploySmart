@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build EmploySmart Client",
+			"type": "shell",
+			"command": "cd c:\\xampp\\htdocs\\EmploySmart\\client ; npm run build ; robocopy .\\dist .\\android\\app\\src\\main\\assets\\public /MIR",
+			"isBackground": false
+		}
+	]
+}

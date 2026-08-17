@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerabilities Documentation - JobLink Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .toc {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .toc li {
+            margin-bottom: 8px;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        .vulnerability {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .vulnerability h2 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .vulnerability-number {
+            background: #ff6b6b;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .section p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: #f4f4f4;
+            border-left: 3px solid #ff6b6b;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .code-block code {
+            color: #333;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .affected {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .affected h4 {
+            margin-bottom: 8px;
+        }
+        
+        .affected ul {
+            margin-left: 20px;
+        }
+        
+        .affected li {
+            margin-bottom: 5px;
+        }
+        
+        .how-to-exploit {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .how-to-exploit h4 {
+            margin-bottom: 8px;
+        }
+        
+        .how-to-exploit ol {
+            margin-left: 20px;
+        }
+        
+        .how-to-exploit li {
+            margin-bottom: 8px;
+        }
+        
+        .fix {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .fix h4 {
+            margin-bottom: 8px;
+        }
+        
+        .fix ul {
+            margin-left: 20px;
+        }
+        
+        .fix li {
+            margin-bottom: 8px;
+        }
+        
+        back-link {
+            display: block;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Vulnerabilities Documentation</h1>
+            <div>
+                <a href="index.html">Home</a>
+                <a href="login.html">Login</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <div class="toc">
+            <h2>📋 Table of Contents</h2>
+            <ul>
+                <li><a href="#sql-injection">1. SQL Injection (A03:2021)</a></li>
+                <li><a href="#broken-access">2. Broken Access Control (A01:2021)</a></li>
+                <li><a href="#auth-failures">3. Identification & Authentication Failures (A07:2021)</a></li>
+                <li><a href="#security-misconfiguration">4. Security Misconfiguration (A05:2021)</a></li>
+                <li><a href="#vulnerable-components">5. Vulnerable & Outdated Components (A06:2021)</a></li>
+            </ul>
+        </div>
+        
+        <!-- VULNERABILITY 1: SQL Injection -->
+        <div class="vulnerability" id="sql-injection">
+            <h2><span class="vulnerability-number">1</span> SQL Injection (OWASP A03:2021)</h2>
+            
+            <div class="section">
+                <h3>📌 What is SQL Injection?</h3>
+                <p>SQL Injection occurs when an application fails to properly sanitize user input before using it in SQL queries. Attackers can manipulate SQL queries by injecting malicious SQL code, allowing them to:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Bypass authentication</li>
+                    <li>Read sensitive data</li>
+                    <li>Modify or delete data</li>
+                    <li>Execute administrative operations</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 Affected Components in JobLink Demo</h3>
+                <div class="affected">
+                    <h4>Vulnerable Areas:</h4>
+                    <ul>
+                        <li><strong>Login Form</strong> (login.html) → backend/login.php</li>
+                        <li><strong>Job Search</strong> (jobs.html) → backend/search.php</li>
+                        <li><strong>User Profile Update</strong> → backend/update_profile.php</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>💻 Vulnerable Code Example</h3>
+                <div class="code-block"><code>// VULNERABLE - backend/login.php
+$email = $_POST['email'];
+$password = $_POST['password'];
+$query = "SELECT * FROM users WHERE email = '" . $email . "' AND password = '" . $password . "'";
+$result = mysqli_query($conn, $query);</code></div>
+            </div>
+            
+            <div class="section">
+                <h3>🚀 How to Exploit</h3>
+                <div class="how-to-exploit">
+                    <h4>Steps to Demonstrate SQL Injection:</h4>
+                    <ol>
+                        <li>Go to <a href="login.html">login.html</a></li>
+                        <li>In the Email field, enter: <code>' OR '1'='1</code></li>
+                        <li>In the Password field, enter: <code>anything</code></li>
+                        <li>Click Login</li>
+                        <li>The SQL query becomes: <code>SELECT * FROM users WHERE email = '' OR '1'='1' AND password = 'anything'</code></li>
+                        <li>This will return all users because <code>'1'='1'</code> is always true!</li>
+                    </ol>
+                    
+                    <h4>Other Payloads to Try:</h4>
+                    <ul>
+                        <li><code>admin' --</code> (comments out the rest of the query)</li>
+                        <li><code>' OR 1=1 --</code> (classic SQL injection)</li>
+                        <li><code>'; DROP TABLE users; --</code> (destructive attack)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>✅ How to Fix</h3>
+                <div class="fix">
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        <li><strong>Use Prepared Statements:</strong> Use parameterized queries with prepared statements (PDO or MySQLi prepared statements)</li>
+                        <li><strong>Input Validation:</strong> Validate and sanitize all user inputs</li>
+                        <li><strong>Principle of Least Privilege:</strong> Database user should have minimal required permissions</li>
+                        <li><strong>Error Handling:</strong> Don't expose database errors to users</li>
+                        <li><strong>Web Application Firewall (WAF):</strong> Deploy WAF to detect and block SQL injection attempts</li>
+                    </ul>
+                    
+                    <h4>Secure Code Example:</h4>
+                    <div class="code-block"><code>// SECURE - Using Prepared Statements
+$email = $_POST['email'];
+$password = $_POST['password'];
+$stmt = $conn->prepare("SELECT * FROM users WHERE email = ? AND password = ?");
+$stmt->bind_param("ss", $email, $password);
+$stmt->execute();
+$result = $stmt->get_result();</code></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- VULNERABILITY 2: Broken Access Control -->
+        <div class="vulnerability" id="broken-access">
+            <h2><span class="vulnerability-number">2</span> Broken Access Control (OWASP A01:2021)</h2>
+            
+            <div class="section">
+                <h3>📌 What is Broken Access Control?</h3>
+                <p>Broken Access Control occurs when authorization checks are weak or missing, allowing users to access resources they shouldn't have access to. Common issues include:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>IDOR (Insecure Direct Object References) - accessing resources by ID</li>
+                    <li>Unprotected Admin Panels</li>
+                    <li>No role-based access control verification</li>
+                    <li>Missing authorization checks on API endpoints</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 Affected Components in JobLink Demo</h3>
+                <div class="affected">
+                    <h4>Vulnerable Areas:</h4>
+                    <ul>
+                        <li><strong>Admin Panel</strong> (admin.html) - Accessible to anyone without authentication</li>
+                        <li><strong>Job Edit</strong> (jobs.html?job_id=X) - Can edit any job by changing ID</li>
+                        <li><strong>User Profile</strong> (jobs.html?edit=X) - Can view/edit other users' profiles</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>💻 Vulnerable Code Example</h3>
+                <div class="code-block"><code>// VULNERABLE - admin.html
+// NO authentication check before showing admin panel
+// Anyone can access this page by visiting admin.html
+// The page doesn't verify if user is logged in or has admin role</code></div>
+            </div>
+            
+            <div class="section">
+                <h3>🚀 How to Exploit</h3>
+                <div class="how-to-exploit">
+                    <h4>Test 1 - Access Admin Panel Without Login:</h4>
+                    <ol>
+                        <li>Go to <a href="admin.html">admin.html</a></li>
+                        <li>You have full access to admin functions without logging in!</li>
+                        <li>Try clicking on "Edit" or "Delete" buttons for any user</li>
+                    </ol>
+                    
+                    <h4>Test 2 - IDOR on Job Editing:</h4>
+                    <ol>
+                        <li>Go to <a href="jobs.html">jobs.html</a></li>
+                        <li>Click "Edit Job" on any job (e.g., job_id=1)</li>
+                        <li>Change the URL to different job IDs: job-edit.html?job_id=2, job-edit.html?job_id=3, etc.</li>
+                        <li>You can edit jobs that belong to other companies!</li>
+                    </ol>
+                    
+                    <h4>Test 3 - Access Other User Profiles:</h4>
+                    <ol>
+                        <li>Try URLs like: jobs.html?user_id=1, jobs.html?user_id=2, etc.</li>
+                        <li>View sensitive information from other users</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>✅ How to Fix</h3>
+                <div class="fix">
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        <li><strong>Authentication Verification:</strong> Always verify user is logged in before showing sensitive pages</li>
+                        <li><strong>Authorization Checks:</strong> Verify user has correct role/permissions for the resource</li>
+                        <li><strong>Principle of Least Privilege:</strong> Users should only access their own data</li>
+                        <li><strong>Role-Based Access Control (RBAC):</strong> Implement proper role hierarchy</li>
+                        <li><strong>Attribute-Based Access Control (ABAC):</strong> Check resource ownership</li>
+                        <li><strong>Server-Side Enforcement:</strong> Never rely on client-side checks only</li>
+                    </ul>
+                    
+                    <h4>Secure Code Example:</h4>
+                    <div class="code-block"><code>// SECURE - Checking authentication and authorization
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.html');
+    exit;
+}
+
+// Verify user owns this resource
+$user_id = $_SESSION['user_id'];
+$job_id = $_GET['job_id'];
+$stmt = $conn->prepare("SELECT owner_id FROM jobs WHERE id = ?");
+$stmt->bind_param("i", $job_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$job = $result->fetch_assoc();
+
+if ($job['owner_id'] != $user_id) {
+    header('HTTP/1.0 403 Forbidden');
+    exit('You do not have permission to edit this job');
+}</code></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- VULNERABILITY 3: Authentication Failures -->
+        <div class="vulnerability" id="auth-failures">
+            <h2><span class="vulnerability-number">3</span> Identification & Authentication Failures (OWASP A07:2021)</h2>
+            
+            <div class="section">
+                <h3>📌 What is Authentication Failure?</h3>
+                <p>Authentication failures occur when security mechanisms that protect user accounts are weak or missing. This includes:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Weak or default passwords</li>
+                    <li>Brute force attacks not prevented</li>
+                    <li>Password not properly hashed</li>
+                    <li>Session tokens not properly managed</li>
+                    <li>Credentials exposed in logs or error messages</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 Affected Components in JobLink Demo</h3>
+                <div class="affected">
+                    <h4>Vulnerable Areas:</h4>
+                    <ul>
+                        <li><strong>Login Page</strong> - No rate limiting on failed attempts</li>
+                        <li><strong>Password Storage</strong> - Weak password hashing or plain text</li>
+                        <li><strong>Session Management</strong> - Tokens not properly validated</li>
+                        <li><strong>Remember Me Feature</strong> - Long session expiry without verification</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>💻 Vulnerable Code Example</h3>
+                <div class="code-block"><code>// VULNERABLE - backend/login.php
+$password = $_POST['password'];
+// Password stored as plain text or weak hash!
+$query = "SELECT * FROM users WHERE email = ? AND password = '" . md5($password) . "'";
+// No rate limiting - can brute force
+// No account lockout after failed attempts</code></div>
+            </div>
+            
+            <div class="section">
+                <h3>🚀 How to Exploit</h3>
+                <div class="how-to-exploit">
+                    <h4>Test 1 - Try Default/Weak Credentials:</h4>
+                    <ol>
+                        <li>Go to <a href="login.html">login.html</a></li>
+                        <li>Try common credentials:
+                            <ul style="margin-top: 5px;">
+                                <li>admin@joblink.com / admin123</li>
+                                <li>admin@joblink.com / password</li>
+                                <li>employer@joblink.com / password123</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    
+                    <h4>Test 2 - Brute Force Attack (No Rate Limiting):</h4>
+                    <ol>
+                        <li>The application doesn't prevent multiple login attempts</li>
+                        <li>An attacker could script multiple login attempts to guess passwords</li>
+                        <li>No CAPTCHA or account lockout mechanism</li>
+                    </ol>
+                    
+                    <h4>Test 3 - View Credentials in Source:</h4>
+                    <ol>
+                        <li>View page source of admin.html</li>
+                        <li>Database credentials are exposed in the page!</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>✅ How to Fix</h3>
+                <div class="fix">
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        <li><strong>Strong Password Hashing:</strong> Use bcrypt, scrypt, or Argon2 (not MD5 or SHA1)</li>
+                        <li><strong>Password Policy:</strong> Enforce minimum length, complexity requirements</li>
+                        <li><strong>Rate Limiting:</strong> Limit login attempts (5 attempts per 15 minutes)</li>
+                        <li><strong>Account Lockout:</strong> Lock account after N failed attempts</li>
+                        <li><strong>Multi-Factor Authentication:</strong> Add 2FA/MFA for additional security</li>
+                        <li><strong>Session Management:</strong> Short expiry times, secure tokens</li>
+                        <li><strong>Never Expose Credentials:</strong> Keep secrets in environment variables</li>
+                    </ul>
+                    
+                    <h4>Secure Code Example:</h4>
+                    <div class="code-block"><code>// SECURE - Using bcrypt and rate limiting
+require 'rate_limiter.php';
+$email = $_POST['email'];
+
+// Rate limiting
+if (isRateLimited($email)) {
+    http_response_code(429);
+    die('Too many login attempts. Try again later.');
+}
+
+// Get user with proper query
+$stmt = $conn->prepare("SELECT id, password_hash FROM users WHERE email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+
+// Verify password with bcrypt
+if ($user && password_verify($_POST['password'], $user['password_hash'])) {
+    $_SESSION['user_id'] = $user['id'];
+    session_regenerate_id();
+} else {
+    recordFailedAttempt($email);
+    die('Invalid credentials');
+}</code></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- VULNERABILITY 4: Security Misconfiguration -->
+        <div class="vulnerability" id="security-misconfiguration">
+            <h2><span class="vulnerability-number">4</span> Security Misconfiguration (OWASP A05:2021)</h2>
+            
+            <div class="section">
+                <h3>📌 What is Security Misconfiguration?</h3>
+                <p>Security Misconfiguration occurs when security settings are not properly configured, exposing sensitive information or allowing unauthorized access. Common issues include:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Exposed secrets (API keys, database passwords)</li>
+                    <li>Debug information visible in errors</li>
+                    <li>Default credentials not changed</li>
+                    <li>Weak CORS policies</li>
+                    <li>Directory listing enabled</li>
+                    <li>Sensitive files accessible</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 Affected Components in JobLink Demo</h3>
+                <div class="affected">
+                    <h4>Vulnerable Areas:</h4>
+                    <ul>
+                        <li><strong>admin.html</strong> - Database credentials hardcoded in HTML</li>
+                        <li><strong>Admin Page Source</strong> - API keys and secrets in JavaScript</li>
+                        <li><strong>Console Logs</strong> - Debug information exposed</li>
+                        <li><strong>.env File (if exposed)</strong> - Environment variables visible</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>💻 Vulnerable Code Example</h3>
+                <div class="code-block"><code>// VULNERABLE - admin.html
+// Hardcoded database credentials in HTML!
+Database Host: 192.168.199.250
+Database User: root
+Database Password: password123
+JWT Secret: super_secret_key_12345_exposed_in_source
+
+// API credentials in JavaScript
+const API_KEY = 'api_key_12345_exposed';
+const API_URL = 'http://192.168.199.250:8000/backend/';</code></div>
+            </div>
+            
+            <div class="section">
+                <h3>🚀 How to Exploit</h3>
+                <div class="how-to-exploit">
+                    <h4>Test 1 - Exposed Database Credentials:</h4>
+                    <ol>
+                        <li>Open <a href="admin.html">admin.html</a></li>
+                        <li>Right-click and select "View Page Source"</li>
+                        <li>Scroll down to "Database Configuration" section</li>
+                        <li>Find database credentials:
+                            <ul style="margin-top: 5px;">
+                                <li>Host: 192.168.199.250</li>
+                                <li>User: root</li>
+                                <li>Password: password123</li>
+                                <li>Database: joblink_demo</li>
+                            </ul>
+                        </li>
+                        <li>Attacker can now directly access the database!</li>
+                    </ol>
+                    
+                    <h4>Test 2 - Exposed API Keys:</h4>
+                    <ol>
+                        <li>Open developer console (F12) on admin.html</li>
+                        <li>Look for API_KEY and API_URL variables</li>
+                        <li>Attacker can use these credentials for unauthorized API access</li>
+                    </ol>
+                    
+                    <h4>Test 3 - Debug Information:</h4>
+                    <ol>
+                        <li>Open browser console on any page</li>
+                        <li>Look for console.log statements with debug info</li>
+                        <li>Error messages expose file paths and system details</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>✅ How to Fix</h3>
+                <div class="fix">
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        <li><strong>Environment Variables:</strong> Store secrets in .env files (never commit to git)</li>
+                        <li><strong>Secrets Management:</strong> Use Azure Key Vault, AWS Secrets Manager, or HashiCorp Vault</li>
+                        <li><strong>Remove Debug Code:</strong> Don't leave console.log or debug statements in production</li>
+                        <li><strong>Security Headers:</strong> Set Content-Security-Policy, X-Frame-Options, etc.</li>
+                        <li><strong>CORS Configuration:</strong> Restrict to trusted origins only</li>
+                        <li><strong>Error Handling:</strong> Don't expose stack traces or file paths to users</li>
+                        <li><strong>Disable Directory Listing:</strong> Prevent access to directories</li>
+                    </ul>
+                    
+                    <h4>Secure Code Example:</h4>
+                    <div class="code-block"><code>// SECURE - Using environment variables
+// .env file (NOT committed to git)
+DB_HOST=192.168.199.250
+DB_USER=db_user
+DB_PASSWORD=secure_password_here
+API_KEY=secret_api_key_here
+JWT_SECRET=secret_jwt_key_here
+
+// backend/config.php
+$db_host = $_ENV['DB_HOST'] ?? getenv('DB_HOST');
+$db_user = $_ENV['DB_USER'] ?? getenv('DB_USER');
+$db_pass = $_ENV['DB_PASSWORD'] ?? getenv('DB_PASSWORD');
+
+// Never expose in client-side code
+// Use backend API endpoints instead</code></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- VULNERABILITY 5: Vulnerable Components -->
+        <div class="vulnerability" id="vulnerable-components">
+            <h2><span class="vulnerability-number">5</span> Vulnerable & Outdated Components (OWASP A06:2021)</h2>
+            
+            <div class="section">
+                <h3>📌 What are Vulnerable Components?</h3>
+                <p>Vulnerable Components occur when using outdated or insecure third-party libraries with known vulnerabilities. This includes:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Outdated versions of popular libraries</li>
+                    <li>Dependencies with known CVEs (Common Vulnerabilities and Exposures)</li>
+                    <li>Unmaintained or abandoned packages</li>
+                    <li>Libraries included in production without security review</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h3>🎯 Affected Components in JobLink Demo</h3>
+                <div class="affected">
+                    <h4>Vulnerable Areas:</h4>
+                    <ul>
+                        <li><strong>jQuery 1.12.4</strong> - Released 2016, has known XSS vulnerabilities</li>
+                        <li><strong>Bootstrap 3</strong> - Outdated, multiple vulnerabilities</li>
+                        <li><strong>PHP Version</strong> - If using PHP < 7.4</li>
+                        <li><strong>MySQL Driver</strong> - Deprecated MySQLi/MySQL extensions</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>💻 Vulnerable Code Example</h3>
+                <div class="code-block"><code>// VULNERABLE - Using outdated jQuery
+&lt;script src="https://code.jquery.com/jquery-1.12.4.min.js"&gt;&lt;/script&gt;
+// jQuery 1.12.4 has multiple known vulnerabilities
+// Released in 2016, no longer maintained
+
+// Outdated Bootstrap
+&lt;link rel="stylesheet" href="bootstrap.3.3.7.min.css"&gt;
+// Bootstrap 3 reached end of life</code></div>
+            </div>
+            
+            <div class="section">
+                <h3>🚀 How to Exploit</h3>
+                <div class="how-to-exploit">
+                    <h4>Test 1 - Check for Outdated Libraries:</h4>
+                    <ol>
+                        <li>Open page source of any page</li>
+                        <li>Look for script and link tags</li>
+                        <li>Find outdated jQuery version: 1.12.4</li>
+                        <li>This version is from 2016 and has known vulnerabilities!</li>
+                    </ol>
+                    
+                    <h4>Test 2 - Known Vulnerabilities:</h4>
+                    <ol>
+                        <li>jQuery 1.12.4 has CVE-2020-11022 and CVE-2020-11023 (XSS vulnerabilities)</li>
+                        <li>Attackers could inject malicious code through jQuery selectors</li>
+                        <li>These vulnerabilities were fixed in jQuery 3.5.0</li>
+                    </ol>
+                    
+                    <h4>Test 3 - Dependency Chain:</h4>
+                    <ol>
+                        <li>Outdated packages can pull in other vulnerable dependencies</li>
+                        <li>One vulnerable package can compromise the entire application</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>✅ How to Fix</h3>
+                <div class="fix">
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        <li><strong>Audit Dependencies:</strong> Use npm audit, composer audit, or similar tools</li>
+                        <li><strong>Update Regularly:</strong> Keep all dependencies up to date</li>
+                        <li><strong>Monitor for CVEs:</strong> Use tools like Snyk, Dependabot, or OWASP Dependency-Check</li>
+                        <li><strong>Remove Unnecessary:</strong> Only include required dependencies</li>
+                        <li><strong>Software Bill of Materials (SBOM):</strong> Track all components and versions</li>
+                        <li><strong>Automated Testing:</strong> Integrate security scanning in CI/CD pipeline</li>
+                        <li><strong>Use Security Tools:</strong> npm audit, Snyk, Black Duck, WhiteSource</li>
+                    </ul>
+                    
+                    <h4>Secure Code Example:</h4>
+                    <div class="code-block"><code>// SECURE - Using modern versions
+// package.json
+{
+  "dependencies": {
+    "jquery": "^3.7.0",    // Latest stable version
+    "bootstrap": "^5.3.0",  // Latest Bootstrap 5
+    "axios": "^1.4.0"
+  }
+}
+
+// Run: npm audit fix
+// This will update vulnerable packages
+
+// .github/workflows/security.yml (CI/CD scanning)
+- name: Run npm audit
+  run: npm audit --audit-level=moderate
+  
+- name: Check with Snyk
+  run: snyk test</code></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="back-link">
+            <a href="index.html">← Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

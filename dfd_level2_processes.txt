@@ -1,0 +1,158 @@
+Data Flow Diagram (DFD) Level 2 - EmploySmart System Processes
+
+This document outlines all the processes in the EmploySmart system at DFD Level 2. Each main process from Level 1 is decomposed into detailed subprocesses, data flows, and interactions.
+
+Level 1 Processes Breakdown:
+
+1. User Authentication Process
+   - 1.1 User Registration Subprocess
+     - Validate user input (name, email, password, role)
+     - Check for duplicate email
+     - Hash password
+     - Store user data in users table
+     - Send verification email
+   - 1.2 User Login Subprocess
+     - Validate email and password
+     - Check user verification status
+     - Generate JWT token
+     - Store refresh token
+   - 1.3 Password Reset Subprocess
+     - Verify user identity
+     - Generate reset token
+     - Send reset email
+     - Update password
+   - 1.4 Token Refresh Subprocess
+     - Validate refresh token
+     - Generate new JWT token
+     - Update token expiry
+
+2. Employer Management Process
+   - 2.1 Employer Registration Subprocess
+     - Link to existing user account
+     - Collect company details (name, industry, size, etc.)
+     - Upload business permit
+     - Set verification status to pending
+   - 2.2 Employer Verification Subprocess
+     - Admin reviews business permit
+     - Update verification status (approved/rejected)
+     - Notify employer via email
+   - 2.3 Employer Profile Update Subprocess
+     - Update company information
+     - Re-upload documents if needed
+     - Trigger re-verification if necessary
+
+3. Job Management Process
+   - 3.1 Job Posting Subprocess
+     - Validate employer verification
+     - Collect job details (title, description, requirements, salary, etc.)
+     - Associate skills with job
+     - Set approval status to pending
+   - 3.2 Job Approval Subprocess
+     - Admin/PESO/CLCDO reviews job posting
+     - Update approval status
+     - Notify employer
+   - 3.3 Job Search and Filtering Subprocess
+     - Receive search criteria (keywords, location, skills)
+     - Query jobs table with filters
+     - Return matching job list
+   - 3.4 Job Update Subprocess
+     - Modify job details
+     - Re-approval if significant changes
+   - 3.5 Job Deletion Subprocess
+     - Check for existing applications
+     - Soft delete or archive job
+
+4. Application Process
+   - 4.1 Job Application Subprocess
+     - Validate user role (jobseeker)
+     - Check job availability and deadline
+     - Upload resume and cover letter
+     - Create application record
+     - Notify employer
+   - 4.2 Application Review Subprocess
+     - Employer views applications
+     - Update application status (reviewed, accepted, rejected)
+     - Schedule interviews if accepted
+     - Add remarks
+   - 4.3 Application Status Tracking Subprocess
+     - Jobseeker views application status
+     - Receive notifications on status changes
+
+5. Skill Matching Process
+   - 5.1 Skill Profile Creation Subprocess
+     - User selects/adds skills
+     - Store in user_skills table
+   - 5.2 Job-Skill Matching Subprocess
+     - Compare user skills with job requirements
+     - Calculate match score
+     - Store in job_matches table
+   - 5.3 Recommendation Generation Subprocess
+     - Retrieve high-match jobs for user
+     - Sort by match score
+     - Display recommendations
+
+6. Training Management Process
+   - 6.1 Training Program Creation Subprocess
+     - Admin/CLCDO creates training details
+     - Associate skills with training
+     - Set dates and capacity
+   - 6.2 Training Enrollment Subprocess
+     - User enrolls in training
+     - Check capacity and prerequisites
+     - Update user_training table
+   - 6.3 Training Completion Subprocess
+     - Mark training as completed
+     - Upload certificate
+     - Update user skills
+   - 6.4 Training Status Tracking Subprocess
+     - View enrolled trainings
+     - Track progress and completion
+
+7. System Administration Process
+   - 7.1 User Management Subprocess
+     - View all users
+     - Update user roles
+     - Deactivate accounts
+   - 7.2 Content Moderation Subprocess
+     - Review job postings
+     - Moderate training programs
+     - Handle reports
+   - 7.3 System Logging Subprocess
+     - Log user actions
+     - Track IP addresses and user agents
+     - Generate audit reports
+
+8. Notification Process
+   - 8.1 Email Notification Subprocess
+     - Send registration confirmations
+     - Job application notifications
+     - Status update alerts
+   - 8.2 In-App Notification Subprocess
+     - Display match recommendations
+     - Training reminders
+     - System announcements
+
+Data Stores (Referenced in Processes):
+- Users table
+- Employers table
+- Jobs table
+- Applications table
+- Skills table
+- User_skills table
+- Training_programs table
+- User_training table
+- Job_matches table
+- System_logs table
+- Refresh_tokens table
+
+External Entities:
+- Jobseekers
+- Employers
+- Admins/PESO/CLCDO
+- Email Service
+- File Storage System
+
+Trust Boundaries:
+- User authentication required for most processes
+- Admin approval for employer verification and job posting
+- File uploads validated for security

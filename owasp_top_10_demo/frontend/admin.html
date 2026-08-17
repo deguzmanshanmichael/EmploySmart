@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - JobLink Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            font-size: 24px;
+        }
+        
+        .warning {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px 20px;
+            margin: 20px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .admin-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .admin-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .admin-card .number {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        table thead {
+            background: #667eea;
+            color: white;
+        }
+        
+        table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .btn-edit {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn-submit {
+            background: #667eea;
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-submit:hover {
+            background: #764ba2;
+        }
+        
+        .vulnerability-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .back-link {
+            margin: 20px;
+        }
+        
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚙️ Admin Panel</h1>
+    </header>
+    
+    <!-- VULNERABILITY: NO AUTHENTICATION CHECK! Anyone can access this page -->
+    <!-- This page has NO backend verification of user role or login status -->
+    
+    <div class="warning">
+        ⚠️ VULNERABILITY DEMONSTRATION: No authentication required to access this page!
+    </div>
+    
+    <div class="container">
+        <div class="vulnerability-info">
+            <strong>🔓 BROKEN ACCESS CONTROL:</strong> This admin panel is accessible to anyone without any authentication. Simply visiting this URL grants full access to sensitive administrative functions. In a real application, only authenticated admin users should see this page.
+        </div>
+        
+        <div class="back-link">
+            <a href="index.html">← Back to Home</a>
+        </div>
+        
+        <div class="admin-grid">
+            <div class="admin-card">
+                <h3><span class="number">5</span> New User Applications</h3>
+                <p>Pending applications from job seekers require review.</p>
+                <button class="btn btn-edit">Review Applications</button>
+            </div>
+            
+            <div class="admin-card">
+                <h3><span class="number">12</span> Reported Issues</h3>
+                <p>User reports and complaints to be investigated.</p>
+                <button class="btn btn-edit">View Reports</button>
+            </div>
+            
+            <div class="admin-card">
+                <h3><span class="number">8</span> Jobs Pending Approval</h3>
+                <p>Job postings awaiting admin verification.</p>
+                <button class="btn btn-edit">Approve Jobs</button>
+            </div>
+            
+            <div class="admin-card">
+                <h3><span class="number">243</span> Active Users</h3>
+                <p>Total registered users in the system.</p>
+                <button class="btn btn-edit">Manage Users</button>
+            </div>
+            
+            <div class="admin-card">
+                <h3><span class="number">156</span> Job Postings</h3>
+                <p>Active job listings on the platform.</p>
+                <button class="btn btn-edit">Manage Jobs</button>
+            </div>
+            
+            <div class="admin-card">
+                <h3><span class="number">$42,500</span> Platform Revenue</h3>
+                <p>Total revenue from premium features.</p>
+                <button class="btn btn-edit">View Analytics</button>
+            </div>
+        </div>
+        
+        <!-- VULNERABILITY: Display of all users including sensitive data -->
+        <h2 style="color: #667eea; margin: 30px 0 20px 0;">All Registered Users</h2>
+        
+        <!-- VULNERABILITY: User IDs are sequential and predictable -->
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- VULNERABILITY: User data exposed in HTML - also note sequential IDs -->
+                <tr>
+                    <td>1</td>
+                    <td>admin@joblink.com</td>
+                    <td>Admin User</td>
+                    <td>Admin</td>
+                    <td>Active</td>
+                    <td>
+                        <a href="user-edit.html?id=1" class="btn btn-edit">Edit</a>
+                        <a href="user-delete.html?id=1" class="btn btn-delete">Delete</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>employer@joblink.com</td>
+                    <td>Tech Corp HR</td>
+                    <td>Employer</td>
+                    <td>Active</td>
+                    <td>
+                        <a href="user-edit.html?id=2" class="btn btn-edit">Edit</a>
+                        <a href="user-delete.html?id=2" class="btn btn-delete">Delete</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>john@example.com</td>
+                    <td>John Doe</td>
+                    <td>JobSeeker</td>
+                    <td>Active</td>
+                    <td>
+                        <a href="user-edit.html?id=3" class="btn btn-edit">Edit</a>
+                        <a href="user-delete.html?id=3" class="btn btn-delete">Delete</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>jane@example.com</td>
+                    <td>Jane Smith</td>
+                    <td>JobSeeker</td>
+                    <td>Active</td>
+                    <td>
+                        <a href="user-edit.html?id=4" class="btn btn-edit">Edit</a>
+                        <a href="user-delete.html?id=4" class="btn btn-delete">Delete</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>mike@company.com</td>
+                    <td>Mike Johnson</td>
+                    <td>Employer</td>
+                    <td>Active</td>
+                    <td>
+                        <a href="user-edit.html?id=5" class="btn btn-edit">Edit</a>
+                        <a href="user-delete.html?id=5" class="btn btn-delete">Delete</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2 style="color: #667eea; margin: 30px 0 20px 0;">System Settings</h2>
+        
+        <div class="form-section">
+            <h3>Database Configuration</h3>
+            <!-- VULNERABILITY: Hardcoded database details in page -->
+            <div class="form-group">
+                <label>Database Host</label>
+                <input type="text" value="192.168.199.250" readonly style="background: #f5f5f5;">
+            </div>
+            <div class="form-group">
+                <label>Database Name</label>
+                <input type="text" value="joblink_demo" readonly style="background: #f5f5f5;">
+            </div>
+            <div class="form-group">
+                <label>Database User</label>
+                <input type="text" value="root" readonly style="background: #f5f5f5;">
+            </div>
+            
+            <!-- VULNERABILITY: Password exposed in HTML! -->
+            <div class="form-group">
+                <label>Database Password</label>
+                <input type="text" value="password123" readonly style="background: #f5f5f5;">
+            </div>
+            
+            <div class="form-group">
+                <label>JWT Secret Key</label>
+                <input type="text" value="super_secret_key_12345_exposed_in_source" readonly style="background: #f5f5f5;">
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h3>File Upload Settings</h3>
+            <!-- VULNERABILITY: No file type validation mentioned -->
+            <div class="form-group">
+                <label>Upload Directory</label>
+                <input type="text" value="/uploads/" readonly style="background: #f5f5f5;">
+            </div>
+            <div class="form-group">
+                <label>Max File Size (MB)</label>
+                <input type="text" value="10" readonly style="background: #f5f5f5;">
+            </div>
+            <div class="form-group">
+                <label>Allowed Extensions</label>
+                <textarea readonly style="background: #f5f5f5;">jpg, jpeg, png, pdf, doc, docx</textarea>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // VULNERABILITY: Exposed API credentials in JavaScript
+        const API_KEY = 'api_key_12345_exposed';
+        const API_URL = 'http://192.168.199.250:8000/backend/';
+        
+        console.log('Admin panel loaded - using API:', API_URL);
+    </script>
+</body>
+</html>

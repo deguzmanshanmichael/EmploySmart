@@ -1,0 +1,10 @@
+{
+  "appId": "com.employsmart.app",
+  "appName": "EmploySmart",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://192.168.83.250:5173",
+    "cleartext": true
+  }
+}

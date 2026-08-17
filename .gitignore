@@ -1,0 +1,17 @@
+.env
+/node_modules/
+/dist/
+/build/
+*.apk
+*.aab
+*.zip
+*.apks
+*.jar
+/.DS_Store
+
+# Android build artifacts
+client/android/**/*.apk
+client/android/**/*.aab
+client/android/**/build/
+client/android/**/outputs/
+client/android/**/intermediates/

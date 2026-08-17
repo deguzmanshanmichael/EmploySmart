@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="EmploySmart icon">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <path d="M38 32h52c5.5 0 10 4.5 10 10v5H48v14h40v9H48v14h52v5c0 5.5-4.5 10-10 10H38c-5.5 0-10-4.5-10-10V42c0-5.5 4.5-10 10-10Zm-8 18h18v9H30v-9Zm0 22h18v9H30v-9Z" fill="#ffffff"/>
+  <circle cx="90" cy="40" r="8" fill="#60a5fa"/>
+  <path d="M88 54h16v9H88zm0 16h16v9H88z" fill="#dbeafe"/>
+</svg>

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attack Scenarios - JobLink Vulnerable Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        header nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .scenario-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .scenario-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .scenario-header h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        
+        .scenario-body {
+            padding: 20px;
+        }
+        
+        .scenario-body h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+        
+        .scenario-body h4:first-child {
+            margin-top: 0;
+        }
+        
+        .step {
+            background: #f9f9f9;
+            padding: 12px;
+            border-left: 3px solid #667eea;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        
+        .impact {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .difficulty {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .difficulty.easy {
+            background: #28a745;
+            color: white;
+        }
+        
+        .difficulty.medium {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .difficulty.hard {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .toc {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #f9f9f9;
+            border-left: 3px solid #667eea;
+            border-radius: 4px;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .page-intro {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .page-intro h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>🎯 Attack Scenarios</h1>
+            <div>
+                <a href="index.html">Home</a>
+                <a href="login.html">Login</a>
+                <a href="vulnerabilities.html">Docs</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <div class="page-intro">
+            <h2>📋 Detailed Attack Scenarios</h2>
+            <p>This page shows step-by-step how each vulnerability can be exploited in the JobLink demo application. Each scenario includes the attack steps, code examples, and the impact.</p>
+        </div>
+        
+        <div class="toc">
+            <h2>🎯 Scenarios Index</h2>
+            <ul>
+                <li><a href="#sql-injection">SQL Injection via Login Form</a></li>
+                <li><a href="#sql-injection-search">SQL Injection via Search</a></li>
+                <li><a href="#access-admin">Accessing Admin Panel Without Authentication</a></li>
+                <li><a href="#idor-jobs">IDOR - Editing Other Users' Jobs</a></li>
+                <li><a href="#brute-force">Brute Force Login Attack</a></li>
+                <li><a href="#credential-theft">Credential Theft from Source Code</a></li>
+                <li><a href="#api-abuse">API Abuse Using Exposed Keys</a></li>
+            </ul>
+        </div>
+        
+        <div class="scenario-grid">
+            <!-- Scenario 1: SQL Injection Login -->
+            <div class="scenario-card" id="sql-injection">
+                <div class="scenario-header">
+                    <h3>🔴 SQL Injection - Login Bypass</h3>
+                    <span class="difficulty easy">EASY</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>SQL Injection (A03:2021)</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Very Easy - No tools required, just modify form input</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Open <code>login.html</code>
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> Enter Email: <code>' OR '1'='1</code>
+                    </div>
+                    <div class="step">
+                        <strong>3.</strong> Enter Password: <code>anything</code>
+                    </div>
+                    <div class="step">
+                        <strong>4.</strong> Click Login button
+                    </div>
+                    
+                    <h4>What Happens</h4>
+                    <p>The PHP code constructs this query:</p>
+                    <div class="code">SELECT * FROM users WHERE email = '' OR '1'='1' AND password = 'anything'</div>
+                    <p>Since <code>'1'='1'</code> is always TRUE, the query returns all users, bypassing authentication!</p>
+                    
+                    <h4>Vulnerable Code Location</h4>
+                    <p><code>backend/login.php</code> - lines containing direct concatenation</p>
+                    
+                    <div class="impact">
+                        <strong>⚠️ Impact:</strong> Attacker gains access to admin account and can access all system functions
+                    </div>
+                    
+                    <h4>Other Payloads to Try</h4>
+                    <div class="code">admin' --
+' OR 1=1 --
+' UNION SELECT 1,2,3 --
+' OR '1'='1' /*</div>
+                </div>
+            </div>
+            
+            <!-- Scenario 2: SQL Injection Search -->
+            <div class="scenario-card" id="sql-injection-search">
+                <div class="scenario-header">
+                    <h3>🔴 SQL Injection - Search Function</h3>
+                    <span class="difficulty easy">EASY</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>SQL Injection in Search (A03:2021)</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Very Easy - Same technique as login, different endpoint</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Open <code>jobs.html</code>
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> Click on search box
+                    </div>
+                    <div class="step">
+                        <strong>3.</strong> Type: <code>%' OR '1'='1</code>
+                    </div>
+                    <div class="step">
+                        <strong>4.</strong> Click Search button
+                    </div>
+                    
+                    <h4>What Happens</h4>
+                    <p>The vulnerable query becomes:</p>
+                    <div class="code">SELECT * FROM jobs WHERE title LIKE '%' OR '1'='1%'</div>
+                    <p>Returns ALL jobs from database (not just matching search)</p>
+                    
+                    <h4>Data Exposed</h4>
+                    <ul>
+                        <li>Private job listings</li>
+                        <li>Draft jobs not ready for publication</li>
+                        <li>Jobs from all companies</li>
+                        <li>Potentially archived/deleted jobs</li>
+                    </ul>
+                    
+                    <div class="impact">
+                        <strong>⚠️ Impact:</strong> Information disclosure - attacker sees data they shouldn't have access to
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scenario 3: Access Admin Panel -->
+            <div class="scenario-card" id="access-admin">
+                <div class="scenario-header">
+                    <h3>🔴 Broken Access Control - Admin Panel</h3>
+                    <span class="difficulty easy">EXTREMELY EASY</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>Broken Access Control (A01:2021)</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Trivial - No authentication required at all</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Open <code>admin.html</code> in browser
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> That's it! Full admin access granted
+                    </div>
+                    
+                    <h4>Access Gained</h4>
+                    <ul>
+                        <li>✅ View all user accounts</li>
+                        <li>✅ View all job postings</li>
+                        <li>✅ Access database credentials</li>
+                        <li>✅ See API keys</li>
+                        <li>✅ View JWT secrets</li>
+                        <li>✅ Access sensitive config</li>
+                    </ul>
+                    
+                    <h4>Secrets Exposed</h4>
+                    <p>Simply by viewing the page source, attacker gets:</p>
+                    <div class="code">Database User: root
+Database Pass: password123
+Database Name: joblink_demo
+API Key: api_key_12345_exposed
+JWT Secret: super_secret_key_12345_exposed_in_source</div>
+                    
+                    <div class="impact">
+                        <strong>⚠️ CRITICAL Impact:</strong> Complete system compromise, all credentials leaked, database access gained
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scenario 4: IDOR Job Editing -->
+            <div class="scenario-card" id="idor-jobs">
+                <div class="scenario-header">
+                    <h3>🔴 IDOR - Edit Other Users' Jobs</h3>
+                    <span class="difficulty easy">VERY EASY</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>IDOR - Insecure Direct Object References (A01:2021)</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Very Easy - Just modify URL parameter</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Open <code>jobs.html</code>
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> Click "Edit Job" button on job_id=1
+                    </div>
+                    <div class="step">
+                        <strong>3.</strong> URL becomes: <code>job-edit.html?job_id=1</code>
+                    </div>
+                    <div class="step">
+                        <strong>4.</strong> Change URL to: <code>job-edit.html?job_id=2</code>
+                    </div>
+                    <div class="step">
+                        <strong>5.</strong> Now editing a different company's job!
+                    </div>
+                    
+                    <h4>What Attacker Can Do</h4>
+                    <ul>
+                        <li>❌ Edit competitor's job listings</li>
+                        <li>❌ Delete job postings</li>
+                        <li>❌ Change salary information</li>
+                        <li>❌ Modify job requirements</li>
+                        <li>❌ Deface listings</li>
+                        <li>❌ Reroute applications</li>
+                    </ul>
+                    
+                    <h4>How to Enumerate</h4>
+                    <p>Since IDs are sequential and predictable:</p>
+                    <div class="code">job-edit.html?job_id=1
+job-edit.html?job_id=2
+job-edit.html?job_id=3
+job-edit.html?job_id=4
+... (try all IDs 1-1000)</div>
+                    
+                    <div class="impact">
+                        <strong>⚠️ Impact:</strong> Business disruption, data corruption, competitive sabotage
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scenario 5: Brute Force -->
+            <div class="scenario-card" id="brute-force">
+                <div class="scenario-header">
+                    <h3>🔴 Brute Force - No Rate Limiting</h3>
+                    <span class="difficulty medium">MEDIUM</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>Identification & Authentication Failures (A07:2021)</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Medium - Requires scripting but no technical barriers</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Write a script to POST login requests
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> Try password combinations:
+                        <ul style="margin-top: 5px;">
+                            <li>password</li>
+                            <li>password123</li>
+                            <li>admin</li>
+                            <li>admin123</li>
+                            <li>12345678</li>
+                        </ul>
+                    </div>
+                    <div class="step">
+                        <strong>3.</strong> No rate limiting = unlimited attempts
+                    </div>
+                    <div class="step">
+                        <strong>4.</strong> Eventually find working password
+                    </div>
+                    
+                    <h4>Why This Works</h4>
+                    <p>No protection mechanisms:</p>
+                    <ul>
+                        <li>❌ No rate limiting (can try 1000s of passwords/min)</li>
+                        <li>❌ No account lockout (after N failed attempts)</li>
+                        <li>❌ No CAPTCHA (stops automated attacks)</li>
+                        <li>❌ No 2FA/MFA (additional factor)</li>
+                    </ul>
+                    
+                    <h4>Example Attack Code (Conceptual)</h4>
+                    <div class="code">passwords = ['admin', 'admin123', '12345678', ...]
+for password in passwords:
+    response = POST(login.php, email, password)
+    if response.contains('Welcome'):
+        print(f"Found password: {password}")
+        break</div>
+                    
+                    <div class="impact">
+                        <strong>⚠️ Impact:</strong> Account takeover, unauthorized access, privilege escalation
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scenario 6: Credential Theft -->
+            <div class="scenario-card" id="credential-theft">
+                <div class="scenario-header">
+                    <h3>🔴 Security Misconfiguration - Credential Theft</h3>
+                    <span class="difficulty easy">EXTREMELY EASY</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>Security Misconfiguration (A05:2021)</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Trivial - View page source</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Open <code>admin.html</code>
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> Right-click → View Page Source
+                    </div>
+                    <div class="step">
+                        <strong>3.</strong> Search for "Database" or "password"
+                    </div>
+                    <div class="step">
+                        <strong>4.</strong> Find all credentials listed!
+                    </div>
+                    
+                    <h4>Credentials Exposed</h4>
+                    <div class="code">Database Host: 192.168.199.250
+Database User: root
+Database Password: password123
+Database Name: joblink_demo
+JWT Secret: super_secret_key_12345_exposed_in_source
+API Key: api_key_12345_exposed
+API URL: http://192.168.199.250:8000/backend/</div>
+                    
+                    <h4>What Attacker Can Now Do</h4>
+                    <ul>
+                        <li>🔓 Connect directly to MySQL database</li>
+                        <li>🔓 Create malicious JWTs for account impersonation</li>
+                        <li>🔓 Make API calls as system</li>
+                        <li>🔓 Extract all data</li>
+                        <li>🔓 Modify database records</li>
+                    </ul>
+                    
+                    <h4>Additional Exposure</h4>
+                    <p>In browser Developer Tools (F12):</p>
+                    <div class="code">// Console shows:
+const API_KEY = 'api_key_12345_exposed';
+const API_URL = 'http://192.168.199.250:8000/backend/';
+console.log('Admin panel loaded - using API:', API_URL);</div>
+                    
+                    <div class="impact">
+                        <strong>⚠️ CRITICAL Impact:</strong> Direct database access, API key compromise, complete system takeover
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scenario 7: API Abuse -->
+            <div class="scenario-card" id="api-abuse">
+                <div class="scenario-header">
+                    <h3>🔴 Using Exposed API Keys</h3>
+                    <span class="difficulty medium">MEDIUM</span>
+                </div>
+                <div class="scenario-body">
+                    <h4>Vulnerability Type</h4>
+                    <p>Security Misconfiguration + Broken Access Control</p>
+                    
+                    <h4>Attack Difficulty</h4>
+                    <p>Medium - Requires HTTP client but straightforward</p>
+                    
+                    <h4>Step-by-Step Attack</h4>
+                    <div class="step">
+                        <strong>1.</strong> Obtain API key from admin.html source
+                    </div>
+                    <div class="step">
+                        <strong>2.</strong> Open tool like Postman or use curl
+                    </div>
+                    <div class="step">
+                        <strong>3.</strong> Make requests with exposed credentials
+                    </div>
+                    <div class="step">
+                        <strong>4.</strong> Access backend APIs without authentication
+                    </div>
+                    
+                    <h4>Attack Examples</h4>
+                    <div class="code"># Using exposed API key
+curl -H "X-API-Key: api_key_12345_exposed" \
+     http://192.168.199.250:8000/backend/get-users.php
+
+# Using exposed JWT secret to create fake tokens
+jwt = encode(payload, secret=super_secret_key_12345)
+headers = {"Authorization": f"Bearer {jwt}"}
+response = requests.get(url, headers=headers)</div>
+                    
+                    <h4>What Attacker Can Access</h4>
+                    <ul>
+                        <li>🔓 /backend/get-users.php - All user data</li>
+                        <li>🔓 /backend/get-jobs.php - All jobs</li>
+                        <li>🔓 /backend/update-user.php - Modify users</li>
+                        <li>🔓 /backend/delete-job.php - Delete jobs</li>
+                        <li>🔓 /backend/admin-only.php - Admin functions</li>
+                    </ul>
+                    
+                    <h4>Why This Fails</h4>
+                    <p>No authentication check because:</p>
+                    <ul>
+                        <li>❌ API key is hardcoded in frontend</li>
+                        <li>❌ Same key used for all operations</li>
+                        <li>❌ Key has unlimited permissions</li>
+                        <li>❌ No expiration on key</li>
+                        <li>❌ Key exposed in source code</li>
+                    </ul>
+                    
+                    <div class="impact">
+                        <strong>⚠️ CRITICAL Impact:</strong> Unauthorized API access, data theft, system compromise
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 30px; border-radius: 8px; margin-top: 30px;">
+            <h2 style="color: #667eea; margin-bottom: 20px;">🔒 How These Would Be Fixed</h2>
+            
+            <h3 style="color: #667eea; margin-top: 20px;">SQL Injection Fix</h3>
+            <div class="code">// BEFORE (Vulnerable)
+$query = "SELECT * FROM users WHERE email = '" . $email . "'";
+
+// AFTER (Secure)
+$stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();</div>
+            
+            <h3 style="color: #667eea; margin-top: 20px;">Access Control Fix</h3>
+            <div class="code">// BEFORE (Vulnerable)
+// Anyone can access admin.html
+
+// AFTER (Secure)
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: login.html');
+    exit;
+}</div>
+            
+            <h3 style="color: #667eea; margin-top: 20px;">Secrets Management Fix</h3>
+            <div class="code">// BEFORE (Vulnerable)
+const API_KEY = 'api_key_12345_exposed'; // In frontend!
+
+// AFTER (Secure)
+// Store in backend .env
+$api_key = $_ENV['API_KEY'];
+// NEVER expose in frontend code
+// Use backend API endpoint instead</div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2026 JobLink Vulnerable Demo | Educational Purposes Only</p>
+        <p><a href="vulnerabilities.html">← Back to Full Documentation</a></p>
+    </footer>
+</body>
+</html>
