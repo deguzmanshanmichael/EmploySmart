@@ -3,8 +3,8 @@ require_once __DIR__ . '/env.php';
 
 function setCorsHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    $allowedOrigins = envList('CORS_ALLOWED_ORIGINS', ['http://localhost', 'http://127.0.0.1', 'http://192.168.199.250:5173']);
-    $allowEmptyOrigin = envBool('CORS_ALLOW_EMPTY_ORIGIN', true);
+    $allowedOrigins = envList('CORS_ALLOWED_ORIGINS', ['http://localhost', 'http://127.0.0.1', 'http://localhost:5173']);
+    $allowEmptyOrigin = envBool('CORS_ALLOW_EMPTY_ORIGIN', false);  // Disable empty origin in production
     $allowedOrigin = '';
 
     if ($origin && in_array($origin, $allowedOrigins, true)) {

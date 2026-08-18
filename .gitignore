@@ -1,4 +1,7 @@
 .env
+.env.local
+.env.production
+.env.*.local
 /node_modules/
 **/node_modules/
 /dist/
@@ -9,6 +12,17 @@
 *.apks
 *.jar
 /.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
 
 # Android build artifacts
 client/android/**/*.apk
@@ -16,3 +30,31 @@ client/android/**/*.aab
 client/android/**/build/
 client/android/**/outputs/
 client/android/**/intermediates/
+
+# Server artifacts
+server/uploads/*
+!server/uploads/.gitkeep
+server/logs/*
+!server/logs/.gitkeep
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.sql.bak
+*.sql.backup
+database/uploads/*
+
+# OS
+Thumbs.db
+.classpath
+.gradle
+.project
+.settings
+.toolstarget
+

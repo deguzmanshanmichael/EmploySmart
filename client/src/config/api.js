@@ -8,9 +8,26 @@
  * - All requests include timestamp to prevent cache issues
  */
 
-export const API_BASE_URL = import.meta.env.DEV
-  ? '/api'
-  : (import.meta.env.VITE_API_URL || 'http://localhost/EmploySmart/server')
+// Auto-detect API URL based on environment
+function getAPIBaseURL() {
+  if (import.meta.env.DEV) {
+    // Development: use relative path for Vite proxy
+    return '/api'
+  }
+  
+  // Production: use environment variable or auto-detect from window location
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  
+  // Auto-detect for Hostinger or any server
+  // Assumes API is at /api on same domain
+  const protocol = window.location.protocol
+  const host = window.location.host
+  return `${protocol}//${host}/api`
+}
+
+export const API_BASE_URL = getAPIBaseURL()
 
 /**
  * Security headers and defaults

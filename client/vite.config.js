@@ -12,10 +12,17 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost/EmploySmart/server',
+        // Development proxy: routes /api calls to backend
+        target: 'http://localhost/api',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        // Keep the /api prefix when proxying to backend
+        rewrite: (path) => path
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'terser'
   }
 })
