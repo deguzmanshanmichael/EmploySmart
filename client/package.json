@@ -12,12 +12,13 @@
     "@capacitor/android": "^8.3.0",
     "axios": "^1.6.7",
     "date-fns": "^3.3.1",
+    "employsmart": "file:..",
     "jwt-decode": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-icons": "^5.0.1",
-    "react-router-dom": "^6.22.0",
+    "react-router-dom": "^7.18.2",
     "recharts": "^2.12.0"
   },
   "devDependencies": {
@@ -25,11 +26,11 @@
     "@capacitor/core": "^8.3.0",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "terser": "^5.46.1",
-    "vite": "^5.4.21"
+    "vite": "^8.2.1"
   }
 }

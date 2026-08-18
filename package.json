@@ -1,8 +1,15 @@
 {
-  "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/cli": "^8.3.0",
-    "@capacitor/core": "^8.3.0",
-    "@vitejs/plugin-react": "^6.0.1"
+  "name": "employsmart",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "install:client": "npm install --prefix client",
+    "build": "npm install --prefix client && npm --prefix client run build",
+    "dev": "npm --prefix client run dev",
+    "preview": "npm --prefix client run preview"
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
   }
 }
