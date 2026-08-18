@@ -23,6 +23,28 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser'
+    minify: 'terser',
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-router-dom') || id.includes('react') || id.includes('scheduler') || id.includes('react-dom')) {
+              return 'react-vendor'
+            }
+            if (id.includes('recharts')) {
+              return 'charting'
+            }
+            if (id.includes('axios') || id.includes('date-fns') || id.includes('jwt-decode')) {
+              return 'data-vendor'
+            }
+            if (id.includes('react-hot-toast') || id.includes('react-icons')) {
+              return 'ui-vendor'
+            }
+            return 'vendor'
+          }
+        }
+      }
+    }
   }
 })
