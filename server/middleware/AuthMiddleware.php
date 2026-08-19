@@ -72,9 +72,12 @@ function requireAuth() {
 
 function requireRole($allowedRoles) {
     $payload = requireAuth();
-    if (!in_array($payload['role'], (array)$allowedRoles, true)) {
+    $role = strtolower(trim((string)($payload['role'] ?? '')));
+    $allowedRoles = array_map(static fn($allowedRole) => strtolower(trim((string)$allowedRole)), (array)$allowedRoles);
+    if (!in_array($role, $allowedRoles, true)) {
         sendError('Forbidden. Insufficient permissions.', 403);
     }
+    $payload['role'] = $role;
     return $payload;
 }
 

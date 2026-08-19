@@ -118,6 +118,9 @@ class AuthController {
         $stmt->bind_param('s', $data['email']);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
+        if ($user) {
+            $user['role'] = strtolower(trim((string)$user['role']));
+        }
 
         $passwordValid = false;
         if ($user && password_verify($data['password'], $user['password'])) {
