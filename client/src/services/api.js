@@ -55,7 +55,7 @@ function clearAuthAndRedirect() {
 
 function redirectToError(status) {
   if (status === 401) window.location.href = '/401'
-  else if (status === 403) window.location.href = '/403'
+  else if (status === 403) window.location.href = '/401'
   else if (status === 500) window.location.href = '/500'
 }
 
