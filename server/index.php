@@ -51,7 +51,7 @@ if ($resource === 'auth') {
 } elseif ($resource === 'users') {
     require_once __DIR__ . '/controllers/UserController.php';
     $ctrl = new UserController();
-    if ($id === 'stats') { $ctrl->getDashboardStats(); }
+    if ($id === 'stats') { requireRole(['admin', 'peso', 'clcdo']); $ctrl->getDashboardStats(); }
     elseif ($id === 'logs') {
         requireRole(['admin']);
         $db = getDB();

@@ -19,6 +19,7 @@ import RequestVerification from '../pages/auth/RequestVerification'
 // Error pages
 import NotFound           from '../pages/errors/NotFound'
 import Unauthorized       from '../pages/errors/Unauthorized'
+import Forbidden           from '../pages/errors/Forbidden'
 import ServerError        from '../pages/errors/ServerError'
 import SessionExpired     from '../pages/errors/SessionExpired'
 import LandingPage        from '../pages/public/LandingPage'
@@ -193,6 +194,7 @@ export default function AppRoutes() {
 
       {/* Catch-all 404 */}
       <Route path="/401" element={<Unauthorized />} />
+      <Route path="/403" element={<Forbidden />} />
       <Route path="/500" element={<ServerError />} />
       <Route path="/session-expired" element={<SessionExpired />} />
       <Route path="*" element={<NotFound />} />
