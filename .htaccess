@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Route API requests before the React SPA fallback. Support both the
+    # recommended public_html/api layout and a repository-root deployment.
+    RewriteCond %{DOCUMENT_ROOT}/api/index.php -f
+    RewriteRule ^api(?:/.*)?$ api/index.php [QSA,L]
+
+    RewriteCond %{DOCUMENT_ROOT}/server/index.php -f
+    RewriteRule ^api(?:/.*)?$ server/index.php [QSA,L]
+
+    # Let React Router handle client-side routes.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+Options -Indexes
