@@ -565,7 +565,7 @@ class UserController {
     }
 
     public function getDashboardStats() {
-        requireRole(['admin', 'peso']);
+        requireRole(['admin', 'peso', 'clcdo']);
         $db = getDB();
         $stats = [];
         
