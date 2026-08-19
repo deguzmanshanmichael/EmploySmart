@@ -42,7 +42,6 @@ if ($resource === 'auth') {
     match($id) {
         'register'   => $ctrl->register(),
         'login'      => $ctrl->login(),
-        'verify-mfa' => $ctrl->verifyMfa(),
         'refresh'    => $ctrl->refresh(),
         'logout'     => $ctrl->logout(),
         'me'         => $ctrl->me(),
