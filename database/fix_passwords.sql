@@ -1,5 +1,5 @@
 -- Fix password hashes for the demo staff accounts.
-USE employsmart;
+-- Run this script after selecting the target database in phpMyAdmin.
 
 UPDATE users SET password = '$2y$10$rkfjo3FQhgna0IP6RvkCWOFLZN0whnzk6dYNy2IwKKpDxCs7Q29Ay' WHERE email = 'admin@employsmart.com';
 UPDATE users SET password = '$2y$10$Zzl/fWfahphZeT9VYbQkeeAjzPakrMUiIxDXAsY9Wd4swz8RSpHNi' WHERE email = 'peso@employsmart.com';
