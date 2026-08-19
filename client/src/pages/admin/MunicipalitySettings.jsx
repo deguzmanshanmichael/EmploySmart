@@ -11,6 +11,13 @@ const initialState = {
   contact_phone: '',
   service_scope: '',
   welcome_message: '',
+  landing_hero_title: '',
+  landing_hero_subtitle: '',
+  landing_about: '',
+  landing_mission: '',
+  landing_vision: '',
+  landing_peso: '',
+  landing_clcdo: '',
 }
 
 export default function MunicipalitySettings() {
@@ -85,6 +92,43 @@ export default function MunicipalitySettings() {
         <div className="form-group">
           <label className="label">Welcome Message</label>
           <textarea className="input h-24 resize-none" value={form.welcome_message} onChange={(e) => setValue('welcome_message', e.target.value)} />
+        </div>
+      </div>
+
+      <div className="card-flat space-y-4 max-w-3xl">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">Public Landing Page</h2>
+          <p className="mt-1 text-sm text-gray-500">These fields appear on the public home page and can be updated without rebuilding the frontend.</p>
+        </div>
+        <div className="form-group">
+          <label className="label">Hero Title</label>
+          <input className="input" value={form.landing_hero_title} onChange={(e) => setValue('landing_hero_title', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="label">Hero Subtitle</label>
+          <textarea className="input h-24 resize-none" value={form.landing_hero_subtitle} onChange={(e) => setValue('landing_hero_subtitle', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="label">About EmploySmart</label>
+          <textarea className="input h-28 resize-none" value={form.landing_about} onChange={(e) => setValue('landing_about', e.target.value)} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="form-group">
+            <label className="label">Mission</label>
+            <textarea className="input h-32 resize-none" value={form.landing_mission} onChange={(e) => setValue('landing_mission', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">Vision</label>
+            <textarea className="input h-32 resize-none" value={form.landing_vision} onChange={(e) => setValue('landing_vision', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">PESO Description</label>
+            <textarea className="input h-32 resize-none" value={form.landing_peso} onChange={(e) => setValue('landing_peso', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">CLCDO Description</label>
+            <textarea className="input h-32 resize-none" value={form.landing_clcdo} onChange={(e) => setValue('landing_clcdo', e.target.value)} />
+          </div>
         </div>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save Configuration'}

@@ -21,6 +21,7 @@ import NotFound           from '../pages/errors/NotFound'
 import Unauthorized       from '../pages/errors/Unauthorized'
 import ServerError        from '../pages/errors/ServerError'
 import SessionExpired     from '../pages/errors/SessionExpired'
+import LandingPage        from '../pages/public/LandingPage'
 
 // Jobseeker pages
 import JobSeekerDashboard  from '../pages/jobseeker/Dashboard'
@@ -96,6 +97,12 @@ function RoleRedirect() {
   return <Navigate to={roleMap[user.role] || '/login'} replace />
 }
 
+function HomeRoute() {
+  const { user, loading } = useAuth()
+  if (loading) return <LandingPage loading />
+  return user ? <RoleRedirect /> : <LandingPage />
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -105,7 +112,7 @@ export default function AppRoutes() {
       <Route path="/login/staff" element={<StaffLogin />} />
       <Route path="/register" element={<Register />} />
       <Route path="/request-verification" element={<RequestVerification />} />
-      <Route path="/" element={<RoleRedirect />} />
+      <Route path="/" element={<HomeRoute />} />
 
       {/* Jobseeker */}
       <Route path="/jobseeker" element={

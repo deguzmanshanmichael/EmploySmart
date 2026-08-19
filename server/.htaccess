@@ -1,6 +1,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /api/
+
+    # Preserve Bearer tokens when Apache passes requests through FastCGI.
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     
     # Prevent direct access to certain sensitive files and directories
     RewriteRule ^\.env$ - [F]

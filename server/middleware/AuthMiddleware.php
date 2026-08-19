@@ -15,9 +15,19 @@ function requireAuth() {
     if (!is_array($headers)) {
         $headers = [];
     }
-    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-    if (empty($authHeader)) {
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $authHeader = '';
+    foreach ($headers as $name => $value) {
+        if (strcasecmp($name, 'Authorization') === 0) {
+            $authHeader = trim((string)$value);
+            break;
+        }
+    }
+    if ($authHeader === '') {
+        $authHeader = trim((string)(
+            $_SERVER['HTTP_AUTHORIZATION']
+            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+            ?? ''
+        ));
     }
     if (empty($authHeader) || !preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
         sendError('Unauthorized. Token required.', 401);

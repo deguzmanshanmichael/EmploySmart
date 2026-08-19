@@ -172,7 +172,9 @@ if ($resource === 'auth') {
 } elseif ($resource === 'settings') {
     require_once __DIR__ . '/controllers/SettingsController.php';
     $ctrl = new SettingsController();
-    if ($id === 'municipality' && ($method === 'GET' || $method === 'POST')) {
+    if ($id === 'landing' && $method === 'GET') {
+        $ctrl->getPublicLandingConfig();
+    } elseif ($id === 'municipality' && ($method === 'GET' || $method === 'POST')) {
         if ($method === 'GET') { $ctrl->getMunicipalityConfig(); }
         else { $ctrl->updateMunicipalityConfig(); }
     } else { sendError('Route not found', 404); }
