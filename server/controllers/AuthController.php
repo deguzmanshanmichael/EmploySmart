@@ -100,6 +100,7 @@ class AuthController {
         $data = getJsonBody();
         $errors = validateRequired($data, ['email', 'password']);
         if (!empty($errors)) sendError('Validation failed', 422, $errors);
+        $data['email'] = strtolower(trim((string)$data['email']));
         if (!validateEmail($data['email'])) sendError('Invalid email address', 422);
 
         $clientKey = 'login:' . md5(($data['email'] ?? '') . ':' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));

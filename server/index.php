@@ -20,9 +20,15 @@ setCorsHeaders();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri    = rtrim(preg_replace('#^/EmploySmart/server#', '', $uri), '/');
-$uri    = rtrim(preg_replace('#^/server#', '', $uri), '/');
-$parts  = array_values(array_filter(explode('/', $uri)));
+
+// Normalize common Hostinger and subfolder deployments before route matching.
+// Handles: /api/auth/login, /EmploySmart/api/auth/login, /public/api/auth/login, /server/auth/login
+foreach (['api', 'server', 'public'] as $segment) {
+    $uri = preg_replace('#^/(?:.*?/)?' . preg_quote($segment, '#') . '(?=/|$)#', '', $uri);
+}
+
+$uri    = rtrim($uri, '/');
+$parts  = array_values(array_filter(explode('/', $uri), fn($segment) => $segment !== ''));
 
 if (empty($parts)) { sendSuccess('EmploySmart API v1.0'); }
 
