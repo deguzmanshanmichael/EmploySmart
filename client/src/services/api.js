@@ -85,6 +85,12 @@ api.interceptors.response.use(
     const status = error.response?.status
     const originalRequest = error.config
 
+    // Landing settings are optional; do not send public visitors to the 500 page
+    // when the database is temporarily unavailable during hosting setup.
+    if (originalRequest?.url?.includes('/settings/landing')) {
+      return Promise.reject(error)
+    }
+
     // 401 Unauthorized - try to refresh token
     if (status === 401 && !originalRequest._retry) {
       const isAuthRoute = originalRequest.url?.includes('/auth/')

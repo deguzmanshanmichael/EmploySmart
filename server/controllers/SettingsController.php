@@ -49,20 +49,22 @@ class SettingsController {
     }
 
     public function getPublicLandingConfig() {
-        $db = getDB();
-        $stmt = $db->prepare("SELECT setting_key, setting_value FROM system_settings");
-        $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stored = [];
-        foreach ($rows as $row) {
-            $stored[$row['setting_key']] = $row['setting_value'];
-        }
-
         $config = $this->landingDefaults();
-        foreach ($config as $key => $value) {
-            if (isset($stored[$key]) && $stored[$key] !== '') {
-                $config[$key] = $stored[$key];
+        // The public home page must remain available while hosting/database setup is incomplete.
+        // Read admin overrides when possible, but keep environment defaults as a valid fallback.
+        $db = @new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+        if (!$db->connect_error) {
+            $stmt = $db->prepare("SELECT setting_key, setting_value FROM system_settings");
+            if ($stmt) {
+                $stmt->execute();
+                $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                foreach ($rows as $row) {
+                    if (array_key_exists($row['setting_key'], $config) && $row['setting_value'] !== '') {
+                        $config[$row['setting_key']] = $row['setting_value'];
+                    }
+                }
             }
+            $db->close();
         }
         sendSuccess('Landing page configuration', $config);
     }
