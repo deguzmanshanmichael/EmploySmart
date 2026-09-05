@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { userService } from '../../services/index'
-import { LoadingSpinner, Modal } from '../../components/index'
+import { LoadingSpinner, Modal, ConfirmDialog } from '../../components/index'
 import { authService } from '../../services/authService'
 import api from '../../services/api'
 import toast from 'react-hot-toast'
-import { FiPlus, FiRefreshCw } from 'react-icons/fi'
+import { FiPlus, FiRefreshCw, FiArchive } from 'react-icons/fi'
 
 const STAFF_ROLES = ['peso', 'clcdo', 'admin']
 const roleBadge   = { peso:'badge-green', clcdo:'badge-yellow', admin:'badge-red' }
@@ -15,6 +15,8 @@ export default function RoleManagement() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  const [confirmArchive, setConfirmArchive] = useState(null)
   const [form, setForm] = useState({
     first_name:'', last_name:'', email:'', password:'', sex:'male', role:'peso'
   })
@@ -68,6 +70,21 @@ export default function RoleManagement() {
     } catch { toast.error('Failed') }
   }
 
+  const handleArchive = async () => {
+    if (!confirmArchive) return
+    setArchiving(true)
+    try {
+      await userService.delete(confirmArchive.id)
+      toast.success('Staff account archived')
+      setConfirmArchive(null)
+      load()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to archive this account')
+    } finally {
+      setArchiving(false)
+    }
+  }
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   if (loading) return <LoadingSpinner />
@@ -98,7 +115,7 @@ export default function RoleManagement() {
             ) : (
               <div className="table-wrapper">
                 <table className="table">
-                  <thead><tr><th>Name</th><th>Email</th><th>Verified</th></tr></thead>
+                  <thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Actions</th></tr></thead>
                   <tbody>
                     {members.map(u => (
                       <tr key={u.id}>
@@ -109,6 +126,7 @@ export default function RoleManagement() {
                             ? <span className="badge-green">✓ Active</span>
                             : <button onClick={() => handleVerify(u.id)} className="btn-success btn-sm">Activate</button>}
                         </td>
+                          <td><button onClick={() => setConfirmArchive(u)} title="Archive account" className="btn-danger btn-sm"><FiArchive size={14} /> Archive</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -118,6 +136,15 @@ export default function RoleManagement() {
           </div>
         )
       })}
+
+      {confirmArchive && (
+        <ConfirmDialog
+          title="Archive Staff Account"
+          message={`Archive ${confirmArchive.first_name} ${confirmArchive.last_name}? Accounts with pending job postings or applications cannot be archived.`}
+          onConfirm={handleArchive}
+          onCancel={() => setConfirmArchive(null)}
+        />
+      )}
 
       {showModal && (
         <Modal title="Create Staff Account" onClose={() => setShowModal(false)}
