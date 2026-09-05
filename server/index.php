@@ -179,6 +179,8 @@ if ($resource === 'auth') {
     $ctrl = new SettingsController();
     if ($id === 'landing' && $method === 'GET') {
         $ctrl->getPublicLandingConfig();
+    } elseif ($id === 'municipality' && $action === 'upload' && $method === 'POST') {
+        $ctrl->uploadLandingImage($_POST['image_type'] ?? '');
     } elseif ($id === 'municipality' && $action === 'reset' && $method === 'POST') {
         $ctrl->resetMunicipalityConfig();
     } elseif ($id === 'municipality' && ($method === 'GET' || $method === 'POST')) {

@@ -111,4 +111,44 @@ class SettingsController {
         $stmt->execute();
         sendSuccess('Municipality and landing settings restored to defaults', $this->landingDefaults());
     }
+
+    public function uploadLandingImage($imageType) {
+        requireRole(['admin']);
+        if (!in_array($imageType, ['hero', 'logo'], true)) {
+            sendError('Invalid landing image type', 422);
+        }
+        if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            sendError('Please choose an image to upload', 400);
+        }
+
+        $file = $_FILES['image'];
+        if ($file['size'] <= 0 || $file['size'] > 5 * 1024 * 1024) {
+            sendError('Image must be smaller than 5MB', 422);
+        }
+        $imageInfo = @getimagesize($file['tmp_name']);
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!$imageInfo || !in_array($imageInfo['mime'], $allowedMimes, true)) {
+            sendError('Only JPG, PNG, and WebP images are allowed', 422);
+        }
+
+        $dir = __DIR__ . '/../uploads/landing/';
+        if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+            sendError('Unable to prepare image upload directory', 500);
+        }
+        if (!is_writable($dir)) sendError('Image upload directory is not writable', 500);
+
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $filename = 'landing_' . $imageType . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+        if (!move_uploaded_file($file['tmp_name'], $dir . $filename)) {
+            sendError('Image upload failed', 500);
+        }
+
+        $path = 'api/uploads/landing/' . $filename;
+        $settingKey = 'landing_' . $imageType . '_image';
+        $db = getDB();
+        $stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        $stmt->bind_param('ss', $settingKey, $path);
+        $stmt->execute();
+        sendSuccess('Landing image uploaded', [$settingKey => $path]);
+    }
 }

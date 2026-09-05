@@ -28,6 +28,7 @@ const initialState = {
 export default function MunicipalitySettings() {
   const [form, setForm] = useState(initialState)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -69,6 +70,23 @@ export default function MunicipalitySettings() {
       toast.error(error.response?.data?.message || 'Unable to restore defaults')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleImageUpload = async (imageType, event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setUploading(imageType)
+    try {
+      const res = await settingsService.uploadLandingImage(imageType, file)
+      const key = imageType === 'hero' ? 'landing_hero_image' : 'landing_logo_image'
+      setValue(key, res.data?.data?.[key] || '')
+      toast.success(`${imageType === 'hero' ? 'Hero' : 'Logo'} image uploaded`)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to upload image')
+    } finally {
+      setUploading('')
     }
   }
 
@@ -152,8 +170,8 @@ export default function MunicipalitySettings() {
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="form-group"><label className="label">Hero Image URL</label><input className="input" placeholder="https://..." value={form.landing_hero_image} onChange={(e) => setValue('landing_hero_image', e.target.value)} /></div>
-          <div className="form-group"><label className="label">Logo Image URL</label><input className="input" placeholder="https://..." value={form.landing_logo_image} onChange={(e) => setValue('landing_logo_image', e.target.value)} /></div>
+          <div className="form-group"><label className="label">Hero Image URL</label><input className="input" placeholder="https://..." value={form.landing_hero_image} onChange={(e) => setValue('landing_hero_image', e.target.value)} /><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('hero', e)} disabled={!!uploading} />{uploading === 'hero' ? 'Uploading...' : 'Upload from computer'}</label></div>
+          <div className="form-group"><label className="label">Logo Image URL</label><input className="input" placeholder="https://..." value={form.landing_logo_image} onChange={(e) => setValue('landing_logo_image', e.target.value)} /><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('logo', e)} disabled={!!uploading} />{uploading === 'logo' ? 'Uploading...' : 'Upload from computer'}</label></div>
           <div className="form-group"><label className="label">Primary Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_primary_color} onChange={(e) => setValue('landing_primary_color', e.target.value)} /></div>
           <div className="form-group"><label className="label">Accent Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_accent_color} onChange={(e) => setValue('landing_accent_color', e.target.value)} /></div>
         </div>

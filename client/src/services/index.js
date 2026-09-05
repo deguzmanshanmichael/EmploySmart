@@ -65,6 +65,12 @@ export const settingsService = {
   getMunicipality: () => api.get('/settings/municipality'),
   updateMunicipality: (data) => api.post('/settings/municipality', data),
   resetMunicipality: () => api.post('/settings/municipality/reset'),
+  uploadLandingImage: (imageType, file) => {
+    const formData = new FormData()
+    formData.append('image_type', imageType)
+    formData.append('image', file)
+    return api.post('/settings/municipality/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
 }
 
 export const feedbackService = {
