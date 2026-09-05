@@ -49,12 +49,12 @@ class JobController {
         $where = "WHERE j.approval_status = ? AND j.archived = FALSE";
         $params = [$status]; $types = 's';
 
-        if ($search) { $where .= " AND (j.title LIKE ? OR j.description LIKE ?)"; $s="%$search%"; $params[]=$s; $params[]=$s; $types.='ss'; }
+        if ($search) { $where .= " AND (j.title LIKE ? OR j.description LIKE ? OR e.company_name LIKE ? OR e.industry LIKE ?)"; $s="%$search%"; $params[]=$s; $params[]=$s; $params[]=$s; $params[]=$s; $types.='ssss'; }
         if ($location) { $where .= " AND j.location LIKE ?"; $params[]="%$location%"; $types.='s'; }
         if ($type) { $where .= " AND j.job_type = ?"; $params[]=$type; $types.='s'; }
         if ($level) { $where .= " AND j.experience_level = ?"; $params[]=$level; $types.='s'; }
 
-        $countStmt = $db->prepare("SELECT COUNT(*) FROM jobs j $where");
+        $countStmt = $db->prepare("SELECT COUNT(*) FROM jobs j LEFT JOIN employers e ON e.id = j.employer_id $where");
         $countStmt->bind_param($types, ...$params);
         $countStmt->execute();
         $total = $countStmt->get_result()->fetch_row()[0];
