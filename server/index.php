@@ -179,6 +179,8 @@ if ($resource === 'auth') {
     $ctrl = new SettingsController();
     if ($id === 'landing' && $method === 'GET') {
         $ctrl->getPublicLandingConfig();
+    } elseif ($id === 'municipality' && $action === 'reset' && $method === 'POST') {
+        $ctrl->resetMunicipalityConfig();
     } elseif ($id === 'municipality' && ($method === 'GET' || $method === 'POST')) {
         if ($method === 'GET') { $ctrl->getMunicipalityConfig(); }
         else { $ctrl->updateMunicipalityConfig(); }

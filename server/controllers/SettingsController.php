@@ -99,4 +99,16 @@ class SettingsController {
 
         sendSuccess('Municipality settings updated');
     }
+
+    public function resetMunicipalityConfig() {
+        requireRole(['admin']);
+        $db = getDB();
+        $keys = array_keys($this->landingDefaults());
+        $placeholders = implode(',', array_fill(0, count($keys), '?'));
+        $types = str_repeat('s', count($keys));
+        $stmt = $db->prepare("DELETE FROM system_settings WHERE setting_key IN ($placeholders)");
+        $stmt->bind_param($types, ...$keys);
+        $stmt->execute();
+        sendSuccess('Municipality and landing settings restored to defaults', $this->landingDefaults());
+    }
 }

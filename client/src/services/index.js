@@ -64,6 +64,7 @@ export const settingsService = {
   getLanding: () => api.get('/settings/landing'),
   getMunicipality: () => api.get('/settings/municipality'),
   updateMunicipality: (data) => api.post('/settings/municipality', data),
+  resetMunicipality: () => api.post('/settings/municipality/reset'),
 }
 
 export const feedbackService = {

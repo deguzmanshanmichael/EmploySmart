@@ -48,9 +48,25 @@ export default function MunicipalitySettings() {
     setSaving(true)
     try {
       await settingsService.updateMunicipality(form)
+      window.dispatchEvent(new Event('employsmart-theme-updated'))
       toast.success('Municipality settings updated')
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to save settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleReset = async () => {
+    if (!window.confirm('Restore municipality, landing page, and theme settings to their defaults?')) return
+    setSaving(true)
+    try {
+      const res = await settingsService.resetMunicipality()
+      setForm({ ...initialState, ...(res.data?.data || {}) })
+      window.dispatchEvent(new Event('employsmart-theme-updated'))
+      toast.success('Settings restored to defaults')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to restore defaults')
     } finally {
       setSaving(false)
     }
@@ -142,9 +158,10 @@ export default function MunicipalitySettings() {
           <div className="form-group"><label className="label">Accent Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_accent_color} onChange={(e) => setValue('landing_accent_color', e.target.value)} /></div>
         </div>
         <div className="form-group"><label className="label">Footer Text</label><input className="input" value={form.landing_footer_text} onChange={(e) => setValue('landing_footer_text', e.target.value)} /></div>
-        <button className="btn-primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Configuration'}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Configuration'}</button>
+          <button className="btn-secondary" onClick={handleReset} disabled={saving}>Back to Defaults</button>
+        </div>
       </div>
     </div>
   )
