@@ -59,7 +59,7 @@ class UserController {
     public function getOne($id) {
         $payload = requireAuth();
         $db = getDB();
-        $allowed = ($payload['role'] === 'admin') || ($payload['sub'] == $id);
+        $allowed = in_array($payload['role'], ['admin', 'peso'], true) || ($payload['sub'] == $id);
 
         if (!$allowed && $payload['role'] === 'employer') {
             $stmt = $db->prepare(
