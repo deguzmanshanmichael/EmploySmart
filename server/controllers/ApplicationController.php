@@ -76,6 +76,14 @@ class ApplicationController {
         $payload = requireRole(['employer', 'peso', 'admin']);
         [$page, $limit, $offset] = getPaginationParams();
         $db = getDB();
+        $search = trim((string)($_GET['search'] ?? ''));
+        $status = trim((string)($_GET['status'] ?? ''));
+        if ($status && !in_array($status, ['pending', 'reviewed', 'accepted', 'rejected', 'withdrawn'], true)) {
+            sendError('Invalid application status filter', 422);
+        }
+        if ($search && !validateStringLength($search, 1, 100)) {
+            sendError('Search query too long', 422);
+        }
 
         if ($payload['role'] === 'employer') {
             $stmt = $db->prepare("SELECT j.id FROM jobs j JOIN employers e ON e.id = j.employer_id WHERE j.id = ? AND e.user_id = ?");
@@ -84,13 +92,32 @@ class ApplicationController {
             if ($stmt->get_result()->num_rows === 0) sendError('Forbidden', 403);
         }
 
-        $stmt = $db->prepare("SELECT a.*, u.first_name, u.last_name, u.email, u.phone, u.education_level, u.resume_path FROM applications a JOIN users u ON u.id = a.user_id WHERE a.job_id = ? ORDER BY a.applied_at DESC LIMIT ? OFFSET ?");
-        $stmt->bind_param('iii', $jobId, $limit, $offset);
+        $where = 'WHERE a.job_id = ?';
+        $params = [$jobId];
+        $types = 'i';
+        if ($search) {
+            $where .= ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
+            $term = "%$search%";
+            $params[] = $term; $params[] = $term; $params[] = $term;
+            $types .= 'sss';
+        }
+        if ($status) {
+            $where .= ' AND a.application_status = ?';
+            $params[] = $status;
+            $types .= 's';
+        }
+
+        $params[] = $limit; $params[] = $offset;
+        $types .= 'ii';
+        $stmt = $db->prepare("SELECT a.*, u.first_name, u.last_name, u.email, u.phone, u.education_level, u.resume_path FROM applications a JOIN users u ON u.id = a.user_id $where ORDER BY a.applied_at DESC LIMIT ? OFFSET ?");
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $apps = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-        $count = $db->prepare("SELECT COUNT(*) FROM applications WHERE job_id = ?");
-        $count->bind_param('i', $jobId);
+        $countParams = array_slice($params, 0, -2);
+        $countTypes = substr($types, 0, -2);
+        $count = $db->prepare("SELECT COUNT(*) FROM applications a JOIN users u ON u.id = a.user_id $where");
+        $count->bind_param($countTypes, ...$countParams);
         $count->execute();
         $total = $count->get_result()->fetch_row()[0];
 

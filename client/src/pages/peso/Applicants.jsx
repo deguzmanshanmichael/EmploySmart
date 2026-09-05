@@ -18,6 +18,8 @@ export default function Applicants() {
   const [pages, setPages]       = useState(1)
   const [loading, setLoading]   = useState(true)
   const [loadingApps, setLoadingApps] = useState(false)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [profileApplicant, setProfileApplicant] = useState(null)
   const [profileData, setProfileData] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
@@ -33,16 +35,21 @@ export default function Applicants() {
     load()
   }, [])
 
-  const loadApplicants = async (job) => {
+  const loadApplicants = async (job, targetPage = 1) => {
     setSelectedJob(job)
     setLoadingApps(true)
     try {
-      const res = await applicationService.getJobApplicants(job.id, { page, limit: 20 })
+      const res = await applicationService.getJobApplicants(job.id, { page: targetPage, limit: 20, search, status })
       setApplicants(res.data.data || [])
       setPages(res.data.pagination?.pages || 1)
+      setPage(targetPage)
     } catch {}
     setLoadingApps(false)
   }
+
+  useEffect(() => {
+    if (selectedJob) loadApplicants(selectedJob, 1)
+  }, [search, status])
 
   const openProfile = async (app) => {
     setProfileApplicant(app)
@@ -108,13 +115,21 @@ export default function Applicants() {
         <div className="md:col-span-2">
           {!selectedJob ? (
             <EmptyState icon="👈" title="Select a job" description="Select a job on the left to view its applicants" />
-          ) : loadingApps ? <LoadingSpinner /> : applicants.length === 0 ? (
-            <EmptyState icon="📭" title="No applicants" description={`No one has applied to "${selectedJob.title}" yet`} />
           ) : (
             <div className="space-y-3">
-              <h3 className="font-bold text-gray-700">
-                {selectedJob.title} — {applicants.length} applicant{applicants.length !== 1 ? 's' : ''}
-              </h3>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <h3 className="font-bold text-gray-700">{selectedJob.title}</h3>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input className="input sm:w-56" value={search} placeholder="Search applicants..." onChange={e => setSearch(e.target.value)} />
+                  <select className="input sm:w-40" value={status} onChange={e => setStatus(e.target.value)}>
+                    <option value="">All statuses</option><option value="pending">Pending</option><option value="reviewed">Reviewed</option><option value="accepted">Accepted</option><option value="rejected">Declined</option><option value="withdrawn">Withdrawn</option>
+                  </select>
+                </div>
+              </div>
+              {loadingApps ? <LoadingSpinner /> : applicants.length === 0 ? (
+                <EmptyState icon="📭" title="No matching applicants" description="Try another search term or status filter." />
+              ) : <>
+              <p className="text-sm text-gray-500">{applicants.length} applicant{applicants.length !== 1 ? 's' : ''} on this page</p>
               <div className="table-wrapper">
                 <table className="table">
                   <thead>
@@ -136,7 +151,8 @@ export default function Applicants() {
                   </tbody>
                 </table>
               </div>
-              <Pagination page={page} pages={pages} onPageChange={p => { setPage(p); loadApplicants(selectedJob) }} />
+              <Pagination page={page} pages={pages} onPageChange={p => loadApplicants(selectedJob, p)} />
+              </>}
             </div>
           )}
         </div>
