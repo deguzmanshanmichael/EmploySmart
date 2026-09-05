@@ -17,6 +17,11 @@ const defaults = {
   landing_vision: 'A thriving local workforce where every capable person can discover opportunity and every responsible employer can find the talent they need.',
   landing_peso: 'PESO supports job matching, employer coordination, job approval, applicant monitoring, and employment reports for the community.',
   landing_clcdo: 'CLCDO coordinates training programs, participant enrollment, skills development, and completion tracking for local residents.',
+  landing_hero_image: '',
+  landing_logo_image: '',
+  landing_primary_color: '#047857',
+  landing_accent_color: '#f59e0b',
+  landing_footer_text: 'Connecting people, skills, and opportunity.',
 }
 
 function BrandMark() {
@@ -34,11 +39,13 @@ export default function LandingPage({ loading = false }) {
 
   if (loading) return <div className="min-h-screen bg-[#f4f8f5]" />
 
+  const themeStyle = { '--landing-primary': content.landing_primary_color, '--landing-accent': content.landing_accent_color }
+
   return (
-    <div className="min-h-screen overflow-hidden bg-[#f4f8f5] text-slate-800">
+    <div style={themeStyle} className="min-h-screen overflow-hidden bg-[#f4f8f5] text-slate-800">
       <header className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-slate-950/20 text-white backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
-          <a href="#top" className="flex items-center gap-3"><BrandMark /><span className="font-display text-lg font-bold tracking-tight">EmploySmart</span></a>
+          <a href="#top" className="flex items-center gap-3">{content.landing_logo_image ? <img src={content.landing_logo_image} alt="EmploySmart" className="h-10 w-10 rounded-xl object-cover" /> : <BrandMark />}<span className="font-display text-lg font-bold tracking-tight">EmploySmart</span></a>
           <nav className="hidden items-center gap-7 text-sm font-semibold text-white/80 md:flex">
             <a href="#about" className="transition hover:text-white">About</a>
             <a href="#services" className="transition hover:text-white">Services</a>
@@ -51,7 +58,7 @@ export default function LandingPage({ loading = false }) {
 
       <main id="top">
         <section className="relative isolate min-h-[720px] overflow-hidden bg-slate-950 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(16,185,129,0.36),transparent_32%),linear-gradient(135deg,#0f172a_0%,#123c3c_55%,#166534_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(16,185,129,0.36),transparent_32%),linear-gradient(135deg,#0f172a_0%,#123c3c_55%,#166534_100%)]" style={content.landing_hero_image ? { backgroundImage: `linear-gradient(135deg, rgba(15,23,42,.9), rgba(6,78,59,.72)), url(${content.landing_hero_image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined} />
           <div className="absolute -right-24 top-28 h-80 w-80 rounded-full border border-emerald-300/20" />
           <div className="absolute right-16 top-52 h-48 w-48 rounded-full border border-emerald-300/20" />
           <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-40 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:pt-48">
@@ -90,7 +97,7 @@ export default function LandingPage({ loading = false }) {
         <section id="contact" className="bg-emerald-700 text-white"><div className="mx-auto flex max-w-7xl flex-col gap-8 px-5 py-16 lg:flex-row lg:items-center lg:justify-between lg:px-8"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-200">Connect with your local office</p><h2 className="mt-3 font-display text-3xl font-bold">Ready to take the next step?</h2><p className="mt-3 max-w-xl text-emerald-50">Talk to {content.contact_office} about job matching, skills development, and employment support in {content.municipality_name}.</p></div><div className="space-y-3 text-sm text-emerald-50"><p className="flex items-center gap-3"><FiMapPin /> {content.municipality_name}, {content.municipality_region}</p><p className="flex items-center gap-3"><FiMail /> {content.contact_email}</p>{content.contact_phone && <p className="flex items-center gap-3"><FiPhone /> {content.contact_phone}</p>}</div></div></section>
       </main>
 
-      <footer className="bg-slate-950 text-slate-400"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-7 text-sm sm:flex-row sm:items-center sm:justify-between lg:px-8"><div className="flex items-center gap-3"><BrandMark /><span>EmploySmart · {content.municipality_name}</span></div><p>Connecting people, skills, and opportunity.</p></div></footer>
+      <footer className="bg-slate-950 text-slate-400"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-7 text-sm sm:flex-row sm:items-center sm:justify-between lg:px-8"><div className="flex items-center gap-3"><BrandMark /><span>EmploySmart · {content.municipality_name}</span></div><p>{content.landing_footer_text}</p></div></footer>
     </div>
   )
 }

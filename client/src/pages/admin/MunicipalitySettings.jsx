@@ -18,6 +18,11 @@ const initialState = {
   landing_vision: '',
   landing_peso: '',
   landing_clcdo: '',
+  landing_hero_image: '',
+  landing_logo_image: '',
+  landing_primary_color: '#047857',
+  landing_accent_color: '#f59e0b',
+  landing_footer_text: '',
 }
 
 export default function MunicipalitySettings() {
@@ -130,6 +135,13 @@ export default function MunicipalitySettings() {
             <textarea className="input h-32 resize-none" value={form.landing_clcdo} onChange={(e) => setValue('landing_clcdo', e.target.value)} />
           </div>
         </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="form-group"><label className="label">Hero Image URL</label><input className="input" placeholder="https://..." value={form.landing_hero_image} onChange={(e) => setValue('landing_hero_image', e.target.value)} /></div>
+          <div className="form-group"><label className="label">Logo Image URL</label><input className="input" placeholder="https://..." value={form.landing_logo_image} onChange={(e) => setValue('landing_logo_image', e.target.value)} /></div>
+          <div className="form-group"><label className="label">Primary Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_primary_color} onChange={(e) => setValue('landing_primary_color', e.target.value)} /></div>
+          <div className="form-group"><label className="label">Accent Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_accent_color} onChange={(e) => setValue('landing_accent_color', e.target.value)} /></div>
+        </div>
+        <div className="form-group"><label className="label">Footer Text</label><input className="input" value={form.landing_footer_text} onChange={(e) => setValue('landing_footer_text', e.target.value)} /></div>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save Configuration'}
         </button>

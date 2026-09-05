@@ -56,14 +56,20 @@ if ($resource === 'auth') {
         $db = getDB();
         [$page, $limit, $offset] = getPaginationParams();
         $search = $_GET['search'] ?? '';
+        $roleFilter = strtolower(trim((string)($_GET['role'] ?? '')));
+        $dateFrom = trim((string)($_GET['date_from'] ?? ''));
+        $dateTo = trim((string)($_GET['date_to'] ?? ''));
         $where = "WHERE 1=1"; $params = []; $types = '';
         if ($search) { $where .= " AND sl.action LIKE ?"; $params[] = "%$search%"; $types .= 's'; }
-        $cStmt = $db->prepare("SELECT COUNT(*) FROM system_logs sl $where");
+        if ($roleFilter) { $where .= " AND LOWER(u.role) = ?"; $params[] = $roleFilter; $types .= 's'; }
+        if ($dateFrom) { $where .= " AND sl.log_time >= ?"; $params[] = $dateFrom . ' 00:00:00'; $types .= 's'; }
+        if ($dateTo) { $where .= " AND sl.log_time <= ?"; $params[] = $dateTo . ' 23:59:59'; $types .= 's'; }
+        $cStmt = $db->prepare("SELECT COUNT(*) FROM system_logs sl LEFT JOIN users u ON u.id = sl.user_id $where");
         if ($types) $cStmt->bind_param($types, ...$params);
         $cStmt->execute();
         $total = $cStmt->get_result()->fetch_row()[0];
         $params[] = $limit; $params[] = $offset; $types .= 'ii';
-        $stmt = $db->prepare("SELECT sl.*, u.first_name, u.last_name FROM system_logs sl LEFT JOIN users u ON u.id = sl.user_id $where ORDER BY sl.log_time DESC LIMIT ? OFFSET ?");
+        $stmt = $db->prepare("SELECT sl.id, sl.action, sl.log_time, u.first_name, u.last_name, u.email, u.role FROM system_logs sl LEFT JOIN users u ON u.id = sl.user_id $where ORDER BY sl.log_time DESC LIMIT ? OFFSET ?");
         $stmt->bind_param($types, ...$params);
         $stmt->execute();
         sendPaginated($stmt->get_result()->fetch_all(MYSQLI_ASSOC), $total, $page, $limit);

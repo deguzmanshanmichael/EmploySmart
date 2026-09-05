@@ -558,6 +558,25 @@ class UserController {
     public function deleteUser($id) {
         requireRole(['admin']);
         $db = getDB();
+
+        $pendingJobs = 0;
+        $stmt = $db->prepare("SELECT COUNT(*) FROM jobs j JOIN employers e ON e.id = j.employer_id WHERE e.user_id = ? AND j.approval_status = 'pending' AND j.archived = FALSE");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $pendingJobs = (int)$stmt->get_result()->fetch_row()[0];
+
+        $stmt = $db->prepare("SELECT COUNT(*) FROM applications WHERE user_id = ? AND application_status = 'pending'");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $pendingApplications = (int)$stmt->get_result()->fetch_row()[0];
+
+        if ($pendingJobs > 0 || $pendingApplications > 0) {
+            $reasons = [];
+            if ($pendingJobs > 0) $reasons[] = "$pendingJobs pending job posting" . ($pendingJobs === 1 ? '' : 's');
+            if ($pendingApplications > 0) $reasons[] = "$pendingApplications pending job application" . ($pendingApplications === 1 ? '' : 's');
+            sendError('Account cannot be archived while it has ' . implode(' and ', $reasons) . '.', 409);
+        }
+
         $stmt = $db->prepare("UPDATE users SET archived = TRUE WHERE id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -611,6 +630,18 @@ class UserController {
         $train_status = 'ongoing';
         $stmt->execute();
         $stats['active_trainings'] = $stmt->get_result()->fetch_row()[0];
+
+        $stats['pending_jobs'] = 0;
+        $stmt = $db->query("SELECT COUNT(*) AS total FROM jobs WHERE approval_status = 'pending' AND archived = FALSE");
+        if ($stmt) $stats['pending_jobs'] = (int)$stmt->fetch_assoc()['total'];
+        $stats['pending_applications'] = 0;
+        $stmt = $db->query("SELECT COUNT(*) AS total FROM applications WHERE application_status = 'pending'");
+        if ($stmt) $stats['pending_applications'] = (int)$stmt->fetch_assoc()['total'];
+        $stats['role_counts'] = [];
+        $stmt = $db->query("SELECT role, COUNT(*) AS total FROM users WHERE archived = FALSE GROUP BY role");
+        if ($stmt) {
+            while ($row = $stmt->fetch_assoc()) $stats['role_counts'][$row['role']] = (int)$row['total'];
+        }
         
         sendSuccess('Dashboard stats', $stats);
     }

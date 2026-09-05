@@ -288,7 +288,6 @@ class AuthController {
 
     private function logAction($userId, $action) {
         $db = getDB();
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
 
         if (!empty($userId) && is_numeric($userId)) {
@@ -297,8 +296,8 @@ class AuthController {
             $userId = null;
         }
 
-        $stmt = $db->prepare("INSERT INTO system_logs (user_id, action, ip_address, user_agent) VALUES (?,?,?,?)");
-        $stmt->bind_param('isss', $userId, $action, $ip, $ua);
+        $stmt = $db->prepare("INSERT INTO system_logs (user_id, action, user_agent) VALUES (?,?,?)");
+        $stmt->bind_param('iss', $userId, $action, $ua);
         $stmt->execute();
     }
 }

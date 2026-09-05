@@ -21,9 +21,9 @@ export default function PlatformAnalytics() {
   const userPieData = [
     { name: 'Job Seekers', value: stats?.total_jobseekers  || 0 },
     { name: 'Employers',   value: stats?.total_employers   || 0 },
-    { name: 'PESO',        value: 1 },
-    { name: 'CLCDO',       value: 1 },
-    { name: 'Admin',       value: 1 },
+    { name: 'PESO',        value: stats?.role_counts?.peso || 0 },
+    { name: 'CLCDO',       value: stats?.role_counts?.clcdo || 0 },
+    { name: 'Admin',       value: stats?.role_counts?.admin || 0 },
   ].filter(d => d.value > 0)
 
   const summaryBar = [
@@ -33,6 +33,12 @@ export default function PlatformAnalytics() {
     { name: 'Applications', value: stats?.total_applications || 0 },
     { name: 'Trainings',    value: stats?.active_trainings   || 0 },
   ]
+  const applicationInsight = (stats?.total_applications || 0) > (stats?.total_jobs || 0)
+    ? 'Applications currently outnumber job postings, showing strong engagement with available opportunities.'
+    : 'Job postings currently outnumber applications, suggesting an opportunity to improve job discovery and matching.'
+  const verificationInsight = (stats?.verified_users || 0) >= (stats?.total_users || 0)
+    ? 'All visible accounts are verified, indicating a fully reviewed user base.'
+    : `${Math.max(0, (stats?.total_users || 0) - (stats?.verified_users || 0))} account${(stats?.total_users || 0) - (stats?.verified_users || 0) === 1 ? '' : 's'} still need verification.`
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -60,6 +66,7 @@ export default function PlatformAnalytics() {
               <Legend />
             </PieChart>
           </ResponsiveContainer>
+          <p className="mt-3 text-sm text-gray-500">The chart shows how the platform’s active accounts are distributed across roles.</p>
         </div>
 
         <div className="card-flat">
@@ -72,6 +79,7 @@ export default function PlatformAnalytics() {
               <Bar dataKey="value" fill="#4f46e5" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
+          <p className="mt-3 text-sm text-gray-500">{applicationInsight}</p>
         </div>
       </div>
 
@@ -97,6 +105,7 @@ export default function PlatformAnalytics() {
             )
           })}
         </div>
+        <p className="mt-5 text-sm text-gray-500">{verificationInsight}</p>
       </div>
     </div>
   )

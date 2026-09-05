@@ -91,7 +91,7 @@ export default function RoleManagement() {
           <div key={r} className="card-flat">
             <div className="flex items-center gap-2 mb-3">
               <span className={roleBadge[r]}>{roleLabel[r]}</span>
-              <span className="text-sm text-gray-500">({members.length} accounts)</span>
+              <span className="text-sm text-gray-500">({members.length} {members.length === 1 ? 'account' : 'accounts'})</span>
             </div>
             {members.length === 0 ? (
               <p className="text-sm text-gray-400 italic">No {roleLabel[r]} accounts</p>

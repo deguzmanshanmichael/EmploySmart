@@ -23,6 +23,11 @@ class SettingsController {
             'landing_vision' => env('APP_LANDING_VISION', 'A thriving local workforce where every capable person can discover opportunity and every responsible employer can find the talent they need.'),
             'landing_peso' => env('APP_LANDING_PESO', 'PESO supports job matching, employer coordination, job approval, applicant monitoring, and employment reports for the community.'),
             'landing_clcdo' => env('APP_LANDING_CLCDO', 'CLCDO coordinates training programs, participant enrollment, skills development, and completion tracking for local residents.'),
+            'landing_hero_image' => env('APP_LANDING_HERO_IMAGE', ''),
+            'landing_logo_image' => env('APP_LANDING_LOGO_IMAGE', ''),
+            'landing_primary_color' => env('APP_LANDING_PRIMARY_COLOR', '#047857'),
+            'landing_accent_color' => env('APP_LANDING_ACCENT_COLOR', '#f59e0b'),
+            'landing_footer_text' => env('APP_LANDING_FOOTER_TEXT', 'Connecting people, skills, and opportunity.'),
         ];
     }
 
@@ -76,7 +81,8 @@ class SettingsController {
             'municipality_name', 'municipality_code', 'municipality_region', 'contact_office',
             'contact_email', 'contact_phone', 'service_scope', 'welcome_message',
             'landing_hero_title', 'landing_hero_subtitle', 'landing_about', 'landing_mission',
-            'landing_vision', 'landing_peso', 'landing_clcdo'
+            'landing_vision', 'landing_peso', 'landing_clcdo', 'landing_hero_image',
+            'landing_logo_image', 'landing_primary_color', 'landing_accent_color', 'landing_footer_text'
         ];
 
         $db = getDB();
