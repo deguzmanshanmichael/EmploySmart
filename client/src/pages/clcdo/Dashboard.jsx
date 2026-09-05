@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { trainingService } from '../../services/index'
 import { StatCard, LoadingSpinner } from '../../components/index'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { FiBook, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi'
 
 export default function ClcdoDashboard() {
@@ -28,6 +29,11 @@ export default function ClcdoDashboard() {
     completed: programs.filter(p => p.status === 'completed').length,
     enrolled:  programs.reduce((sum, p) => sum + (p.enrolled_count || 0), 0),
   }
+  const capacityData = programs.slice(0, 8).map(program => ({
+    name: program.program_name.length > 18 ? `${program.program_name.slice(0, 18)}…` : program.program_name,
+    enrolled: program.enrolled_count || 0,
+    capacity: program.max_participants || 0,
+  }))
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -58,6 +64,23 @@ export default function ClcdoDashboard() {
             <span className="text-xs text-gray-500 mt-0.5">{link.desc}</span>
           </Link>
         ))}
+      </div>
+
+      <div className="card-flat">
+        <h2 className="font-bold text-gray-800">Training enrollment capacity</h2>
+        <p className="mt-1 text-sm text-gray-500">Enrollment compared with the configured capacity for each recent program.</p>
+        {capacityData.length === 0 ? <p className="py-10 text-center text-sm text-gray-400">No training programs yet</p> : (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={capacityData} margin={{ top: 18, right: 12, left: -20, bottom: 30 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" angle={-18} textAnchor="end" interval={0} height={55} tick={{ fontSize: 10 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="enrolled" name="Enrolled" fill="#2563eb" radius={[5, 5, 0, 0]} />
+              <Bar dataKey="capacity" name="Capacity" fill="#cbd5e1" radius={[5, 5, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {programs.length > 0 && (

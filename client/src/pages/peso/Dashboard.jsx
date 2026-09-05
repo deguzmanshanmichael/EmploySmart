@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { userService } from '../../services/index'
 import { StatCard, LoadingSpinner } from '../../components/index'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { FiUsers, FiBriefcase, FiShield, FiFileText, FiCheckSquare, FiClock } from 'react-icons/fi'
 
 export default function PesoDashboard() {
@@ -20,6 +21,12 @@ export default function PesoDashboard() {
   }, [])
 
   if (loading) return <LoadingSpinner />
+
+  const workQueueData = [
+    { name: 'Pending jobs', total: stats?.pending_jobs || 0 },
+    { name: 'Pending employers', total: stats?.pending_employers || 0 },
+    { name: 'Pending applications', total: stats?.pending_applications || 0 },
+  ]
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -50,6 +57,20 @@ export default function PesoDashboard() {
             <span className="text-xs text-gray-500 mt-0.5">{link.desc}</span>
           </Link>
         ))}
+      </div>
+
+      <div className="card-flat">
+        <h2 className="font-bold text-gray-800">PESO review workload</h2>
+        <p className="mt-1 text-sm text-gray-500">Current records waiting for employment-office review or action.</p>
+        <ResponsiveContainer width="100%" height={230}>
+          <BarChart data={workQueueData} margin={{ top: 18, right: 12, left: -20, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+            <Tooltip formatter={(value) => [value, 'Records']} />
+            <Bar dataKey="total" fill="#15803d" radius={[5, 5, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {stats?.pending_employers > 0 && (

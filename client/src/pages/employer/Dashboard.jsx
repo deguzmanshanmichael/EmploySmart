@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { employerService } from '../../services/index'
 import { StatCard, LoadingSpinner } from '../../components/index'
 import { Link } from 'react-router-dom'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { FiBriefcase, FiUsers, FiCheckCircle, FiClock, FiAlertCircle } from 'react-icons/fi'
 
 export default function EmployerDashboard() {
@@ -30,6 +31,11 @@ export default function EmployerDashboard() {
   if (loading) return <LoadingSpinner />
 
   const notApproved = employer?.verification_status !== 'approved'
+  const applicationStatusData = analytics ? [
+    { name: 'Pending', total: analytics.pending_applications || 0 },
+    { name: 'Accepted', total: analytics.accepted_applications || 0 },
+    { name: 'Declined', total: Math.max(0, (analytics.total_applications || 0) - (analytics.pending_applications || 0) - (analytics.accepted_applications || 0)) },
+  ] : []
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -54,6 +60,22 @@ export default function EmployerDashboard() {
           <StatCard label="Approved Jobs"      value={analytics.approved_jobs}        icon={<FiCheckCircle />} color="bg-green-50 text-green-600" />
           <StatCard label="Total Applications" value={analytics.total_applications}   icon={<FiUsers />} color="bg-purple-50 text-purple-600" />
           <StatCard label="Pending Review"     value={analytics.pending_applications} icon={<FiClock />} color="bg-yellow-50 text-yellow-600" />
+        </div>
+      )}
+
+      {analytics && (
+        <div className="card-flat">
+          <h2 className="font-bold text-gray-800">Application pipeline</h2>
+          <p className="mt-1 text-sm text-gray-500">A live view of how candidate applications are progressing across your jobs.</p>
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart data={applicationStatusData} margin={{ top: 18, right: 12, left: -20, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip formatter={(value) => [value, 'Applications']} />
+              <Bar dataKey="total" fill="#4f46e5" radius={[5, 5, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
 
