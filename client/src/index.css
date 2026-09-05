@@ -32,6 +32,21 @@
 }
 
 @layer components {
+  .landing-page { background-color: var(--landing-background, #f4f8f5); color: var(--landing-text, #1e293b); }
+  .landing-page .bg-slate-950 { background-color: var(--landing-dark, #0f172a) !important; }
+  .landing-page .bg-white { background-color: var(--landing-surface, #ffffff) !important; }
+  .landing-page .bg-emerald-700 { background-color: var(--landing-primary, #047857) !important; }
+  .landing-page .bg-emerald-50 { background-color: color-mix(in srgb, var(--landing-primary, #047857) 10%, white) !important; }
+  .landing-page .bg-amber-50 { background-color: color-mix(in srgb, var(--landing-accent, #f59e0b) 12%, white) !important; }
+  .landing-page .bg-emerald-400 { background-color: var(--landing-primary-light, #34d399) !important; }
+  .landing-page .text-slate-950, .landing-page .text-slate-800 { color: var(--landing-text, #1e293b) !important; }
+  .landing-page .text-slate-600, .landing-page .text-slate-500, .landing-page .text-slate-400 { color: var(--landing-muted, #64748b) !important; }
+  .landing-page .border-slate-200, .landing-page .border-emerald-200 { border-color: var(--landing-border, #e2e8f0) !important; }
+  .landing-page .text-emerald-700, .landing-page .text-emerald-800 { color: var(--landing-primary, #047857) !important; }
+  .landing-page .text-emerald-300, .landing-page .text-emerald-200 { color: var(--landing-primary-light, #34d399) !important; }
+  .landing-page .text-amber-700, .landing-page .text-amber-800 { color: var(--landing-accent, #f59e0b) !important; }
+  .landing-page .border-emerald-300, .landing-page .border-emerald-500, .landing-page .border-amber-500 { border-color: var(--landing-accent, #f59e0b) !important; }
+  .landing-page .bg-emerald-600 { background-color: var(--landing-primary, #047857) !important; }
   .btn {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }

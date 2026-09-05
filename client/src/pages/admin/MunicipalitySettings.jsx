@@ -22,6 +22,14 @@ const initialState = {
   landing_logo_image: '',
   landing_primary_color: '#047857',
   landing_accent_color: '#f59e0b',
+  landing_primary_light_color: '#34d399',
+  landing_primary_dark_color: '#064e3b',
+  landing_dark_color: '#0f172a',
+  landing_background_color: '#f4f8f5',
+  landing_surface_color: '#ffffff',
+  landing_text_color: '#1e293b',
+  landing_muted_text_color: '#64748b',
+  landing_border_color: '#e2e8f0',
   landing_footer_text: '',
 }
 
@@ -170,10 +178,18 @@ export default function MunicipalitySettings() {
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="form-group"><label className="label">Hero Image URL</label><input className="input" placeholder="https://..." value={form.landing_hero_image} onChange={(e) => setValue('landing_hero_image', e.target.value)} /><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('hero', e)} disabled={!!uploading} />{uploading === 'hero' ? 'Uploading...' : 'Upload from computer'}</label></div>
-          <div className="form-group"><label className="label">Logo Image URL</label><input className="input" placeholder="https://..." value={form.landing_logo_image} onChange={(e) => setValue('landing_logo_image', e.target.value)} /><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('logo', e)} disabled={!!uploading} />{uploading === 'logo' ? 'Uploading...' : 'Upload from computer'}</label></div>
+          <div className="form-group"><label className="label">Hero Image URL</label><input className="input" placeholder="https://..." value={form.landing_hero_image} onChange={(e) => setValue('landing_hero_image', e.target.value)} /><p className="text-xs text-gray-500">Recommended: 1920 × 900 px, landscape, JPG/PNG/WebP, maximum 5 MB.</p><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('hero', e)} disabled={!!uploading} />{uploading === 'hero' ? 'Uploading...' : 'Upload from computer'}</label></div>
+          <div className="form-group"><label className="label">Logo Image URL</label><input className="input" placeholder="https://..." value={form.landing_logo_image} onChange={(e) => setValue('landing_logo_image', e.target.value)} /><p className="text-xs text-gray-500">Recommended: 512 × 512 px, square, transparent PNG/WebP, maximum 5 MB.</p><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('logo', e)} disabled={!!uploading} />{uploading === 'logo' ? 'Uploading...' : 'Upload from computer'}</label></div>
           <div className="form-group"><label className="label">Primary Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_primary_color} onChange={(e) => setValue('landing_primary_color', e.target.value)} /></div>
           <div className="form-group"><label className="label">Accent Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_accent_color} onChange={(e) => setValue('landing_accent_color', e.target.value)} /></div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {[
+            ['landing_primary_light_color', 'Primary Light'], ['landing_primary_dark_color', 'Primary Dark'],
+            ['landing_dark_color', 'Dark / Hero Base'], ['landing_background_color', 'Page Background'],
+            ['landing_surface_color', 'Surface / Cards'], ['landing_text_color', 'Main Text'],
+            ['landing_muted_text_color', 'Muted Text'], ['landing_border_color', 'Borders'],
+          ].map(([key, label]) => <div className="form-group" key={key}><label className="label">{label}</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form[key]} onChange={(e) => setValue(key, e.target.value)} /></div>)}
         </div>
         <div className="form-group"><label className="label">Footer Text</label><input className="input" value={form.landing_footer_text} onChange={(e) => setValue('landing_footer_text', e.target.value)} /></div>
         <div className="flex flex-wrap gap-3">

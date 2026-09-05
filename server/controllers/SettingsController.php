@@ -27,6 +27,14 @@ class SettingsController {
             'landing_logo_image' => env('APP_LANDING_LOGO_IMAGE', ''),
             'landing_primary_color' => env('APP_LANDING_PRIMARY_COLOR', '#047857'),
             'landing_accent_color' => env('APP_LANDING_ACCENT_COLOR', '#f59e0b'),
+            'landing_primary_light_color' => env('APP_LANDING_PRIMARY_LIGHT_COLOR', '#34d399'),
+            'landing_primary_dark_color' => env('APP_LANDING_PRIMARY_DARK_COLOR', '#064e3b'),
+            'landing_dark_color' => env('APP_LANDING_DARK_COLOR', '#0f172a'),
+            'landing_background_color' => env('APP_LANDING_BACKGROUND_COLOR', '#f4f8f5'),
+            'landing_surface_color' => env('APP_LANDING_SURFACE_COLOR', '#ffffff'),
+            'landing_text_color' => env('APP_LANDING_TEXT_COLOR', '#1e293b'),
+            'landing_muted_text_color' => env('APP_LANDING_MUTED_TEXT_COLOR', '#64748b'),
+            'landing_border_color' => env('APP_LANDING_BORDER_COLOR', '#e2e8f0'),
             'landing_footer_text' => env('APP_LANDING_FOOTER_TEXT', 'Connecting people, skills, and opportunity.'),
         ];
     }
@@ -83,6 +91,9 @@ class SettingsController {
             'landing_hero_title', 'landing_hero_subtitle', 'landing_about', 'landing_mission',
             'landing_vision', 'landing_peso', 'landing_clcdo', 'landing_hero_image',
             'landing_logo_image', 'landing_primary_color', 'landing_accent_color', 'landing_footer_text'
+            , 'landing_primary_light_color', 'landing_primary_dark_color', 'landing_dark_color',
+            'landing_background_color', 'landing_surface_color', 'landing_text_color',
+            'landing_muted_text_color', 'landing_border_color'
         ];
 
         $db = getDB();

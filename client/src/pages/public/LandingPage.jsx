@@ -21,6 +21,14 @@ const defaults = {
   landing_logo_image: '',
   landing_primary_color: '#047857',
   landing_accent_color: '#f59e0b',
+  landing_primary_light_color: '#34d399',
+  landing_primary_dark_color: '#064e3b',
+  landing_dark_color: '#0f172a',
+  landing_background_color: '#f4f8f5',
+  landing_surface_color: '#ffffff',
+  landing_text_color: '#1e293b',
+  landing_muted_text_color: '#64748b',
+  landing_border_color: '#e2e8f0',
   landing_footer_text: 'Connecting people, skills, and opportunity.',
 }
 
@@ -39,10 +47,21 @@ export default function LandingPage({ loading = false }) {
 
   if (loading) return <div className="min-h-screen bg-[#f4f8f5]" />
 
-  const themeStyle = { '--landing-primary': content.landing_primary_color, '--landing-accent': content.landing_accent_color }
+  const themeStyle = {
+    '--landing-primary': content.landing_primary_color,
+    '--landing-accent': content.landing_accent_color,
+    '--landing-primary-light': content.landing_primary_light_color,
+    '--landing-primary-dark': content.landing_primary_dark_color,
+    '--landing-dark': content.landing_dark_color,
+    '--landing-background': content.landing_background_color,
+    '--landing-surface': content.landing_surface_color,
+    '--landing-text': content.landing_text_color,
+    '--landing-muted': content.landing_muted_text_color,
+    '--landing-border': content.landing_border_color,
+  }
 
   return (
-    <div style={themeStyle} className="min-h-screen overflow-hidden bg-[#f4f8f5] text-slate-800">
+    <div style={themeStyle} className="landing-page min-h-screen overflow-hidden bg-[#f4f8f5] text-slate-800">
       <header className="absolute inset-x-0 top-0 z-20 border-b border-white/10 bg-slate-950/20 text-white backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="flex items-center gap-3">{content.landing_logo_image ? <img src={content.landing_logo_image} alt="EmploySmart" className="h-10 w-10 rounded-xl object-cover" /> : <BrandMark />}<span className="font-display text-lg font-bold tracking-tight">EmploySmart</span></a>
@@ -58,7 +77,7 @@ export default function LandingPage({ loading = false }) {
 
       <main id="top">
         <section className="relative isolate min-h-[720px] overflow-hidden bg-slate-950 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(16,185,129,0.36),transparent_32%),linear-gradient(135deg,#0f172a_0%,#123c3c_55%,#166534_100%)]" style={content.landing_hero_image ? { backgroundImage: `linear-gradient(135deg, rgba(15,23,42,.9), rgba(6,78,59,.72)), url(${content.landing_hero_image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined} />
+          <div className="absolute inset-0" style={{ backgroundImage: content.landing_hero_image ? `linear-gradient(135deg, color-mix(in srgb, var(--landing-dark) 92%, transparent), color-mix(in srgb, var(--landing-primary-dark) 78%, transparent)), url(${content.landing_hero_image})` : 'linear-gradient(135deg, var(--landing-dark), var(--landing-primary-dark) 55%, var(--landing-primary))', backgroundSize: 'cover', backgroundPosition: 'center' }} />
           <div className="absolute -right-24 top-28 h-80 w-80 rounded-full border border-emerald-300/20" />
           <div className="absolute right-16 top-52 h-48 w-48 rounded-full border border-emerald-300/20" />
           <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-20 pt-40 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:pt-48">
