@@ -5,6 +5,7 @@ import { authService } from '../../services/authService'
 import api from '../../services/api'
 import toast from 'react-hot-toast'
 import { FiPlus, FiRefreshCw, FiArchive } from 'react-icons/fi'
+import PasswordField from '../../components/PasswordField'
 
 const STAFF_ROLES = ['peso', 'clcdo', 'admin']
 const roleBadge   = { peso:'badge-green', clcdo:'badge-yellow', admin:'badge-red' }
@@ -174,7 +175,7 @@ export default function RoleManagement() {
             </div>
             <div className="form-group">
               <label className="label">Password *</label>
-              <input type="password" className="input" value={form.password} onChange={e => set('password', e.target.value)} required />
+              <PasswordField value={form.password} onChange={e => set('password', e.target.value)} required autoComplete="new-password" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="form-group">

@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
+import { FiMail, FiLock } from 'react-icons/fi'
+import PasswordField from '../../components/PasswordField'
 
 export default function UserLogin() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
-  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -67,10 +67,7 @@ export default function UserLogin() {
               <label className="label">Password</label>
               <div className="relative">
                 <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input type={showPass ? 'text' : 'password'} className="input pl-10 pr-10" placeholder="Enter your password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required autoComplete="current-password" />
-                <button type="button" onClick={() => setShowPass((s) => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                </button>
+                <PasswordField className="input pl-10" placeholder="Enter your password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required autoComplete="current-password" />
               </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full btn-lg mt-2">

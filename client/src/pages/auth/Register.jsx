@@ -2,13 +2,12 @@ import { useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authService } from '../../services/authService'
 import { Modal } from '../../components/index'
+import PasswordField from '../../components/PasswordField'
 import toast from 'react-hot-toast'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
 
 export default function Register() {
   const navigate  = useNavigate()
   const [loading, setLoading]   = useState(false)
-  const [showPass, setShowPass] = useState(false)
   const [errors, setErrors]     = useState({})
   const [showTerms, setShowTerms] = useState(false)
   const [form, setForm] = useState({
@@ -264,30 +263,20 @@ export default function Register() {
                 <div className="form-group">
                   <label className="label">Password <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <input
-                      type={showPass ? 'text' : 'password'}
+                    <PasswordField
                       className={`input pr-10 ${errors.password ? 'input-error' : ''}`}
                       placeholder="Min. 6 characters"
                       value={form.password}
                       onChange={e => set('password', e.target.value)}
                       autoComplete="new-password"
                     />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setShowPass(s => !s)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                    </button>
                   </div>
                   {em('password')}
                 </div>
 
                 <div className="form-group">
                   <label className="label">Confirm Password <span className="text-red-500">*</span></label>
-                  <input
-                    type="password"
+                  <PasswordField
                     className={ic('confirm_password')}
                     placeholder="Repeat password"
                     value={form.confirm_password}

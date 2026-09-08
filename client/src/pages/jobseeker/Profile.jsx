@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import PasswordField from '../../components/PasswordField'
 import { userService, resumeRecommendationService } from '../../services/index'
 import toast from 'react-hot-toast'
 import { FiSave, FiLock, FiUpload, FiUser, FiAward } from 'react-icons/fi'
@@ -288,7 +289,7 @@ export default function Profile() {
           {['current_password','new_password','confirm'].map(f => (
             <div key={f} className="form-group">
               <label className="label capitalize">{f.replace('_',' ')}</label>
-              <input type="password" className="input" value={passForm[f]} onChange={e => setPassForm(p => ({ ...p, [f]: e.target.value }))} />
+              <PasswordField value={passForm[f]} onChange={e => setPassForm(p => ({ ...p, [f]: e.target.value }))} autoComplete="new-password" />
             </div>
           ))}
           <button onClick={handleChangePassword} disabled={saving} className="btn-primary">
