@@ -121,7 +121,7 @@ export default function JobSeekerDashboard() {
           <EmptyState
             icon="🎯"
             title="No recommendations yet"
-            description="Update your skills to get personalized job recommendations"
+            description="Update your skills to help employers understand your strengths"
             action={<Link to="/jobseeker/skills" className="btn-primary btn-sm">Add Skills</Link>}
           />
         ) : (

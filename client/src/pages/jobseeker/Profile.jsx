@@ -323,7 +323,7 @@ export default function Profile() {
             <p className="text-sm text-gray-600">
               {recommendations.length > 0
                 ? `${recommendations.length} recommendation${recommendations.length > 1 ? 's' : ''} based on your uploaded resume.`
-                : 'Upload your resume to receive personalized job recommendations.'}
+                : 'Upload your resume to complete your profile and help employers understand your experience.'}
             </p>
           </div>
 
