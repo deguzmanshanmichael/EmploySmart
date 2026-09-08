@@ -584,8 +584,19 @@ class UserController {
     }
 
     public function verifyUser($id) {
-        requireRole(['admin', 'peso']);
+        $payload = requireAuth();
         $db = getDB();
+        $roleStmt = $db->prepare("SELECT role FROM users WHERE id = ?");
+        $roleStmt->bind_param('i', $id);
+        $roleStmt->execute();
+        $target = $roleStmt->get_result()->fetch_assoc();
+        if (!$target) sendError('User not found', 404);
+        if ($target['role'] === 'jobseeker' && $payload['role'] !== 'admin') {
+            sendError('Only an administrator can verify jobseeker accounts.', 403);
+        }
+        if (!in_array($payload['role'], ['admin', 'peso'], true)) {
+            sendError('Forbidden', 403);
+        }
         $stmt = $db->prepare("UPDATE users SET is_verified = 1 WHERE id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();

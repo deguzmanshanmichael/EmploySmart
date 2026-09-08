@@ -38,7 +38,7 @@ export const PERMISSIONS = {
 
   // Users
   'users.view_all':     ['admin', 'peso', 'clcdo'],
-  'users.verify':       ['admin', 'peso'],
+  'users.verify':       ['admin'],
   'users.delete':       ['admin'],
 
   // Reports
