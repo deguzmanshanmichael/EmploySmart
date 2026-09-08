@@ -7,11 +7,23 @@ import { LoadingSpinner, EmptyState, Modal, Pagination } from '../../components/
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { API_BASE_URL } from '../../config/api.js'
+import api from '../../services/api'
 
 const normalizeApplicationStatus = status => status === 'rejected' ? 'declined' : status
 const statusColors = { pending:'badge-yellow', reviewed:'badge-blue', accepted:'badge-green', declined:'badge-red', rejected:'badge-red' }
 const actionLabels = { reviewed:'Review', accepted:'Approve', declined:'Decline' }
 const BASE_URL = API_BASE_URL
+
+async function openResume(path) {
+  try {
+    const response = await api.get(path, { responseType: 'blob' })
+    const url = URL.createObjectURL(response.data)
+    window.open(url, '_blank', 'noopener,noreferrer')
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Unable to open resume')
+  }
+}
 
 export default function Applicants() {
   const { user }   = useAuth()
@@ -153,9 +165,9 @@ export default function Applicants() {
                   <div className="rounded-xl border border-blue-100 bg-blue-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-2">Uploaded Resume</div>
                     {profileData.resume_path ? (
-                      <a href={`${BASE_URL}/users/${profileData.id}/uploaded-resume`} target="_blank" rel="noopener noreferrer" className="btn-primary btn-sm inline-flex">
+                      <button onClick={() => openResume(`/users/${profileData.id}/uploaded-resume`)} className="btn-primary btn-sm inline-flex">
                         📄 View Uploaded Resume
-                      </a>
+                      </button>
                     ) : (
                       <p className="text-sm text-gray-500">No uploaded resume available.</p>
                     )}
@@ -164,9 +176,9 @@ export default function Applicants() {
                   <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-2">Generated Resume</div>
                     {profileData.id ? (
-                      <a href={`${BASE_URL}/users/${profileData.id}/resume`} target="_blank" rel="noopener noreferrer" className="btn-success btn-sm inline-flex">
+                      <button onClick={() => openResume(`/users/${profileData.id}/resume`)} className="btn-success btn-sm inline-flex">
                         🧾 View Generated Resume
-                      </a>
+                      </button>
                     ) : (
                       <p className="text-sm text-gray-500">No generated resume available.</p>
                     )}
