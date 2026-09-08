@@ -79,6 +79,10 @@ class UserController {
         $user = $stmt->get_result()->fetch_assoc();
         if (!$user) sendError('User not found', 404);
         unset($user['password']);
+        if (!empty($user['resume_path'])) {
+            $resumeFile = __DIR__ . '/../' . ltrim($user['resume_path'], '/');
+            if (!is_file($resumeFile)) $user['resume_path'] = null;
+        }
 
         // Get skills
         $sStmt = $db->prepare("SELECT s.id, s.skill_name FROM user_skills us JOIN skills s ON s.id = us.skill_id WHERE us.user_id = ?");

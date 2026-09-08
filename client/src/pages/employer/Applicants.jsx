@@ -165,7 +165,7 @@ export default function Applicants() {
                   <div className="rounded-xl border border-blue-100 bg-blue-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-2">Uploaded Resume</div>
                     <button onClick={() => openResume(`/users/${profileData.id}/uploaded-resume`)} disabled={!profileData.resume_path} className="btn-primary btn-sm inline-flex disabled:cursor-not-allowed disabled:opacity-50">
-                      📄 {profileData.resume_path ? 'View Uploaded Resume' : "Jobseeker hasn't uploaded a resume"}
+                      📄 {profileData.resume_path ? 'View Uploaded Resume' : "Applicant hasn't uploaded a resume yet"}
                     </button>
                   </div>
 
