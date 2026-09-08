@@ -153,7 +153,7 @@ export default function Applicants() {
                   <div className="rounded-xl border border-blue-100 bg-blue-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-2">Uploaded Resume</div>
                     {profileData.resume_path ? (
-                      <a href={`${BASE_URL}/${profileData.resume_path}`} target="_blank" rel="noopener noreferrer" className="btn-primary btn-sm inline-flex">
+                      <a href={`${BASE_URL}/users/${profileData.id}/uploaded-resume`} target="_blank" rel="noopener noreferrer" className="btn-primary btn-sm inline-flex">
                         📄 View Uploaded Resume
                       </a>
                     ) : (
@@ -164,7 +164,7 @@ export default function Applicants() {
                   <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-2">Generated Resume</div>
                     {profileData.id ? (
-                      <a href={`${BASE_URL}/uploads/resumes/generated/resume_${profileData.id}_generated.pdf`} target="_blank" rel="noopener noreferrer" className="btn-success btn-sm inline-flex">
+                      <a href={`${BASE_URL}/users/${profileData.id}/resume`} target="_blank" rel="noopener noreferrer" className="btn-success btn-sm inline-flex">
                         🧾 View Generated Resume
                       </a>
                     ) : (

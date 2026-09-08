@@ -84,6 +84,7 @@ if ($resource === 'auth') {
         if ($method === 'GET') { $ctrl->generateResume($id); }
         else { $ctrl->uploadResume($id); }
     }
+    elseif ($id !== null && $action === 'uploaded-resume' && $method === 'GET') { call_user_func([$ctrl, 'downloadUploadedResume'], $id); }
     elseif ($id !== null && $action === 'avatar')   { $ctrl->uploadProfilePicture($id); }
     else { sendError('Route not found', 404); }
 } elseif ($resource === 'jobs') {

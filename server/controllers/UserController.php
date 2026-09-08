@@ -236,7 +236,7 @@ class UserController {
 
     public function generateResume($id) {
         $payload = requireAuth();
-        verifyOwnership($id, $payload, ['admin', 'peso']);
+        $this->authorizeResumeViewer($id, $payload);
         $db = getDB();
 
         $stmt = $db->prepare("SELECT u.*, e.company_name FROM users u LEFT JOIN employers e ON e.user_id = u.id WHERE u.id = ?");
@@ -326,6 +326,39 @@ class UserController {
         header('Cache-Control: no-store, no-cache, must-revalidate');
         readfile($filepath);
         exit;
+    }
+
+    public function downloadUploadedResume($id) {
+        $payload = requireAuth();
+        $this->authorizeResumeViewer($id, $payload);
+        $db = getDB();
+        $stmt = $db->prepare("SELECT resume_path FROM users WHERE id = ?");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $path = $user['resume_path'] ?? '';
+        $filePath = $path ? __DIR__ . '/../' . ltrim($path, '/') : '';
+        if (!$filePath || !is_file($filePath)) {
+            sendError("This jobseeker hasn't uploaded any resume yet.", 404);
+        }
+        $mime = mime_content_type($filePath) ?: 'application/octet-stream';
+        header('Content-Type: ' . $mime);
+        header('Content-Disposition: inline; filename="' . basename($filePath) . '"');
+        header('X-Content-Type-Options: nosniff');
+        readfile($filePath);
+        exit;
+    }
+
+    private function authorizeResumeViewer($id, $payload) {
+        if (in_array($payload['role'], ['admin', 'peso'], true) || (int)$payload['sub'] === (int)$id) return;
+        if ($payload['role'] === 'employer') {
+            $db = getDB();
+            $stmt = $db->prepare("SELECT 1 FROM applications a JOIN jobs j ON j.id = a.job_id JOIN employers e ON e.id = j.employer_id WHERE a.user_id = ? AND e.user_id = ? LIMIT 1");
+            $stmt->bind_param('ii', $id, $payload['sub']);
+            $stmt->execute();
+            if ($stmt->get_result()->num_rows > 0) return;
+        }
+        sendError('Forbidden', 403);
     }
 
     public function update($id) {
