@@ -147,6 +147,7 @@ if ($resource === 'auth') {
     if ($id === null && $method === 'GET')  { $ctrl->getAll(); }
     elseif ($id === null && $method === 'POST') { $ctrl->create(); }
     elseif ($id === 'user' && $action !== null) { $ctrl->getUserTrainings($action); }
+    elseif ($id !== null && $action === 'approve' && $method === 'PATCH') { $ctrl->approveEnrollment($id, $parts[3] ?? null); }
     elseif ($id !== null && $action === null) {
         match($method) { 'GET'=>$ctrl->getOne($id),'PUT'=>$ctrl->update($id),'PATCH'=>$ctrl->update($id),default=>sendError('Method not allowed',405) };
     }

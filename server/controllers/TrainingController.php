@@ -171,10 +171,13 @@ class TrainingController {
     }
 
     public function enroll($trainingId) {
-        $payload = requireRole(['clcdo', 'admin', 'peso']);
+        $payload = requireRole(['jobseeker', 'clcdo', 'admin', 'peso']);
         $data = getJsonBody();
         if (empty($data['user_id'])) sendError('user_id required', 422);
         $userId = $data['user_id'];
+        if ($payload['role'] === 'jobseeker' && (int)$userId !== (int)$payload['sub']) {
+            sendError('You can only apply for yourself', 403);
+        }
 
         $db = getDB();
         $stmt = $db->prepare("SELECT id, program_name, max_participants FROM training_programs WHERE id = ?");
@@ -194,21 +197,51 @@ class TrainingController {
         $check->execute();
         if ($check->get_result()->num_rows > 0) sendError('User already enrolled', 409);
 
-        $stmt = $db->prepare("INSERT INTO user_training (user_id, training_id) VALUES (?,?)");
-        $stmt->bind_param('ii', $userId, $trainingId);
+        $enrollmentStatus = $payload['role'] === 'jobseeker' ? 'pending' : 'enrolled';
+        $stmt = $db->prepare("INSERT INTO user_training (user_id, training_id, status) VALUES (?,?,?)");
+        $stmt->bind_param('iis', $userId, $trainingId, $enrollmentStatus);
         $stmt->execute();
 
         $notifyStmt = $db->prepare("INSERT INTO notifications (target_user_id, title, message, priority, category) VALUES (?,?,?,?,?)");
         if ($notifyStmt) {
-            $title = 'Enrolled in training program';
-            $message = sprintf('You have been enrolled in the "%s" program.', $prog['program_name'] ?? 'selected');
+            $title = $enrollmentStatus === 'pending' ? 'Training application submitted' : 'Enrolled in training program';
+            $message = $enrollmentStatus === 'pending'
+                ? sprintf('Your application for "%s" is waiting for CLCDO approval.', $prog['program_name'] ?? 'selected')
+                : sprintf('You have been enrolled in the "%s" program.', $prog['program_name'] ?? 'selected');
             $priority = 'normal';
             $category = 'training';
             $notifyStmt->bind_param('issss', $userId, $title, $message, $priority, $category);
             $notifyStmt->execute();
         }
 
-        sendSuccess('Enrolled successfully', null, 201);
+        sendSuccess($enrollmentStatus === 'pending' ? 'Training application submitted' : 'Enrolled successfully', null, 201);
+    }
+
+    public function approveEnrollment($trainingId, $userId) {
+        requireRole(['clcdo', 'admin']);
+        if (!$userId) sendError('Jobseeker is required', 422);
+        $db = getDB();
+        $stmt = $db->prepare("SELECT tp.program_name, ut.status FROM user_training ut JOIN training_programs tp ON tp.id = ut.training_id WHERE ut.training_id = ? AND ut.user_id = ?");
+        $stmt->bind_param('ii', $trainingId, $userId);
+        $stmt->execute();
+        $application = $stmt->get_result()->fetch_assoc();
+        if (!$application) sendError('Training application not found', 404);
+        if ($application['status'] !== 'pending') sendError('Training application is not pending', 409);
+
+        $countStmt = $db->prepare("SELECT max_participants FROM training_programs WHERE id = ?");
+        $countStmt->bind_param('i', $trainingId);
+        $countStmt->execute();
+        $program = $countStmt->get_result()->fetch_assoc();
+        $enrolledStmt = $db->prepare("SELECT COUNT(*) AS total FROM user_training WHERE training_id = ? AND status IN ('enrolled','in_progress','completed')");
+        $enrolledStmt->bind_param('i', $trainingId);
+        $enrolledStmt->execute();
+        $enrolled = (int)$enrolledStmt->get_result()->fetch_assoc()['total'];
+        if (!empty($program['max_participants']) && $enrolled >= (int)$program['max_participants']) sendError('Training is full', 409);
+
+        $update = $db->prepare("UPDATE user_training SET status = 'enrolled' WHERE training_id = ? AND user_id = ?");
+        $update->bind_param('ii', $trainingId, $userId);
+        $update->execute();
+        sendSuccess('Training application approved');
     }
 
     public function completeEnrollment($trainingId, $userId) {

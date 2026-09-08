@@ -13,6 +13,7 @@ export default function EnrollParticipants() {
   const [loading, setLoading] = useState(true)
   const [enrolling, setEnrolling] = useState(null)
   const [enrolled, setEnrolled] = useState(new Set())
+  const [pending, setPending] = useState(new Set())
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +44,7 @@ export default function EnrollParticipants() {
   useEffect(() => {
     if (!selectedProg) {
       setEnrolled(new Set())
+      setPending(new Set())
       return
     }
 
@@ -50,7 +52,8 @@ export default function EnrollParticipants() {
       try {
         const res = await trainingService.getOne(selectedProg)
         const participants = res.data.data?.participants || []
-        setEnrolled(new Set(participants.filter((p) => p.status !== 'dropped').map((p) => p.user_id)))
+        setEnrolled(new Set(participants.filter((p) => ['enrolled', 'in_progress', 'completed'].includes(p.status)).map((p) => p.user_id)))
+        setPending(new Set(participants.filter((p) => p.status === 'pending').map((p) => p.user_id)))
       } catch (err) {
         console.error('Failed to load enrolled participants:', err)
         setEnrolled(new Set())
@@ -83,6 +86,18 @@ export default function EnrollParticipants() {
       toast.error(errorMessage)
     } finally {
       setEnrolling(null)
+    }
+  }
+
+  const handleApprove = async (userId) => {
+    if (!selectedProg) return
+    try {
+      await trainingService.approveEnrollment(selectedProg, userId)
+      setPending((prev) => { const next = new Set(prev); next.delete(userId); return next })
+      setEnrolled((prev) => new Set([...prev, userId]))
+      toast.success('Training application approved')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Unable to approve application')
     }
   }
 
@@ -215,11 +230,12 @@ export default function EnrollParticipants() {
                   </div>
                   <button
                     onClick={() => handleEnroll(user.id)}
-                    disabled={!selectedProg || enrolled.has(user.id) || enrolling === user.id}
-                    className={`flex-shrink-0 btn btn-sm ${enrolled.has(user.id) ? 'bg-green-100 text-green-700 cursor-default' : 'btn-primary'} ${(!selectedProg || enrolling === user.id) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    disabled={!selectedProg || enrolled.has(user.id) || pending.has(user.id) || enrolling === user.id}
+                    className={`flex-shrink-0 btn btn-sm ${enrolled.has(user.id) ? 'bg-green-100 text-green-700 cursor-default' : pending.has(user.id) ? 'bg-yellow-100 text-yellow-700 cursor-default' : 'btn-primary'} ${(!selectedProg || enrolling === user.id) ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    {enrolling === user.id ? 'Enrolling...' : enrolled.has(user.id) ? '✓ Enrolled' : <><FiUserPlus size={14} className="mr-1" /> Enroll</>}
+                    {enrolling === user.id ? 'Enrolling...' : enrolled.has(user.id) ? '✓ Enrolled' : pending.has(user.id) ? 'Pending approval' : <><FiUserPlus size={14} className="mr-1" /> Enroll</>}
                   </button>
+                  {pending.has(user.id) && <button onClick={() => handleApprove(user.id)} className="btn-success btn-sm">Approve</button>}
                 </div>
               ))}
             </div>

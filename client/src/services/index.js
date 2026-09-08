@@ -33,6 +33,7 @@ export const trainingService = {
   update: (id, data) => api.put(`/training/${id}`, data),
   delete: (id) => api.delete(`/training/${id}`),
   enroll: (trainingId, userId) => api.post(`/training/${trainingId}/enroll`, { user_id: userId }),
+  approveEnrollment: (trainingId, userId) => api.patch(`/training/${trainingId}/approve/${userId}`),
   complete: (trainingId, userId, data) =>
     api.post(`/training/${trainingId}/complete/${userId}`, data),
   getUserTrainings: (userId) => api.get(`/training/user/${userId}`),

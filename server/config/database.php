@@ -73,6 +73,9 @@ function ensureRequiredTables($conn) {
             error_log('Schema initialization warning: ' . $conn->error);
         }
     }
+
+    // Add the jobseeker training application state to existing deployments.
+    $conn->query("ALTER TABLE user_training MODIFY status ENUM('pending','enrolled','completed','dropped','in_progress') DEFAULT 'pending'");
 }
 
 function getDB() {

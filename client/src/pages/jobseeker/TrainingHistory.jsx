@@ -6,12 +6,14 @@ import { LoadingSpinner, EmptyState } from '../../components/index'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { API_BASE_URL } from '../../config/api.js'
+import { FiSend } from 'react-icons/fi'
 
 export default function TrainingHistory() {
   const { user } = useAuth()
   const [myTrainings, setMyTrainings] = useState([])
   const [availableTrainings, setAvailableTrainings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [applying, setApplying] = useState(null)
   const BASE_URL = API_BASE_URL
 
   useEffect(() => {
@@ -63,6 +65,20 @@ export default function TrainingHistory() {
 
   const enrolledMap = new Map(myTrainings.map((training) => [training.training_id || training.id, training]))
   const availableList = availableTrainings.filter((training) => !enrolledMap.has(training.id))
+
+  const applyForTraining = async (trainingId) => {
+    setApplying(trainingId)
+    try {
+      await trainingService.enroll(trainingId, user.id)
+      toast.success('Training application submitted for CLCDO approval')
+      const res = await trainingService.getUserTrainings(user.id)
+      setMyTrainings(res.data?.data || [])
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to apply for training')
+    } finally {
+      setApplying(null)
+    }
+  }
 
   if (loading) return <LoadingSpinner />
 
@@ -132,6 +148,7 @@ export default function TrainingHistory() {
                       </a>
                     </div>
                   )}
+                  {training.status === 'pending' && <p className="mt-3 text-sm text-amber-700">Application submitted and waiting for CLCDO approval.</p>}
                 </div>
               )
             })}
@@ -172,6 +189,9 @@ export default function TrainingHistory() {
                     ))}
                   </div>
                 )}
+                <button onClick={() => applyForTraining(training.id)} disabled={applying === training.id} className="btn-primary btn-sm inline-flex items-center gap-2">
+                  <FiSend size={14} /> {applying === training.id ? 'Applying...' : 'Apply for Training'}
+                </button>
               </div>
             ))}
           </div>

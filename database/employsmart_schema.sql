@@ -168,7 +168,7 @@ CREATE TABLE user_training (
     user_id INT,
     training_id INT,
 
-    status ENUM('enrolled','completed','dropped') DEFAULT 'enrolled',
+    status ENUM('pending','enrolled','completed','dropped','in_progress') DEFAULT 'pending',
     certificate_path VARCHAR(255),
     completion_date DATE,
 
