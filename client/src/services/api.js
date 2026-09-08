@@ -154,10 +154,14 @@ api.interceptors.response.use(
     // 403 Forbidden
     if (status === 403) {
       console.warn('🚫 Forbidden: User lacks permissions for this resource')
+      const isAuthRoute = originalRequest?.url?.includes('/auth/')
+      if (isAuthRoute) {
+        return Promise.reject(error)
+      }
       redirectToError(403)
       return Promise.reject({
         status: 403,
-        message: 'Access Forbidden: You do not have permission to access this resource.',
+        message: error.response?.data?.message || 'Access Forbidden: You do not have permission to access this resource.',
         data: error.response?.data,
       })
     }

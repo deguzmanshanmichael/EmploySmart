@@ -116,6 +116,7 @@ class AuthController {
         $user = $stmt->get_result()->fetch_assoc();
         if ($user) {
             $user['role'] = strtolower(trim((string)$user['role']));
+            $user['employer_status'] = strtolower(trim((string)($user['employer_status'] ?? '')));
         }
 
         $passwordValid = false;
