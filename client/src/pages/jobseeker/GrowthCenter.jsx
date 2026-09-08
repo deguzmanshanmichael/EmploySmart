@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { feedbackService, resumeRecommendationService, settingsService, skillService, trainingService } from '../../services/index'
+import { feedbackService, settingsService, skillService, trainingService } from '../../services/index'
 import toast from 'react-hot-toast'
-import { FiAward, FiBookOpen, FiMessageSquare, FiTrendingUp, FiUpload } from 'react-icons/fi'
+import { FiMessageSquare, FiTrendingUp } from 'react-icons/fi'
 
 export default function GrowthCenter() {
   const { user } = useAuth()
   const [municipality, setMunicipality] = useState(null)
   const [progression, setProgression] = useState(null)
   const [trainingHistory, setTrainingHistory] = useState([])
-  const [recommendations, setRecommendations] = useState([])
   const [feedback, setFeedback] = useState('')
   const [rating, setRating] = useState(5)
   const [savingFeedback, setSavingFeedback] = useState(false)
@@ -17,16 +16,14 @@ export default function GrowthCenter() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [settingsRes, progressionRes, recRes, trainingRes] = await Promise.all([
+        const [settingsRes, progressionRes, trainingRes] = await Promise.all([
           settingsService.getMunicipality(),
           skillService.getProgression(user?.id),
-          resumeRecommendationService.getForUser(user?.id),
           trainingService.getUserTrainings(user?.id),
         ])
         setMunicipality(settingsRes.data?.data || null)
         setProgression(progressionRes.data?.data || null)
         setTrainingHistory(trainingRes.data?.data || [])
-        setRecommendations(recRes.data?.data?.recommendations || [])
       } catch (error) {
         console.error(error)
       }
@@ -42,11 +39,6 @@ export default function GrowthCenter() {
     const items = Array.isArray(progression?.progression) ? progression.progression : []
     return items.filter((item) => String(item?.status || '').toLowerCase() === 'completed').length
   }, [trainingHistory, progression])
-
-  const feedbackSummary = useMemo(() => {
-    const count = recommendations.length
-    return count > 0 ? `${count} recommendation${count > 1 ? 's' : ''} based on your uploaded profile details.` : 'Upload a resume to receive personalized recommendations.'
-  }, [recommendations.length])
 
   const submitFeedback = async () => {
     if (!feedback.trim()) {
@@ -70,7 +62,7 @@ export default function GrowthCenter() {
     <div className="space-y-6 animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">Growth Center</h1>
-        <p className="page-subtitle">Track your skills, resume-based opportunities, and feedback with PESO.</p>
+        <p className="page-subtitle">Track your skills, training progress, and feedback with PESO.</p>
       </div>
 
       <div className="card-flat bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
@@ -108,26 +100,6 @@ export default function GrowthCenter() {
           </div>
         </div>
 
-        <div className="card-flat space-y-4">
-          <div className="flex items-center gap-2 text-purple-700 font-semibold">
-            <FiBookOpen /> Resume-Driven Recommendations
-          </div>
-          <p className="text-sm text-gray-600">{feedbackSummary}</p>
-          {recommendations.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-              <div className="flex items-center gap-2 mb-2 text-gray-700"><FiUpload /> Add a resume in your profile to generate recommendations.</div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recommendations.map((item) => (
-                <div key={item.skill_id} className="rounded-lg border border-gray-100 p-3 text-sm flex items-center justify-between">
-                  <span className="font-medium text-gray-800">{item.skill_name}</span>
-                  <span className="text-xs text-purple-600">Suggested from resume</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="card-flat space-y-4">
