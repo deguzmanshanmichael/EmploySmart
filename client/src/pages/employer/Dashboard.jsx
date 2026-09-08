@@ -30,7 +30,7 @@ export default function EmployerDashboard() {
 
   if (loading) return <LoadingSpinner />
 
-  const notApproved = false
+  const notApproved = employer?.verification_status !== 'approved'
   const applicationStatusData = analytics ? [
     { name: 'Pending', total: analytics.pending_applications || 0 },
     { name: 'Accepted', total: analytics.accepted_applications || 0 },
@@ -43,6 +43,15 @@ export default function EmployerDashboard() {
         <h1 className="page-title">Employer Dashboard 🏢</h1>
         <p className="page-subtitle">Welcome, {employer?.company_name || user?.name}</p>
       </div>
+
+      {notApproved && (
+        <div className="alert-warning">
+          <div>
+            <p className="font-bold">Account Pending Verification</p>
+            <p className="text-sm mt-0.5">Your employer account is under review by PESO. You can prepare your company profile while waiting.</p>
+          </div>
+        </div>
+      )}
 
       {analytics && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -61,10 +61,7 @@ class AuthController {
         $province = $data['province'] ?? null;
         $zipCode = $data['zip_code'] ?? null;
         $educationLevel = $data['education_level'] ?? null;
-        // Registration approval is temporarily disabled for public jobseeker and employer accounts.
-        $isVerified = in_array($data['role'], ['jobseeker', 'employer'], true)
-            ? true
-            : (bool)($data['is_verified'] ?? false);
+        $isVerified = (bool)($data['is_verified'] ?? false);
         
         $stmt = $db->prepare("INSERT INTO users (first_name,middle_name,last_name,suffix,sex,birth_date,email,password,role,phone,address,city,province,zip_code,education_level,is_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         $stmt->bind_param(
@@ -92,41 +89,7 @@ class AuthController {
         }
 
         $this->logAction($userId, 'REGISTER');
-        if (in_array($data['role'], ['jobseeker', 'employer'], true)) {
-            $payload = [
-                'sub' => $userId,
-                'email' => $email,
-                'role' => $data['role'],
-                'name' => "$firstName $lastName",
-            ];
-            $accessToken = generateJWT($payload);
-            $refreshToken = generateRefreshToken($userId);
-            $expiresAt = date('Y-m-d H:i:s', time() + JWT_REFRESH_EXPIRE);
-            $csrfToken = bin2hex(random_bytes(32));
-            $tokenStmt = $db->prepare("INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?,?,?)");
-            if (!$tokenStmt) sendError('Database error: ' . $db->error, 500);
-            $tokenStmt->bind_param('iss', $userId, $refreshToken, $expiresAt);
-            if (!$tokenStmt->execute()) sendError('Failed to create login session: ' . $tokenStmt->error, 500);
-
-            sendSuccess('Registration successful. You are now logged in.', [
-                'access_token' => $accessToken,
-                'refresh_token' => $refreshToken,
-                'csrf_token' => $csrfToken,
-                'expires_in' => JWT_ACCESS_EXPIRE,
-                'user' => [
-                    'id' => $userId,
-                    'name' => "$firstName $lastName",
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'email' => $email,
-                    'role' => $data['role'],
-                    'profile_picture' => null,
-                    'is_verified' => true,
-                    'employer_status' => $data['role'] === 'employer' ? 'pending' : null,
-                ],
-            ], 201);
-        }
-        sendSuccess('Staff account created successfully.', null, 201);
+        sendSuccess('Registration successful. Please wait for account verification.', null, 201);
     }
 
     public function login() {
@@ -185,6 +148,9 @@ class AuthController {
 
         if (!$user['is_verified'] && $user['role'] === 'jobseeker') {
             sendError('Account not yet verified. Please contact PESO office.', 403);
+        }
+        if ($user['role'] === 'employer' && ($user['employer_status'] ?? 'pending') !== 'approved') {
+            sendError('Employer account not yet verified. Please wait for PESO approval.', 403);
         }
 
         $payload = [
