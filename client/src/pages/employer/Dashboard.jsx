@@ -4,7 +4,7 @@ import { employerService } from '../../services/index'
 import { StatCard, LoadingSpinner } from '../../components/index'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { FiBriefcase, FiUsers, FiCheckCircle, FiClock, FiAlertCircle } from 'react-icons/fi'
+import { FiBriefcase, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi'
 
 export default function EmployerDashboard() {
   const { user } = useAuth()
@@ -30,7 +30,7 @@ export default function EmployerDashboard() {
 
   if (loading) return <LoadingSpinner />
 
-  const notApproved = employer?.verification_status !== 'approved'
+  const notApproved = false
   const applicationStatusData = analytics ? [
     { name: 'Pending', total: analytics.pending_applications || 0 },
     { name: 'Accepted', total: analytics.accepted_applications || 0 },
@@ -43,16 +43,6 @@ export default function EmployerDashboard() {
         <h1 className="page-title">Employer Dashboard 🏢</h1>
         <p className="page-subtitle">Welcome, {employer?.company_name || user?.name}</p>
       </div>
-
-      {notApproved && (
-        <div className="alert-warning">
-          <FiAlertCircle className="flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold">Account Pending Verification</p>
-            <p className="text-sm mt-0.5">Your employer account is under review by PESO. You can prepare your company profile while waiting.</p>
-          </div>
-        </div>
-      )}
 
       {analytics && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

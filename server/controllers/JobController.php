@@ -150,11 +150,12 @@ class JobController {
         }
 
         $db = getDB();
-        $stmt = $db->prepare("SELECT id FROM employers WHERE user_id = ? AND verification_status = 'approved'");
+        // Employer approval is temporarily disabled during the evaluation phase.
+        $stmt = $db->prepare("SELECT id FROM employers WHERE user_id = ?");
         $stmt->bind_param('i', $payload['sub']);
         $stmt->execute();
         $employer = $stmt->get_result()->fetch_assoc();
-        if (!$employer) sendError('Employer not verified. Cannot post jobs.', 403);
+        if (!$employer) sendError('Employer profile not found.', 404);
 
         $empId = $employer['id'];
         $vacancies = (int) ($data['vacancies'] ?? 1);
