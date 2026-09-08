@@ -32,6 +32,9 @@
 }
 
 @layer components {
+  .password-field-input::-ms-reveal,
+  .password-field-input::-ms-clear { display: none; }
+
   .landing-page { background-color: var(--landing-background, #f4f8f5); color: var(--landing-text, #1e293b); }
   .landing-page .bg-slate-950 { background-color: var(--landing-dark, #0f172a) !important; }
   .landing-page .bg-white { background-color: var(--landing-surface, #ffffff) !important; }

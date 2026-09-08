@@ -6,7 +6,7 @@ export default function PasswordField({ className = 'input', ...props }) {
 
   return (
     <div className="relative">
-      <input {...props} type={visible ? 'text' : 'password'} className={`${className} pr-10`} />
+      <input {...props} type={visible ? 'text' : 'password'} className={`password-field-input ${className} pr-10`} />
       <button
         type="button"
         onClick={() => setVisible((current) => !current)}
