@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
+import EvaluationNotice from '../components/EvaluationNotice'
 import { FiHome, FiBriefcase, FiCheckSquare, FiUsers, FiShield, FiFileText } from 'react-icons/fi'
 
 const links = [
@@ -30,6 +31,7 @@ export default function PesoLayout() {
           roleColor="bg-green-50 text-green-700"
         />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          <EvaluationNotice className="-mx-4 -mt-4 mb-6 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8" />
           <Outlet />
         </main>
       </div>

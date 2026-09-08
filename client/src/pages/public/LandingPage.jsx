@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiArrowRight, FiBriefcase, FiCheckCircle, FiCompass, FiHeart, FiMail, FiMapPin, FiPhone, FiSearch, FiUsers } from 'react-icons/fi'
 import { settingsService } from '../../services/index'
+import EvaluationNotice from '../../components/EvaluationNotice'
 
 const defaults = {
   municipality_name: 'EmploySmart Municipality',
@@ -74,6 +75,8 @@ export default function LandingPage({ loading = false }) {
           <Link to="/login" className="btn rounded-full bg-white px-4 py-2 text-slate-900 shadow-lg hover:bg-emerald-50">Sign in <FiArrowRight /></Link>
         </div>
       </header>
+
+      <EvaluationNotice className="relative z-10 pt-20" />
 
       <main id="top">
         <section className="relative isolate min-h-[720px] overflow-hidden bg-slate-950 text-white">
