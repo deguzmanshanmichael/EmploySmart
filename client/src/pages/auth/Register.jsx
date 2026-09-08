@@ -55,9 +55,19 @@ export default function Register() {
     if (!validate()) return
     setLoading(true)
     try {
-      await authService.register(form)
-      toast.success('Registration submitted! Please wait for account verification.')
-      navigate('/login')
+      const response = await authService.register(form)
+      const session = response.data?.data
+      if (session?.access_token && session?.user) {
+        localStorage.setItem('access_token', session.access_token)
+        localStorage.setItem('refresh_token', session.refresh_token)
+        localStorage.setItem('csrf_token', session.csrf_token)
+        localStorage.setItem('user', JSON.stringify(session.user))
+        toast.success('Registration successful. Welcome to EmploySmart!')
+        navigate(session.user.role === 'employer' ? '/employer' : '/jobseeker', { replace: true })
+      } else {
+        toast.success('Registration submitted successfully.')
+        navigate('/login')
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed'
       toast.error(msg)
