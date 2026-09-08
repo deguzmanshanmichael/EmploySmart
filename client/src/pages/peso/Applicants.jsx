@@ -97,7 +97,7 @@ export default function Applicants() {
               <div className="space-y-3 pt-2 border-t border-gray-200">
                 <div className="font-semibold text-gray-800">Resume Documents</div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><div className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-2">Uploaded Resume</div>{profileData.resume_path ? <button onClick={() => openResume(`/users/${profileData.id}/uploaded-resume`)} className="btn-primary btn-sm inline-flex">📄 View Uploaded Resume</button> : <p className="text-sm text-gray-500">This jobseeker hasn&apos;t uploaded any resume yet.</p>}</div>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><div className="text-xs font-semibold uppercase tracking-wide text-blue-700 mb-2">Uploaded Resume</div><button onClick={() => openResume(`/users/${profileData.id}/uploaded-resume`)} disabled={!profileData.resume_path} className="btn-primary btn-sm inline-flex disabled:cursor-not-allowed disabled:opacity-50">📄 {profileData.resume_path ? 'View Uploaded Resume' : "Jobseeker hasn't uploaded a resume"}</button></div>
                   <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><div className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-2">Generated Resume</div>{profileData.id ? <button onClick={() => openResume(`/users/${profileData.id}/resume`)} className="btn-success btn-sm inline-flex">🧾 View Generated Resume</button> : <p className="text-sm text-gray-500">No generated resume available.</p>}</div>
                 </div>
               </div>

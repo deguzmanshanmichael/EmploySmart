@@ -135,6 +135,8 @@ class ApplicationController {
         if (!validateEnum($status, $allowed)) sendError('Invalid status', 422);
         if ($status === 'declined') $status = 'rejected';
 
+        $db = getDB();
+        $applicationId = (int) $id;
         $currentStatus = null;
         $statusCheck = $db->prepare("SELECT application_status FROM applications WHERE id = ?");
         $statusCheck->bind_param('i', $applicationId);
@@ -161,8 +163,6 @@ class ApplicationController {
             sendError('Remarks too long (max 1000 characters)', 422);
         }
 
-        $db = getDB();
-        
         // Verify application exists and user has access
         if ($payload['role'] === 'employer') {
             $stmt = $db->prepare("SELECT a.id FROM applications a JOIN jobs j ON j.id = a.job_id JOIN employers e ON e.id = j.employer_id WHERE a.id = ? AND e.user_id = ?");
@@ -173,8 +173,6 @@ class ApplicationController {
         
         $remarks = isset($data['remarks']) ? (string) $data['remarks'] : null;
         $interviewDate = isset($data['interview_date']) ? (string) $data['interview_date'] : null;
-        $applicationId = (int) $id;
-
         $stmt = $db->prepare("UPDATE applications SET application_status = ?, remarks = ?, interview_date = ? WHERE id = ?");
         $stmt->bind_param('sssi', $status, $remarks, $interviewDate, $applicationId);
         if (!$stmt->execute()) sendError('Update failed', 500);
