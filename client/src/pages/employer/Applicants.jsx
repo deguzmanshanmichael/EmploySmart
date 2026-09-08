@@ -11,7 +11,7 @@ import api from '../../services/api'
 
 const normalizeApplicationStatus = status => status === 'rejected' ? 'declined' : status
 const statusColors = { pending:'badge-yellow', reviewed:'badge-blue', accepted:'badge-green', declined:'badge-red', rejected:'badge-red' }
-const actionLabels = { reviewed:'Review', accepted:'Approve', declined:'Decline' }
+const actionLabels = { accepted:'Approve', declined:'Decline' }
 const BASE_URL = API_BASE_URL
 
 async function openResume(path) {
@@ -236,7 +236,7 @@ export default function Applicants() {
                       </p>
                     )}
                     <div className="flex flex-wrap gap-2">
-                      {['reviewed','accepted','declined'].map(s => {
+                      {['accepted','declined'].map(s => {
                         const currentStatus = normalizeApplicationStatus(app.application_status)
                         const isDisabled = currentStatus === s || (s === 'declined' && currentStatus === 'accepted') || (s === 'accepted' && currentStatus === 'rejected')
                         return (
