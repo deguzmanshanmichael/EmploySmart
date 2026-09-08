@@ -63,7 +63,8 @@ export default function Register() {
         localStorage.setItem('csrf_token', session.csrf_token)
         localStorage.setItem('user', JSON.stringify(session.user))
         toast.success('Registration successful. Welcome to EmploySmart!')
-        navigate(session.user.role === 'employer' ? '/employer' : '/jobseeker', { replace: true })
+        // Reload so AuthProvider initializes from the new session before the protected route evaluates.
+        window.location.replace(session.user.role === 'employer' ? '/employer' : '/jobseeker')
       } else {
         toast.success('Registration submitted successfully.')
         navigate('/login')
