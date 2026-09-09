@@ -199,6 +199,8 @@ class UserController {
         $stream .= "Q\n";
         $stream .= "BT /F1 16 Tf 70 750 Td (EmploySmart Professional Resume) Tj ET\n";
         $stream .= "BT /F1 10 Tf 70 730 Td (Generated from your profile, training, and approved roles) Tj ET\n";
+        $stream .= "0.55 0.59 0.66 rg\n";
+        $stream .= "BT /F1 8 Tf 50 25 Td (EmploySmart | Generated " . $this->escapePdfText(date('Y-m-d H:i')) . " | Page 1) Tj ET\n";
         $y = $marginTop - 30;
         foreach ($lines as $line) {
             if ($y < 40) {

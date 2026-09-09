@@ -4,6 +4,7 @@ import { LoadingSpinner, EmptyState, Pagination } from '../../components/index'
 import { format } from 'date-fns'
 import { FiRefreshCw, FiPrinter } from 'react-icons/fi'
 import toast from 'react-hot-toast'
+import { printReport } from '../../utils/printReport'
 
 export default function SystemLogs() {
   const [logs, setLogs]   = useState([])
@@ -41,13 +42,18 @@ export default function SystemLogs() {
   }
 
   const printLogs = () => {
-    const printWindow = window.open('', '_blank', 'width=1000,height=700')
-    if (!printWindow) return toast.error('Please allow pop-ups to print logs.')
-    const rows = logs.map(log => `<tr><td>${log.first_name || 'System'} ${log.last_name || ''}</td><td>${log.role || 'system'}</td><td>${log.action}</td><td>${format(new Date(log.log_time), 'MMM d, yyyy h:mm a')}</td></tr>`).join('')
-    printWindow.document.write(`<html><head><title>EmploySmart System Logs</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111}h1{font-size:20px}p{color:#555}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f3f4f6}</style></head><body><h1>EmploySmart System Logs</h1><p>Filtered results: ${logs.length} entries</p><table><thead><tr><th>Username</th><th>Role</th><th>Activity</th><th>Date and time</th></tr></thead><tbody>${rows}</tbody></table></body></html>`)
-    printWindow.document.close()
-    printWindow.focus()
-    printWindow.print()
+    if (!printReport({
+      title: 'System Logs',
+      subtitle: 'System activity audit report',
+      summary: `${logs.length} displayed entries · Filters: ${role || 'all roles'} · ${dateFrom || 'any date'} to ${dateTo || 'any date'}`,
+      tableHeaders: ['Username', 'Role', 'Activity', 'Date and time'],
+      tableRows: logs.map(log => [
+        log.first_name ? `${log.first_name} ${log.last_name || ''}` : 'System',
+        log.role || 'system',
+        log.action,
+        format(new Date(log.log_time), 'MMM d, yyyy h:mm a'),
+      ]),
+    })) toast.error('Please allow pop-ups to print logs.')
   }
 
   return (

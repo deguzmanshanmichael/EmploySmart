@@ -3,6 +3,8 @@ import { userService } from '../../services/index'
 import { LoadingSpinner, StatCard } from '../../components/index'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts'
 import { FiUsers, FiBriefcase, FiFileText, FiAward } from 'react-icons/fi'
+import { FiPrinter } from 'react-icons/fi'
+import { printReport } from '../../utils/printReport'
 
 export default function Reports() {
   const [stats, setStats]   = useState(null)
@@ -28,11 +30,28 @@ export default function Reports() {
     { label: 'Applications', value: stats?.total_applications || 0 },
   ]
 
+  const printReportView = () => {
+    if (!printReport({
+      title: 'PESO Employment Report',
+      subtitle: 'Employment statistics and system overview',
+      summary: 'Current platform totals for jobseekers, employers, jobs, applications, verification, and training activity.',
+      tableHeaders: ['Metric', 'Value'],
+      tableRows: [
+        ['Total Jobseekers', stats?.total_jobseekers || 0],
+        ['Total Employers', stats?.total_employers || 0],
+        ['Active Jobs', stats?.total_jobs || 0],
+        ['Applications Filed', stats?.total_applications || 0],
+        ['Verified Users', stats?.verified_users || 0],
+        ['Pending Employers', stats?.pending_employers || 0],
+        ['Active Trainings', stats?.active_trainings || 0],
+      ],
+    })) return
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <h1 className="page-title">PESO Reports 📊</h1>
-        <p className="page-subtitle">Employment statistics and system overview</p>
+        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">PESO Reports 📊</h1><p className="page-subtitle">Employment statistics and system overview</p></div><button onClick={printReportView} className="btn-secondary btn-sm"><FiPrinter /> Print Report</button></div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
