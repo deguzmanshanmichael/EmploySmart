@@ -22,16 +22,16 @@ export function printReport({ title, subtitle = '', summary = '', tableHeaders =
     @page { size: A4 landscape; margin: 22mm 14mm 18mm; }
     * { box-sizing: border-box; }
     body { margin: 0; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
-    .report-header { border-bottom: 3px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 18px; }
+    .report-header { border-bottom: 3px solid #1d4ed8; padding: 14px 16px 12px; margin-bottom: 18px; background: linear-gradient(120deg, #eff6ff, #ffffff 70%); }
     .organization { color: #1d4ed8; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    h1 { margin: 5px 0 3px; font-size: 22px; color: #111827; }
+    h1 { margin: 5px 0 3px; font-size: 24px; color: #111827; }
     .subtitle, .meta { margin: 0; color: #5b6472; }
     .meta { margin-top: 7px; font-size: 10px; }
-    .summary { margin: 0 0 14px; color: #374151; }
+    .summary { margin: 0 0 14px; padding: 9px 11px; border-left: 3px solid #1d4ed8; background: #f8fafc; color: #374151; }
     table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; page-break-after: auto; }
-    th { background: #eff6ff; color: #1e3a8a; font-weight: 700; text-align: left; }
+    th { background: #1d4ed8; color: #ffffff; font-weight: 700; text-align: left; }
     th, td { border: 1px solid #d8dee8; padding: 7px 8px; vertical-align: top; }
     tbody tr:nth-child(even) { background: #f8fafc; }
     .report-footer { position: fixed; bottom: -10mm; left: 0; right: 0; border-top: 1px solid #cbd5e1; padding-top: 5px; color: #64748b; font-size: 9px; }

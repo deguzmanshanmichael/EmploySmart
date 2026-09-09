@@ -4,6 +4,8 @@ import { trainingService } from '../../services/index'
 import { StatCard, LoadingSpinner } from '../../components/index'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { FiBook, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi'
+import { FiPrinter } from 'react-icons/fi'
+import { printReport } from '../../utils/printReport'
 
 export default function ClcdoDashboard() {
   const [programs, setPrograms] = useState([])
@@ -34,12 +36,18 @@ export default function ClcdoDashboard() {
     enrolled: program.enrolled_count || 0,
     capacity: program.max_participants || 0,
   }))
+  const printReportView = () => printReport({
+    title: 'CLCDO Training Report',
+    subtitle: 'Community livelihood and development training summary',
+    summary: `${programs.length} programs and ${stats.enrolled} enrolled participants.`,
+    tableHeaders: ['Program', 'Location', 'Status', 'Enrolled', 'Capacity'],
+    tableRows: programs.map(program => [program.program_name, program.location || '—', program.status, program.enrolled_count || 0, program.max_participants || 'Unlimited']),
+  })
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <h1 className="page-title">CLCDO Dashboard 📚</h1>
-        <p className="page-subtitle">City Livelihood and Community Development Office</p>
+        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">CLCDO Dashboard 📚</h1><p className="page-subtitle">City Livelihood and Community Development Office</p></div><button onClick={printReportView} className="btn-primary btn-sm"><FiPrinter /> Print Report</button></div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

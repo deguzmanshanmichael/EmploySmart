@@ -4,6 +4,8 @@ import { userService } from '../../services/index'
 import { StatCard, LoadingSpinner } from '../../components/index'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { FiUsers, FiBriefcase, FiShield, FiFileText, FiCheckSquare, FiClock } from 'react-icons/fi'
+import { FiPrinter } from 'react-icons/fi'
+import { printReport } from '../../utils/printReport'
 
 export default function PesoDashboard() {
   const [stats, setStats] = useState(null)
@@ -27,12 +29,25 @@ export default function PesoDashboard() {
     { name: 'Pending employers', total: stats?.pending_employers || 0 },
     { name: 'Pending applications', total: stats?.pending_applications || 0 },
   ]
+  const printReportView = () => printReport({
+    title: 'PESO Employment Report',
+    subtitle: 'Employment office dashboard summary',
+    summary: 'Current review workload and employment activity from the EmploySmart platform.',
+    tableHeaders: ['Metric', 'Value'],
+    tableRows: [
+      ['Total Jobseekers', stats?.total_jobseekers || 0],
+      ['Active Jobs', stats?.total_jobs || 0],
+      ['Pending Employers', stats?.pending_employers || 0],
+      ['Pending Jobs', stats?.pending_jobs || 0],
+      ['Pending Applications', stats?.pending_applications || 0],
+      ['Total Applications', stats?.total_applications || 0],
+    ],
+  })
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <h1 className="page-title">PESO Dashboard 🏛️</h1>
-        <p className="page-subtitle">Public Employment Service Office — Cabanatuan City</p>
+        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">PESO Dashboard 🏛️</h1><p className="page-subtitle">Public Employment Service Office — Cabanatuan City</p></div><button onClick={printReportView} className="btn-primary btn-sm"><FiPrinter /> Print Report</button></div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
