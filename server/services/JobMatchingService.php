@@ -10,52 +10,26 @@ class JobMatchingService {
         $user = $this->getUser($userId);
         $job = $this->getJob($jobId);
 
-        if (!$user || !$job || $job['approval_status'] !== 'approved') {
+        if (!$user || !$job || strtolower(trim((string)$job['approval_status'])) !== 'approved' || !empty($job['archived'])) {
             return 0;
         }
+        if (!empty($job['deadline']) && $job['deadline'] < date('Y-m-d')) return 0;
 
         $userSkills = $this->getUserSkillIds($userId);
         $trainingSkills = $this->getUserTrainingSkillIds($userId);
         $jobSkills = $this->getJobSkillIds($jobId);
 
-        $score = 0;
-
-        // Skill matching (40% of total score)
-        if (!empty($jobSkills)) {
-            $matchedSkills = count(array_intersect($userSkills, $jobSkills));
-            $skillCoverage = $matchedSkills / count($jobSkills);
-            $score += $skillCoverage * 40;
-        }
-
-        // Training/Certification matching (15% of total score)
-        if (!empty($jobSkills)) {
-            $matchedTraining = count(array_intersect($trainingSkills, $jobSkills));
-            $trainingCoverage = $matchedTraining / count($jobSkills);
-            $score += $trainingCoverage * 15;
-        }
-
-        // Education level match (20% of total score)
-        $educationMatch = $this->educationScore($user['education_level'], $job['education_required']);
-        $score += $educationMatch * 20;
-
-        // Experience level match (15% of total score)
-        $experienceMatch = $this->experienceScore($user['employment_status'], $job['experience_level']);
-        $score += $experienceMatch * 15;
-
-        // Employment status preference (10% of total score)
-        $employmentBonus = $this->employmentStatusBonus($user['employment_status'], $job['job_type'] ?? '');
-        $score += $employmentBonus * 10;
-
-        return round(min(100, max(0, $score)), 2);
+        return $this->scoreJob($user, $job, $userSkills, $trainingSkills, $jobSkills);
     }
 
     private function employmentStatusBonus($userStatus, $jobType) {
-        // Give preference to full-time for employed users, flexible for others
+        $userStatus = strtolower(trim((string)$userStatus));
+        $jobType = strtolower(trim(str_replace(['_', '-'], '', (string)$jobType)));
         $bonusMap = [
-            'employed' => ['full_time' => 1, 'part_time' => 0.5, 'contract' => 0.6],
-            'unemployed' => ['full_time' => 1, 'part_time' => 0.8, 'contract' => 0.9],
-            'student' => ['part_time' => 1, 'full_time' => 0.6, 'contract' => 0.7],
-            'self_employed' => ['contract' => 1, 'full_time' => 0.5, 'part_time' => 0.8],
+            'employed' => ['fulltime' => 1, 'parttime' => 0.5, 'contract' => 0.6, 'internship' => 0.4, 'temporary' => 0.5, 'freelance' => 0.6],
+            'unemployed' => ['fulltime' => 1, 'parttime' => 0.8, 'contract' => 0.9, 'internship' => 0.8, 'temporary' => 0.9, 'freelance' => 0.8],
+            'student' => ['parttime' => 1, 'fulltime' => 0.6, 'contract' => 0.7, 'internship' => 1, 'temporary' => 0.8, 'freelance' => 0.8],
+            'self_employed' => ['contract' => 1, 'fulltime' => 0.5, 'parttime' => 0.8, 'internship' => 0.4, 'temporary' => 0.7, 'freelance' => 1],
         ];
 
         return $bonusMap[$userStatus][$jobType] ?? 0.5;
@@ -73,11 +47,13 @@ class JobMatchingService {
         ];
 
         // If job has no education requirement, give full score
-        if (!$jobEdu) {
+        $jobEdu = strtolower(trim(str_replace(['_', '-'], ' ', (string)$jobEdu)));
+        if ($jobEdu === '' || $jobEdu === 'any' || $jobEdu === 'not required' || $jobEdu === 'none') {
             return 1;
         }
 
         // Normalize user education level
+        $userEdu = strtolower(trim(str_replace([' ', '-'], '_', (string)$userEdu)));
         $userLevel = $levels[$userEdu] ?? 0;
         
         // Parse job education requirement
@@ -90,8 +66,10 @@ class JobMatchingService {
             $jobLevel = 5;
         } elseif (stripos($jobEduLower, 'vocational') !== false) {
             $jobLevel = 4;
-        } elseif (stripos($jobEduLower, 'high school') !== false || stripos($jobEduLower, 'senior high') !== false) {
+        } elseif (stripos($jobEduLower, 'senior high') !== false) {
             $jobLevel = 3;
+        } elseif (stripos($jobEduLower, 'high school') !== false) {
+            $jobLevel = 2;
         } elseif (stripos($jobEduLower, 'elementary') !== false) {
             $jobLevel = 1;
         }
@@ -113,8 +91,8 @@ class JobMatchingService {
             return 1; // No experience requirement = perfect match
         }
 
-        $expLevelLower = strtolower($expLevel);
-        $empStatusLower = strtolower($empStatus);
+        $expLevelLower = strtolower(trim((string)$expLevel));
+        $empStatusLower = strtolower(trim((string)$empStatus));
 
         // Entry level jobs
         if (stripos($expLevelLower, 'entry') !== false || stripos($expLevelLower, 'junior') !== false) {
@@ -194,7 +172,33 @@ class JobMatchingService {
         return $stmt->get_result()->fetch_assoc();
     }
 
+    private function scoreJob($user, $job, $userSkills, $trainingSkills, $jobSkills) {
+        $score = 0.0;
+
+        // Skill and completed-training overlap are meaningful only when the job has tagged skills.
+        if (!empty($jobSkills)) {
+            $jobSkills = array_values(array_unique(array_map('intval', $jobSkills)));
+            $denominator = count($jobSkills);
+            $score += (count(array_intersect($userSkills, $jobSkills)) / $denominator) * 40;
+            $score += (count(array_intersect($trainingSkills, $jobSkills)) / $denominator) * 15;
+        } else {
+            // Missing job skill tags are unknown evidence, not a perfect skill match.
+            $score += 27.5;
+        }
+
+        $score += $this->educationScore($user['education_level'] ?? null, $job['education_required'] ?? null) * 20;
+        $score += $this->experienceScore($user['employment_status'] ?? '', $job['experience_level'] ?? '') * 15;
+        $score += $this->employmentStatusBonus($user['employment_status'] ?? '', $job['job_type'] ?? '') * 10;
+
+        return round(min(100, max(0, $score)), 2);
+    }
+
     public function getTopMatchesForUser($userId, $limit = 10) {
+        $scored = $this->getScoredJobsForUser($userId);
+        return array_slice($scored, 0, max(0, (int)$limit));
+    }
+
+    private function getScoredJobsForUser($userId) {
         $user = $this->getUser($userId);
         if (!$user) {
             return [];
@@ -204,92 +208,59 @@ class JobMatchingService {
         $trainingSkills = $this->getUserTrainingSkillIds($userId);
 
         $stmt = $this->db->prepare(
-            'SELECT j.*, e.company_name, e.industry FROM jobs j JOIN employers e ON e.id = j.employer_id WHERE j.approval_status = "approved" AND (j.deadline IS NULL OR j.deadline >= CURDATE()) ORDER BY j.created_at DESC'
+            'SELECT j.*, e.company_name, e.industry, js.skill_id, s.skill_name FROM jobs j LEFT JOIN employers e ON e.id = j.employer_id LEFT JOIN job_skills js ON js.job_id = j.id LEFT JOIN skills s ON s.id = js.skill_id WHERE j.approval_status = ? AND j.archived = 0 AND (j.deadline IS NULL OR j.deadline >= CURDATE()) ORDER BY j.created_at DESC'
         );
+        $approvedStatus = 'approved';
+        $stmt->bind_param('s', $approvedStatus);
         $stmt->execute();
-        $jobs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $jobSkillRows = $this->db->query('SELECT js.job_id, js.skill_id, s.skill_name FROM job_skills js LEFT JOIN skills s ON s.id = js.skill_id ORDER BY js.job_id')
-            ->fetch_all(MYSQLI_ASSOC);
-
-        $jobSkillsByJob = [];
-        foreach ($jobSkillRows as $row) {
-            $jobId = (int) $row['job_id'];
-            if (!isset($jobSkillsByJob[$jobId])) {
-                $jobSkillsByJob[$jobId] = [];
+        $result = $stmt->get_result();
+        $jobsById = [];
+        while ($row = $result->fetch_assoc()) {
+            $jobId = (int)$row['id'];
+            if (!isset($jobsById[$jobId])) {
+                $jobsById[$jobId] = $row;
+                $jobsById[$jobId]['_skills'] = [];
             }
-            $jobSkillsByJob[$jobId][] = [
-                'id' => (int) $row['skill_id'],
-                'name' => $row['skill_name'],
-            ];
+            if ($row['skill_id'] !== null) {
+                $skillId = (int)$row['skill_id'];
+                $jobsById[$jobId]['_skills'][$skillId] = [
+                    'id' => $skillId,
+                    'name' => $row['skill_name'],
+                ];
+            }
         }
 
         $scored = [];
-        foreach ($jobs as $job) {
-            $jobId = (int) $job['id'];
-            $jobSkills = array_values(array_unique(array_map(fn($skill) => (int) $skill['id'], $jobSkillsByJob[$jobId] ?? [])));
-
-            $score = 0;
-            
-            // Skill matching (40% of total score)
-            if (!empty($jobSkills)) {
-                $matchedSkills = count(array_intersect($userSkills, $jobSkills));
-                $skillCoverage = $matchedSkills / count($jobSkills);
-                $score += $skillCoverage * 40;
-            }
-
-            // Training/Certification matching (15% of total score)
-            if (!empty($jobSkills)) {
-                $matchedTraining = count(array_intersect($trainingSkills, $jobSkills));
-                $trainingCoverage = $matchedTraining / count($jobSkills);
-                $score += $trainingCoverage * 15;
-            }
-
-            // Education level match (20% of total score)
-            $educationMatch = $this->educationScore($user['education_level'], $job['education_required']);
-            $score += $educationMatch * 20;
-
-            // Experience level match (15% of total score)
-            $experienceMatch = $this->experienceScore($user['employment_status'], $job['experience_level']);
-            $score += $experienceMatch * 15;
-
-            // Employment status preference (10% of total score)
-            $employmentBonus = $this->employmentStatusBonus($user['employment_status'], $job['job_type'] ?? '');
-            $score += $employmentBonus * 10;
-
-            if ($score > 0) {
-                $job['skills'] = array_values(array_filter(array_map(function ($skill) {
-                    return $skill['name'] ? ['skill_name' => $skill['name']] : null;
-                }, $jobSkillsByJob[$jobId] ?? [])));
-                $job['match_score'] = round(min(100, max(0, $score)), 2);
-                $scored[] = $job;
-            }
+        foreach ($jobsById as $job) {
+            $jobSkillRows = array_values($job['_skills']);
+            $jobSkillIds = array_column($jobSkillRows, 'id');
+            $job['skills'] = array_values(array_filter(array_map(static function ($skill) {
+                return $skill['name'] ? ['skill_name' => $skill['name']] : null;
+            }, $jobSkillRows)));
+            unset($job['_skills'], $job['skill_id'], $job['skill_name']);
+            $job['match_score'] = $this->scoreJob($user, $job, $userSkills, $trainingSkills, $jobSkillIds);
+            $scored[] = $job;
         }
 
-        usort($scored, function ($a, $b) {
-            return $b['match_score'] <=> $a['match_score'];
+        usort($scored, static function ($a, $b) {
+            $scoreOrder = $b['match_score'] <=> $a['match_score'];
+            return $scoreOrder !== 0 ? $scoreOrder : strcmp((string)$b['created_at'], (string)$a['created_at']);
         });
 
-        return array_slice($scored, 0, $limit);
+        return $scored;
     }
 
     public function computeAndStoreMatches($userId) {
-        $user = $this->getUser($userId);
-        if (!$user) {
-            return;
-        }
-
-        $stmt = $this->db->prepare('SELECT id FROM jobs WHERE approval_status = "approved"');
-        $stmt->execute();
-        $jobs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $userId = (int)$userId;
+        $scoredJobs = $this->getScoredJobsForUser($userId);
 
         $del = $this->db->prepare('DELETE FROM job_matches WHERE user_id = ?');
         $del->bind_param('i', $userId);
         $del->execute();
 
         $ins = $this->db->prepare('INSERT INTO job_matches (user_id, job_id, match_score) VALUES (?,?,?)');
-        foreach ($jobs as $job) {
-            $score = $this->computeScore($userId, (int) $job['id']);
+        foreach ($scoredJobs as $job) {
+            $score = $job['match_score'];
             $jobId = (int) $job['id'];
             $ins->bind_param('iid', $userId, $jobId, $score);
             $ins->execute();
