@@ -10,16 +10,20 @@ class JobMatchingService {
         $user = $this->getUser($userId);
         $job = $this->getJob($jobId);
 
-        if (!$user || !$job || strtolower(trim((string)$job['approval_status'])) !== 'approved' || !empty($job['archived'])) {
+        if (!$user || !$this->isEligibleJob($job)) {
             return 0;
         }
-        if (!empty($job['deadline']) && $job['deadline'] < date('Y-m-d')) return 0;
-
         $userSkills = $this->getUserSkillIds($userId);
         $trainingSkills = $this->getUserTrainingSkillIds($userId);
         $jobSkills = $this->getJobSkillIds($jobId);
 
         return $this->scoreJob($user, $job, $userSkills, $trainingSkills, $jobSkills);
+    }
+
+    private function isEligibleJob($job) {
+        return is_array($job)
+            && strtolower(trim((string)($job['approval_status'] ?? ''))) === 'approved'
+            && empty($job['archived']);
     }
 
     private function employmentStatusBonus($userStatus, $jobType) {
@@ -208,7 +212,7 @@ class JobMatchingService {
         $trainingSkills = $this->getUserTrainingSkillIds($userId);
 
         $stmt = $this->db->prepare(
-            'SELECT j.*, e.company_name, e.industry, js.skill_id, s.skill_name FROM jobs j LEFT JOIN employers e ON e.id = j.employer_id LEFT JOIN job_skills js ON js.job_id = j.id LEFT JOIN skills s ON s.id = js.skill_id WHERE j.approval_status = ? AND j.archived = 0 AND (j.deadline IS NULL OR j.deadline >= CURDATE()) ORDER BY j.created_at DESC'
+            'SELECT j.*, e.company_name, e.industry, js.skill_id, s.skill_name FROM jobs j LEFT JOIN employers e ON e.id = j.employer_id LEFT JOIN job_skills js ON js.job_id = j.id LEFT JOIN skills s ON s.id = js.skill_id WHERE j.approval_status = ? AND COALESCE(j.archived, 0) = 0 ORDER BY j.created_at DESC'
         );
         $approvedStatus = 'approved';
         $stmt->bind_param('s', $approvedStatus);

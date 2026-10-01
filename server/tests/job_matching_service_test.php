@@ -37,4 +37,15 @@ if ($skillFreeScore !== 72.5) {
     throw new RuntimeException('Jobs without tagged skills should receive neutral skill evidence; got ' . $skillFreeScore);
 }
 
+$eligibleMethod = new ReflectionMethod(JobMatchingService::class, 'isEligibleJob');
+$eligibleMethod->setAccessible(true);
+$eligibleJob = ['approval_status' => 'approved', 'archived' => 0, 'deadline' => date('Y-m-d', strtotime('-1 day'))];
+if (!$eligibleMethod->invoke($service, $eligibleJob)) {
+    throw new RuntimeException('Approved non-archived jobs must remain recommendable regardless of deadline.');
+}
+$archivedJob = ['approval_status' => 'approved', 'archived' => 1];
+if ($eligibleMethod->invoke($service, $archivedJob)) {
+    throw new RuntimeException('Archived jobs must not be recommended.');
+}
+
 echo "JobMatchingService scoring tests passed.\n";
