@@ -51,6 +51,8 @@ import ApproveJobs            from '../pages/peso/ApproveJobs'
 import PesoApplicants         from '../pages/peso/Applicants'
 import EmployerVerification   from '../pages/peso/EmployerVerification'
 import PesoReports            from '../pages/peso/Reports'
+import SkillsGap             from '../pages/peso/SkillsGap'
+import PlacementFeedback     from '../pages/shared/PlacementFeedback'
 
 // CLCDO pages
 import ClcdoDashboard       from '../pages/clcdo/Dashboard'
@@ -146,6 +148,7 @@ export default function AppRoutes() {
         <Route path="applicants" element={<Applicants />} />
         <Route path="company" element={<CompanyProfile />} />
         <Route path="analytics" element={<JobAnalytics />} />
+        <Route path="feedback" element={<PlacementFeedback />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
@@ -161,6 +164,8 @@ export default function AppRoutes() {
         <Route path="applicants" element={<PesoApplicants />} />
         <Route path="employer-verification" element={<EmployerVerification />} />
         <Route path="reports" element={<PesoReports />} />
+        <Route path="skills-gap" element={<SkillsGap />} />
+        <Route path="feedback" element={<PlacementFeedback />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 
@@ -176,6 +181,7 @@ export default function AppRoutes() {
         <Route path="enroll" element={<EnrollParticipants />} />
         <Route path="completion" element={<TrainingCompletion />} />
         <Route path="reports" element={<TrainingReports />} />
+        <Route path="skills-gap" element={<SkillsGap />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>
 

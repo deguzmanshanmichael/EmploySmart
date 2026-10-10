@@ -192,7 +192,14 @@ if ($resource === 'auth') {
 } elseif ($resource === 'feedback') {
     require_once __DIR__ . '/controllers/FeedbackController.php';
     $ctrl = new FeedbackController();
-    if ($id === null && $method === 'POST') { $ctrl->create(); }
+    $sub = $parts[3] ?? null;
+    if ($id === 'placements' && $action === null && $method === 'GET') { $ctrl->placements(); }
+    elseif ($id === 'placements' && $action !== null && $method === 'GET') { $ctrl->placementThreads($action); }
+    elseif ($id === 'placements' && $action !== null && $method === 'POST') { $ctrl->createForPlacement($action); }
+    elseif ($id === 'summary' && $method === 'GET') { $ctrl->summary(); }
+    elseif ($id === 'thread' && $action !== null && $sub === 'replies' && $method === 'POST') { $ctrl->reply($action); }
+    elseif ($id === 'thread' && $action !== null && $sub === 'status' && $method === 'PATCH') { $ctrl->setStatus($action); }
+    elseif ($id === null && $method === 'POST') { $ctrl->create(); }
     elseif ($id !== null && $action !== null && $method === 'GET') { $ctrl->listForTarget($id, $action); }
     else { sendError('Route not found', 404); }
 } elseif ($resource === 'uploads' && $method === 'GET') {
@@ -209,6 +216,13 @@ if ($resource === 'auth') {
     header('Cache-Control: public, max-age=86400');
     readfile($file);
     exit;
+} elseif ($resource === 'skill-gaps') {
+    require_once __DIR__ . '/controllers/SkillGapController.php';
+    $ctrl = new SkillGapController();
+    if ($id === null && $method === 'GET') { $ctrl->overview(); }
+    elseif ($id === 'user' && $action !== null && ($parts[3] ?? null) === null && $method === 'GET') { $ctrl->applicant($action); }
+    elseif ($id === 'user' && $action !== null && ($parts[3] ?? null) === 'recommend' && $method === 'POST') { $ctrl->recommendTraining($action); }
+    else { sendError('Route not found', 404); }
 } elseif ($resource === 'resume-profile') {
     require_once __DIR__ . '/controllers/ResumeProfileController.php';
     $ctrl = new ResumeProfileController();

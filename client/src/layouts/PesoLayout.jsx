@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import EvaluationNotice from '../components/EvaluationNotice'
-import { FiHome, FiBriefcase, FiCheckSquare, FiUsers, FiShield, FiFileText } from 'react-icons/fi'
+import { FiHome, FiBriefcase, FiCheckSquare, FiUsers, FiShield, FiFileText, FiTarget, FiMessageSquare } from 'react-icons/fi'
 
 const links = [
   { to: '/peso',                        label: 'Dashboard',            icon: <FiHome />,        end: true },
@@ -13,8 +13,10 @@ const links = [
   { type: 'divider', label: 'People' },
   { to: '/peso/applicants',             label: 'Applicants',           icon: <FiUsers /> },
   { to: '/peso/employer-verification',  label: 'Verify Employers',     icon: <FiShield /> },
+  { to: '/peso/feedback',               label: 'Placement Feedback',   icon: <FiMessageSquare /> },
   { type: 'divider', label: 'Reports' },
   { to: '/peso/reports',                label: 'Reports',              icon: <FiFileText /> },
+  { to: '/peso/skills-gap',             label: 'Skills Gap',           icon: <FiTarget /> },
 ]
 
 export default function PesoLayout() {

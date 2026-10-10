@@ -77,6 +77,19 @@ export const settingsService = {
 export const feedbackService = {
   create: (data) => api.post('/feedback', data),
   getForTarget: (targetType, targetId) => api.get(`/feedback/${targetType}/${targetId}`),
+  getPlacements: (params) => api.get('/feedback/placements', { params }),
+  getPlacement: (applicationId) => api.get(`/feedback/placements/${applicationId}`),
+  createForPlacement: (applicationId, data) => api.post(`/feedback/placements/${applicationId}`, data),
+  reply: (threadId, message) => api.post(`/feedback/thread/${threadId}/replies`, { message }),
+  setStatus: (threadId, status) => api.patch(`/feedback/thread/${threadId}/status`, { status }),
+  getSummary: () => api.get('/feedback/summary'),
+}
+
+export const skillGapService = {
+  getOverview: () => api.get('/skill-gaps', { timeout: 60000 }),
+  getApplicant: (userId) => api.get(`/skill-gaps/user/${userId}`),
+  getMine: () => api.get('/skill-gaps/user/me'),
+  recommendTraining: (userId, trainingId, message) => api.post(`/skill-gaps/user/${userId}/recommend`, { training_id: trainingId, message }),
 }
 
 export const resumeRecommendationService = {

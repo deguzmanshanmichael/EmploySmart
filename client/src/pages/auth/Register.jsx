@@ -4,9 +4,11 @@ import { authService } from '../../services/authService'
 import { Modal } from '../../components/index'
 import PasswordField from '../../components/PasswordField'
 import toast from 'react-hot-toast'
+import useMunicipality from '../../hooks/useMunicipality'
 
 export default function Register() {
   const navigate  = useNavigate()
+  const { config: municipality, place } = useMunicipality()
   const [loading, setLoading]   = useState(false)
   const [errors, setErrors]     = useState({})
   const [showTerms, setShowTerms] = useState(false)
@@ -94,7 +96,7 @@ export default function Register() {
             <span className="text-white text-xl font-bold font-display">ES</span>
           </div>
           <h1 className="text-2xl font-bold font-display text-gray-900">Create Your Account</h1>
-          <p className="text-sm text-gray-500 mt-1">Join EmploySmart — Nueva Ecija's Job Portal</p>
+          <p className="text-sm text-gray-500 mt-1">Join EmploySmart{place ? ` — ${place}'s Job Portal` : ' — your local job portal'}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
@@ -202,13 +204,13 @@ export default function Register() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="form-group">
                 <label className="label">City</label>
-                <input type="text" className="input" placeholder="Cabanatuan City"
+                <input type="text" className="input" placeholder={municipality.municipality_name && !/employsmart/i.test(municipality.municipality_name) ? municipality.municipality_name : 'City / Municipality'}
                   value={form.city} onChange={e => set('city', e.target.value)}
                   autoComplete="address-level2" />
               </div>
               <div className="form-group">
                 <label className="label">Province</label>
-                <input type="text" className="input" placeholder="Nueva Ecija"
+                <input type="text" className="input" placeholder={municipality.municipality_province || 'Province'}
                   value={form.province} onChange={e => set('province', e.target.value)}
                   autoComplete="address-level1" />
               </div>
@@ -319,7 +321,7 @@ export default function Register() {
             {showTerms && (
               <Modal title="Terms and Conditions" onClose={() => setShowTerms(false)} size="lg">
                 <div className="space-y-4 text-sm text-gray-700">
-                  <p>By using EmploySmart, you agree to the terms below. EmploySmart is a job portal for job seekers and employers in Nueva Ecija, and these terms govern account registration, service use, and communications.</p>
+                  <p>By using EmploySmart, you agree to the terms below. EmploySmart is a job portal for job seekers and employers in {place || 'the municipality'}, and these terms govern account registration, service use, and communications.</p>
                   <div>
                     <p className="font-semibold">Account Registration</p>
                     <p>Users must provide accurate information and may be required to verify their identity before the account becomes active. EmploySmart reserves the right to approve, suspend, or decline any registration.</p>

@@ -1,5 +1,6 @@
 // CreateJob.jsx
 import { useState, useEffect } from 'react'
+import useMunicipality from '../../hooks/useMunicipality'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { jobService } from '../../services/jobService'
@@ -15,10 +16,15 @@ export default function CreateJob() {
   const [loading, setLoading]     = useState(false)
   const [employer, setEmployer]   = useState(null)
   const [form, setForm] = useState({
-    title: '', description: '', requirements: '', location: 'Cabanatuan City',
+    title: '', description: '', requirements: '', location: '',
     salary_range: '', vacancies: 1, deadline: '', job_type: 'fulltime',
     experience_level: 'entry', education_required: '',
   })
+  const { place } = useMunicipality()
+  // Default location is the configured municipality; the user can still change it.
+  useEffect(() => {
+    if (place) setForm((f) => (f.location ? f : { ...f, location: place }))
+  }, [place])
 
   useEffect(() => {
     const load = async () => {

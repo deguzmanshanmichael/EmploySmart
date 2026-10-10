@@ -6,6 +6,9 @@ const initialState = {
   municipality_name: '',
   municipality_code: '',
   municipality_region: '',
+  municipality_province: '',
+  contact_address: '',
+  office_hours: '',
   contact_office: '',
   contact_email: '',
   contact_phone: '',
@@ -118,6 +121,18 @@ export default function MunicipalitySettings() {
           <div className="form-group">
             <label className="label">Region</label>
             <input className="input" value={form.municipality_region} onChange={(e) => setValue('municipality_region', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">Province</label>
+            <input className="input" placeholder="e.g. Nueva Ecija" value={form.municipality_province} onChange={(e) => setValue('municipality_province', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">Office Address</label>
+            <input className="input" placeholder="e.g. City Hall, Cabanatuan City" value={form.contact_address} onChange={(e) => setValue('contact_address', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="label">Office Hours</label>
+            <input className="input" placeholder="Monday–Friday, 8:00 AM – 5:00 PM" value={form.office_hours} onChange={(e) => setValue('office_hours', e.target.value)} />
           </div>
           <div className="form-group">
             <label className="label">Contact Office</label>

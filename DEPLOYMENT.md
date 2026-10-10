@@ -155,6 +155,18 @@ Every AI-extracted value is checked against the resume text before it is shown. 
 
 ---
 
+### Using EmploySmart in another municipality
+
+No code changes are needed. Log in as admin → **Municipality Settings** and set the municipality name, province, office address, contact email/phone, office hours, landing page text, logo and colours. Registration, verification instructions, the PESO dashboard, and default job/training locations all use these values. Each LGU should use its own deployment and database.
+
+### New PESO tools (no extra setup)
+
+- **PESO → Skills Gap** (also under CLCDO): skills demanded by open jobs vs. skills of jobseekers, available trainings per gap, a 12-month progression trend, applicants needing support, and one-click training recommendations sent as notifications.
+- **PESO / Employer → Placement Feedback**: ratings, placement outcomes and reply threads for accepted applicants, plus a PESO outcome summary by employer.
+- Database changes (`feedback_replies` table, `outcome`/`updated_at` columns) are applied automatically; the manual script is `database/migrations/2026_10_11_placement_feedback.sql`.
+
+---
+
 ## 7. Test the deployed workflow
 
 1. `https://YOUR_DOMAIN/api/` should return `{"success":true,"message":"EmploySmart API v1.0"}`.
@@ -175,6 +187,7 @@ php server/tests/resume_matching_test.php
 php server/tests/job_matching_service_test.php
 php -S 127.0.0.1:8099 server/index.php &       # then, against a development database:
 php server/tests/resume_api_integration_test.php http://127.0.0.1:8099/api
+php server/tests/peso_features_integration_test.php http://127.0.0.1:8099/api
 ```
 
 ---

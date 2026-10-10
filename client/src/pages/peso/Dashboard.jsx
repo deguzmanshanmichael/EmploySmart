@@ -6,8 +6,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { FiUsers, FiBriefcase, FiShield, FiFileText, FiCheckSquare, FiClock } from 'react-icons/fi'
 import { FiPrinter } from 'react-icons/fi'
 import { printReport } from '../../utils/printReport'
+import useMunicipality from '../../hooks/useMunicipality'
 
 export default function PesoDashboard() {
+  const { place: municipalityPlace } = useMunicipality()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -47,7 +49,7 @@ export default function PesoDashboard() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">PESO Dashboard 🏛️</h1><p className="page-subtitle">Public Employment Service Office — Cabanatuan City</p></div><button onClick={printReportView} className="btn-primary btn-sm"><FiPrinter /> Print Report</button></div>
+        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">PESO Dashboard 🏛️</h1><p className="page-subtitle">Public Employment Service Office{municipalityPlace ? ` — ${municipalityPlace}` : ''}</p></div><button onClick={printReportView} className="btn-primary btn-sm"><FiPrinter /> Print Report</button></div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

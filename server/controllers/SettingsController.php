@@ -11,6 +11,9 @@ class SettingsController {
             'municipality_name' => env('APP_MUNICIPALITY_NAME', 'EmploySmart Municipality'),
             'municipality_code' => env('APP_MUNICIPALITY_CODE', 'general'),
             'municipality_region' => env('APP_MUNICIPALITY_REGION', 'Philippines'),
+            'municipality_province' => env('APP_MUNICIPALITY_PROVINCE', ''),
+            'contact_address' => env('APP_CONTACT_ADDRESS', ''),
+            'office_hours' => env('APP_OFFICE_HOURS', 'Monday–Friday, 8:00 AM – 5:00 PM'),
             'contact_office' => env('APP_CONTACT_OFFICE', 'PESO'),
             'contact_email' => env('APP_CONTACT_EMAIL', 'peso@example.org'),
             'contact_phone' => env('APP_CONTACT_PHONE', ''),
@@ -86,7 +89,7 @@ class SettingsController {
         requireRole(['admin', 'peso']);
         $data = getJsonBody();
         $allowed = [
-            'municipality_name', 'municipality_code', 'municipality_region', 'contact_office',
+            'municipality_name', 'municipality_code', 'municipality_region', 'municipality_province', 'contact_address', 'office_hours', 'contact_office',
             'contact_email', 'contact_phone', 'service_scope', 'welcome_message',
             'landing_hero_title', 'landing_hero_subtitle', 'landing_about', 'landing_mission',
             'landing_vision', 'landing_peso', 'landing_clcdo', 'landing_hero_image',

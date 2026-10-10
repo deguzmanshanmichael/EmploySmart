@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import EvaluationNotice from '../components/EvaluationNotice'
-import { FiHome, FiBook, FiPlusSquare, FiUserPlus, FiCheckCircle, FiFileText } from 'react-icons/fi'
+import { FiHome, FiBook, FiPlusSquare, FiUserPlus, FiCheckCircle, FiFileText, FiTarget } from 'react-icons/fi'
 
 const links = [
   { to: '/clcdo',                  label: 'Dashboard',         icon: <FiHome />,        end: true },
@@ -14,6 +14,7 @@ const links = [
   { to: '/clcdo/completion',       label: 'Mark Completion',   icon: <FiCheckCircle /> },
   { type: 'divider', label: 'Reports' },
   { to: '/clcdo/reports',          label: 'Training Reports',  icon: <FiFileText /> },
+  { to: '/clcdo/skills-gap',       label: 'Skills Gap',        icon: <FiTarget /> },
 ]
 
 export default function ClcdoLayout() {

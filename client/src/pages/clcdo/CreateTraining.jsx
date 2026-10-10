@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import useMunicipality from '../../hooks/useMunicipality'
 import { useNavigate } from 'react-router-dom'
 import { trainingService, skillService } from '../../services/index'
 import toast from 'react-hot-toast'
@@ -11,8 +12,13 @@ export default function CreateTraining() {
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     program_name: '', description: '', start_date: '', end_date: '',
-    max_participants: '', location: 'Cabanatuan City', status: 'upcoming',
+    max_participants: '', location: '', status: 'upcoming',
   })
+  const { place } = useMunicipality()
+  // Default location is the configured municipality; the user can still change it.
+  useEffect(() => {
+    if (place) setForm((f) => (f.location ? f : { ...f, location: place }))
+  }, [place])
 
   useEffect(() => {
     skillService.getAll().then(res => setSkills(res.data.data || []))

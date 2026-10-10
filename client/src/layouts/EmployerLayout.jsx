@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import EvaluationNotice from '../components/EvaluationNotice'
-import { FiHome, FiPlusSquare, FiBriefcase, FiUsers, FiBarChart2 } from 'react-icons/fi'
+import { FiHome, FiPlusSquare, FiBriefcase, FiUsers, FiBarChart2, FiMessageSquare } from 'react-icons/fi'
 import { FaBuilding } from 'react-icons/fa' // ✅ ADD THIS
 
 const links = [
@@ -12,6 +12,7 @@ const links = [
   { to: '/employer/create-job',  label: 'Post a Job',      icon: <FiPlusSquare /> },
   { to: '/employer/jobs',        label: 'Manage Jobs',     icon: <FiBriefcase /> },
   { to: '/employer/applicants',  label: 'Applicants',      icon: <FiUsers /> },
+  { to: '/employer/feedback',    label: 'Placement Feedback', icon: <FiMessageSquare /> },
   { type: 'divider', label: 'Company' },
   { to: '/employer/company',     label: 'Company Profile', icon: <FaBuilding /> }, // ✅ FIXED
   { to: '/employer/analytics',   label: 'Analytics',       icon: <FiBarChart2 /> },

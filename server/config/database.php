@@ -89,10 +89,34 @@ function ensureRequiredTables($conn) {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     ];
 
+    // Replies in PESO ↔ employer placement feedback threads.
+    $statements[] = "CREATE TABLE IF NOT EXISTS feedback_replies (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            thread_id INT NOT NULL,
+            sender_id INT NULL,
+            sender_role VARCHAR(50) NOT NULL,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_feedback_replies_thread (thread_id),
+            FOREIGN KEY (thread_id) REFERENCES feedback_threads(id) ON DELETE CASCADE,
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
     foreach ($statements as $sql) {
         if (!$conn->query($sql)) {
             error_log('Schema initialization warning: ' . $conn->error);
         }
+    }
+
+    // Placement outcome and last-activity columns on feedback threads (added once).
+    $columns = [];
+    $res = $conn->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'feedback_threads'");
+    while ($res && ($row = $res->fetch_row())) $columns[] = $row[0];
+    if ($columns && !in_array('outcome', $columns, true)) {
+        $conn->query("ALTER TABLE feedback_threads ADD COLUMN outcome VARCHAR(40) NULL AFTER rating");
+    }
+    if ($columns && !in_array('updated_at', $columns, true)) {
+        $conn->query("ALTER TABLE feedback_threads ADD COLUMN updated_at TIMESTAMP NULL DEFAULT NULL");
     }
 
     // Add the jobseeker training application state to existing deployments.

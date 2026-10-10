@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { feedbackService, settingsService, skillService, trainingService } from '../../services/index'
+import { feedbackService, settingsService, skillGapService, skillService, trainingService } from '../../services/index'
 import toast from 'react-hot-toast'
-import { FiMessageSquare, FiTrendingUp } from 'react-icons/fi'
+import { FiMessageSquare, FiTrendingUp, FiTarget } from 'react-icons/fi'
 
 export default function GrowthCenter() {
   const { user } = useAuth()
@@ -12,6 +12,7 @@ export default function GrowthCenter() {
   const [feedback, setFeedback] = useState('')
   const [rating, setRating] = useState(5)
   const [savingFeedback, setSavingFeedback] = useState(false)
+  const [gaps, setGaps] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -29,7 +30,10 @@ export default function GrowthCenter() {
       }
     }
 
-    if (user?.id) load()
+    if (user?.id) {
+      load()
+      skillGapService.getMine().then((res) => setGaps(res.data?.data || null)).catch(() => setGaps(null))
+    }
   }, [user?.id])
 
   const completedTrainingCount = useMemo(() => {
@@ -100,6 +104,33 @@ export default function GrowthCenter() {
           </div>
         </div>
 
+        <div className="card-flat space-y-4">
+          <div className="flex items-center gap-2 font-semibold text-purple-700">
+            <FiTarget /> Skills Employers Are Looking For
+          </div>
+          {!gaps ? (
+            <p className="text-sm text-gray-500">Loading in-demand skills...</p>
+          ) : gaps.missing_in_demand.length === 0 ? (
+            <p className="text-sm text-gray-500">{gaps.in_demand_strengths.length ? 'You already have every skill requested in current job postings. Great work!' : 'No skill requirements found in current job postings.'}</p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600">
+                You have {gaps.in_demand_strengths.length} of the {gaps.in_demand_strengths.length + gaps.missing_in_demand.length} skills requested in open job postings. Building these could open more opportunities:
+              </p>
+              <ul className="space-y-2">
+                {gaps.missing_in_demand.slice(0, 5).map((m) => (
+                  <li key={m.skill_id} className="rounded-lg border border-gray-100 p-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-gray-800">{m.skill_name}</span>
+                      <span className="text-xs text-gray-500">{m.open_jobs} open job{m.open_jobs > 1 ? 's' : ''}</span>
+                    </div>
+                    {m.trainings.length > 0 && <p className="mt-1 text-xs text-purple-700">Training available: {m.trainings.map((t) => t.program_name).join(', ')}</p>}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="card-flat space-y-4">
