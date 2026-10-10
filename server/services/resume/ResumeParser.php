@@ -212,9 +212,10 @@ class ResumeParser {
         $result = [];
         $topLines = array_values(array_filter(array_merge($sections['header'], $sections['personal'] ?? []), fn($l) => $l !== ''));
 
-        // Email
-        if (preg_match_all('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', $fullText, $m)) {
-            $emails = array_values(array_unique(array_map('strtolower', $m[0])));
+        // Email (also "name @ gmail.com", "name[at]gmail[dot]com")
+        $emailText = preg_replace(['/\s*(?:\[at\]|\(at\)|\s@\s|\s@|@\s)\s*/i', '/\s*(?:\[dot\]|\(dot\))\s*/i'], ['@', '.'], $fullText);
+        if (preg_match_all('/[A-Z0-9._%+\-]+@[A-Z0-9\-]+(?:\.[A-Z0-9\-]+)*\.[A-Z]{2,}/i', $emailText, $m)) {
+            $emails = array_values(array_unique(array_map(fn($e) => rtrim(strtolower($e), '.'), $m[0])));
             $valid = array_values(array_filter($emails, fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
             if ($valid) {
                 $result['email'] = $this->field($valid[0], count($valid) > 1 ? 'medium' : 'high', 'Email address found in resume');
@@ -222,19 +223,12 @@ class ResumeParser {
             }
         }
 
-        // Phone: prefer labelled numbers, then Philippine mobile formats, then generic international numbers.
-        $phone = null;
-        if (preg_match('/(?:mobile|cell(?:phone)?|phone|tel(?:ephone)?|contact(?:\s*(?:no|number|#))?)\.?\s*(?:no\.?|number|#)?\s*[:\-]?\s*(\+?[\d][\d\s().\-]{8,18}\d)/i', $fullText, $m)) {
-            $phone = $m[1];
-        } elseif (preg_match('/(?<!\d)(?:\+?63[\s\-]?|0)9\d{2}[\s\-.]?\d{3}[\s\-.]?\d{4}(?!\d)/', $fullText, $m)) {
-            $phone = $m[0];
-        } elseif (preg_match('/(?<![\d\/])\+?\(?\d{2,4}\)?[\s\-.]\d{3,4}[\s\-.]\d{3,4}(?![\d\/])/', $fullText, $m)) {
-            $phone = $m[0];
-        }
-        if ($phone !== null) {
-            $digits = preg_replace('/\D/', '', $phone);
-            if (strlen($digits) >= 10 && strlen($digits) <= 15 && !preg_match('/^(19|20)\d{2}(19|20)\d{2}/', $digits)) {
-                $result['phone'] = $this->field(trim(preg_replace('/\s+/', ' ', $phone)), 'high', 'Phone number found in resume');
+        // Phone numbers (mobile, landline, international); a second number becomes the alternate phone.
+        $phones = $this->extractPhones($fullText);
+        if ($phones) {
+            $result['phone'] = $this->field($phones[0]['value'], $phones[0]['confidence'], $phones[0]['evidence']);
+            if (isset($phones[1])) {
+                $result['alternate_phone'] = $this->field($phones[1]['value'], $phones[1]['confidence'] === 'high' ? 'medium' : $phones[1]['confidence'], $phones[1]['evidence']);
             }
         }
 
@@ -249,27 +243,18 @@ class ResumeParser {
         }
 
         // Location / address
-        $location = $this->labelled($fullText, ['home address', 'present address', 'permanent address', 'current address', 'address', 'location', 'residence', 'city address', 'based in']);
-        $locConfidence = 'high';
-        if ($location === null) {
-            foreach (array_slice($topLines, 0, 14) as $line) {
-                foreach (preg_split('/\s*[|·•]\s*/u', $line) as $segment) {
-                    if ($this->looksLikeAddress($segment)) { $location = $segment; $locConfidence = 'medium'; break 2; }
-                }
-            }
-        }
-        if ($location !== null) {
-            $location = trim(preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}|\+?\d[\d\s().\-]{8,}\d/i', '', $location), " ,|-·");
-            if (mb_strlen($location) >= 4 && mb_strlen($location) <= 200) {
-                $result['location'] = $this->field($location, $locConfidence, 'Address/location found in resume');
-                [$city, $province] = $this->splitLocation($location);
-                if ($city) $result['city'] = $this->field($city, $locConfidence === 'high' ? 'medium' : 'low', 'Derived from the address');
-                if ($province) $result['province'] = $this->field($province, 'medium', 'Recognised province name in the address');
-            }
+        $address = $this->extractAddress($topLines, $this->lines, $result['full_name']['value'] ?? '');
+        if ($address !== null) {
+            $result['location'] = $this->field($address['value'], $address['confidence'], $address['evidence']);
+            [$city, $province, $zip] = $this->splitLocation($address['value']);
+            $partConfidence = $address['confidence'] === 'high' ? 'medium' : 'low';
+            if ($city) $result['city'] = $this->field($city, $this->isKnownPlace($city) ? 'medium' : $partConfidence, 'Derived from the address');
+            if ($province) $result['province'] = $this->field($province, 'medium', 'Recognised province name in the address');
+            if ($zip) $result['zip_code'] = $this->field($zip, $partConfidence, 'ZIP code in the address');
         }
 
         // Explicitly labelled personal data (common in Philippine resumes).
-        $birth = $this->labelled($fullText, ['date of birth', 'birth date', 'birthdate', 'birthday', 'born on', 'born']);
+        $birth = $this->labelled($fullText, ['date of birth', 'birth date', 'birthdate', 'birthday', 'date of birth/age', 'born on', 'born', 'dob', 'd.o.b.'], true);
         if ($birth !== null && ($date = $this->parseFullDate($birth)) !== null) {
             $result['birth_date'] = $this->field($date, 'high', 'Labelled birth date');
         }
@@ -380,41 +365,219 @@ class ResumeParser {
         return $out;
     }
 
-    private function looksLikeAddress(string $text): bool {
-        $lower = mb_strtolower($text);
-        if (mb_strlen($text) < 6 || mb_strlen($text) > 160 || str_contains($lower, '@')) return false;
-        if ($this->educationLevelOf($text) !== null || $this->institutionOf($text) !== null) return false;
-        foreach (self::PROVINCES as $province) {
-            if (preg_match('/\b' . preg_quote($province, '/') . '\b/u', $lower)) return true;
+    /**
+     * Find phone numbers in any common Philippine or international format.
+     * @return array<int, array{value:string, confidence:string, evidence:string}>
+     */
+    private function extractPhones(string $text): array {
+        $label = '(?:mobile|cell(?:ular)?|cellphone|cp|phone|tel(?:ephone)?|landline|contact|viber|whats\s*app|telefax|fax|hotline)';
+        $reject = '/(?:sss|tin|gsis|philhealth|pag-?ibig|hdmf|umid|prc|license|licence|passport|id|zip|postal|account|acct|reference|ref)\s*(?:no\.?|number|#)?\s*[:\-#]?\s*$/i';
+        $found = [];
+        foreach (preg_split("/\n/u", $text) as $lineNo => $line) {
+            if (!preg_match_all('/(?<![\w@.])(\(?\+?\(?\d[\d\s().\-]{5,24}\d)(?![\w@])/u', $line, $m, PREG_OFFSET_CAPTURE)) continue;
+            foreach ($m[1] as [$raw, $offset]) {
+                $before = mb_substr(substr($line, 0, $offset), -30);
+                if (preg_match($reject, $before)) continue;
+                $labelled = (bool)preg_match('/' . $label . '[^\d\n]{0,18}$/iu', $before);
+                // A candidate may hold two numbers ("0917 123 4567 0918 765 4321"); split on wide gaps.
+                foreach (preg_split('/\s{2,}|\s+(?=\+)/', trim($raw)) as $piece) {
+                    $kind = $this->phoneKind($piece, $labelled);
+                    if ($kind === null) continue;
+                    $digits = preg_replace('/\D/', '', $piece);
+                    $key = preg_replace('/^(?:63|0)/', '', $digits);
+                    if (isset($found[$key])) continue;
+                    $value = trim(preg_replace('/\s+/', ' ', $piece), " .-");
+                    $found[$key] = [
+                        'value' => $value,
+                        'confidence' => $labelled || $kind === 'mobile' ? 'high' : 'medium',
+                        'evidence' => ($labelled ? 'Labelled ' : '') . ['mobile' => 'mobile number', 'landline' => 'landline number', 'international' => 'phone number', 'local' => 'local phone number'][$kind] . ' found in resume',
+                        'rank' => ($labelled ? 0 : 10) + ['mobile' => 0, 'landline' => 2, 'international' => 1, 'local' => 3][$kind] + $lineNo / 1000,
+                    ];
+                }
+            }
         }
-        return (bool)preg_match('/\b(brgy\.?|barangay|purok|sitio|street|st\.|avenue|ave\.|road|rd\.|subdivision|subd\.|village|city|municipality|province|philippines|zip)\b/u', $lower)
-            && preg_match('/,/', $text);
+        uasort($found, fn($a, $b) => $a['rank'] <=> $b['rank']);
+        return array_values(array_map(fn($p) => array_diff_key($p, ['rank' => 1]), $found));
     }
 
+    private function phoneKind(string $raw, bool $labelled): ?string {
+        $raw = trim($raw);
+        $digits = preg_replace('/\D/', '', $raw);
+        // Years, year ranges and dates are not phone numbers.
+        if (preg_match('/^\(?(?:19|20)\d{2}\)?\s*[-–.\/]?\s*\(?(?:(?:19|20)\d{2})?\)?$/', $raw)) return null;
+        if (preg_match('/^\d{1,2}[\/.\-]\d{1,2}[\/.\-](?:19|20)?\d{2}$/', $raw)) return null;
+        if (preg_match('/^(?:63|0)?9\d{9}$/', $digits) && (str_starts_with($digits, '9') ? strlen($digits) === 10 : true)) return 'mobile';
+        if (preg_match('/^0[2-8]\d{7,9}$/', $digits) || preg_match('/^63[2-8]\d{7,9}$/', $digits)) {
+            return (preg_match('/[\s().\-]/', $raw) || $labelled) ? 'landline' : null;
+        }
+        if (str_starts_with($raw, '+') || str_starts_with($raw, '(+')) {
+            return strlen($digits) >= 10 && strlen($digits) <= 15 ? 'international' : null;
+        }
+        if ($labelled && strlen($digits) >= 10 && strlen($digits) <= 15) return 'international';
+        // North-American style "890-555-0401" / "(415) 555-0132".
+        if (preg_match('/^\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}$/', $raw)) return 'international';
+        if ($labelled && preg_match('/^\d{3}[\s\-.]?\d{4}$/', $raw)) return 'local';
+        return null;
+    }
+
+    private const PLACES = ['manila', 'quezon city', 'makati', 'pasig', 'taguig', 'mandaluyong', 'marikina', 'caloocan', 'valenzuela', 'malabon', 'navotas', 'parañaque', 'paranaque', 'las piñas', 'las pinas', 'muntinlupa', 'pasay', 'san juan', 'pateros',
+        'cabanatuan', 'gapan', 'palayan', 'san jose', 'muñoz', 'munoz', 'science city of muñoz', 'aliaga', 'bongabon', 'cabiao', 'carranglan', 'cuyapo', 'gabaldon', 'general mamerto natividad', 'general tinio', 'guimba', 'jaen', 'laur', 'licab', 'llanera', 'lupao', 'nampicuan', 'pantabangan', 'peñaranda', 'penaranda', 'san antonio', 'san isidro', 'san leonardo', 'santa rosa', 'santo domingo', 'sto. domingo', 'sta. rosa', 'talavera', 'talugtug', 'zaragoza', 'quezon', 'rizal',
+        'san fernando', 'angeles', 'mabalacat', 'tarlac city', 'malolos', 'meycauayan', 'san jose del monte', 'olongapo', 'balanga', 'baliwag', 'baliuag', 'plaridel', 'bocaue', 'marilao', 'guiguinto', 'santa maria', 'apalit', 'guagua', 'concepcion', 'paniqui', 'capas', 'dagupan', 'urdaneta', 'baguio', 'san carlos', 'alaminos', 'antipolo', 'cainta', 'taytay', 'calamba', 'santa rosa', 'biñan', 'binan', 'san pedro', 'cabuyao', 'san pablo', 'dasmariñas', 'dasmarinas', 'bacoor', 'imus', 'general trias', 'tagaytay', 'batangas city', 'lipa', 'tanauan', 'lucena', 'naga', 'legazpi', 'iloilo city', 'bacolod', 'cebu city', 'mandaue', 'lapu-lapu', 'davao city', 'cagayan de oro', 'general santos', 'zamboanga city', 'iligan', 'butuan', 'tacloban', 'puerto princesa', 'cauayan', 'santiago', 'tuguegarao', 'ilagan', 'vigan', 'laoag', 'san fernando city'];
+
+    /** Known places, longest first so "Science City of Muñoz" wins over "Muñoz". */
+    private function placesByLength(): array {
+        static $sorted = null;
+        if ($sorted === null) {
+            $sorted = array_values(array_unique(self::PLACES));
+            usort($sorted, fn($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+        }
+        return $sorted;
+    }
+
+    private function isKnownPlace(string $text): bool {
+        $lower = mb_strtolower(trim(preg_replace('/\bcity\s+of\s+|\s+city$/iu', '', $text)));
+        return in_array($lower, self::PLACES, true) || in_array($lower . ' city', self::PLACES, true);
+    }
+
+    /** Score how much a piece of text looks like a home address (0 = not an address). */
+    private function addressScore(string $text): int {
+        $lower = mb_strtolower($text);
+        if (mb_strlen($text) < 4 || mb_strlen($text) > 180 || str_contains($lower, '@') || preg_match('#https?://|www\.#', $lower)) return 0;
+        if ($this->educationLevelOf($text) !== null || $this->institutionOf($text) !== null) return 0;
+        if ($this->headingSection($text) !== null) return 0;
+        if (preg_match('/[.!?]$/u', $text) && str_word_count($text) > 8) return 0; // a sentence
+        $score = 0;
+        foreach (self::PROVINCES as $province) {
+            if (preg_match('/\b' . preg_quote($province, '/') . '\b/u', $lower)) { $score += 3; break; }
+        }
+        foreach (self::PLACES as $place) {
+            if (preg_match('/(?<![\p{L}])' . preg_quote($place, '/') . '(?![\p{L}])/u', $lower)) { $score += 3; break; }
+        }
+        if (preg_match('/\b(brgy|bgy|barangay|purok|sitio|zone|poblacion|street|st\.|avenue|ave\.?|road|rd\.|highway|hwy|subdivision|subd\.?|village|vill\.|compound|cmpd|blk|block|lot|phase|bldg|building|unit|apt|apartment|townhouse|homes|heights|extension|ext\.)\b/u', $lower)
+            || preg_match('/\d+\w*\s+[\p{L}\s]{2,30}\b(st|rd|ave|blvd|boulevard|lane|ln|drive|way|court|ct)\b\.?(?:,|$)/u', $lower)) $score += 2;
+        if (preg_match('/\b(city|municipality|province|philippines|usa|u\.s\.a|united states|canada|united kingdom|uk|singapore|australia|japan|uae|dubai|saudi arabia|qatar|hong kong|taiwan|new zealand)\b/u', $lower)) $score += 1;
+        if (str_contains($text, ',')) $score += 1;
+        if (preg_match('/^(?:#|no\.?\s*)?\d+[a-z]?\b/iu', trim($text))) $score += 1;
+        // Job titles and employers are not addresses.
+        if ($this->companyScore($text) > 1 || ($this->titleScore($text) > 0 && $score < 4)) $score -= 3;
+        return $score;
+    }
+
+    private function cleanAddress(string $text): string {
+        $text = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', ' ', $text);
+        foreach ($this->extractPhones($text) as $p) $text = str_replace($p['value'], ' ', $text);
+        $text = preg_replace('/^[^\p{L}\p{N}#]+/u', '', $text); // leading icons/bullets
+        $text = preg_replace('/\s*\|\s*/u', ', ', $text);
+        $text = preg_replace('/\s+,/u', ',', preg_replace('/\s+/u', ' ', $text));
+        return trim($text, " ,|-·:;");
+    }
+
+    /**
+     * Address: a labelled value (same line or following lines), otherwise the most
+     * address-like line near the top of the resume or in the personal data section.
+     */
+    private function extractAddress(array $topLines, array $allLines, string $name): ?array {
+        $labels = 'home address|present address|permanent address|current address|residential address|residence address|mailing address|provincial address|city address|complete address|address|residence|location|lives in|based in';
+        $all = array_values(array_filter($allLines, fn($l) => $l !== '' && $l !== ResumeTextExtractor::COLUMN_BREAK));
+        $sources = [[$topLines, true], [$all, false]];
+        foreach ($sources as [$lines, $isTop]) {
+            foreach ($lines as $i => $line) {
+                $plain = preg_replace('/^[•\s]+/u', '', $line);
+                if (!preg_match('/^[^\p{L}\p{N}]{0,3}(' . $labels . ')\s*(?:[:\-–|]|\s{2,})\s*(.*)$/iu', $plain, $m)
+                    && !preg_match('/^[^\p{L}\p{N}]{0,3}(' . $labels . ')\s*$/iu', $plain, $m)) {
+                    // "Present Address #45 Mabini St." (table cell spacing lost during extraction)
+                    if (!preg_match('/^[^\p{L}\p{N}]{0,3}(' . $labels . ')\s+(\S.*)$/iu', $plain, $m)) continue;
+                    if (!str_contains(trim($m[1]), ' ') && $this->addressScore($m[2]) < 3) continue;
+                }
+                $label = mb_strtolower($m[1]);
+                // "Location:" outside the top area usually belongs to a job entry.
+                if (!$isTop && in_array($label, ['location', 'based in'], true)) continue;
+                $value = trim($m[2] ?? '');
+                $j = $i;
+                // Value on the next line(s), or wrapped onto the next line after a comma.
+                while (isset($lines[$j + 1]) && $j < $i + 3) {
+                    $next = trim(preg_replace('/^[•\s]+/u', '', $lines[$j + 1]));
+                    $continues = $value === '' || str_ends_with($value, ',') || ($j < $i + 2 && $this->addressScore($next) >= 3 && $this->extractPhones($next) === []);
+                    if (!$continues || $next === '' || preg_match('/^[\p{L}\s\/]{2,30}\s*:/u', $next) || $this->headingSection($next) !== null || str_contains($next, '@')) break;
+                    $value = trim($value === '' ? $next : rtrim($value, ',') . ', ' . $next);
+                    $j++;
+                }
+                $value = $this->cleanAddress($value);
+                if (mb_strlen($value) >= 3 && mb_strlen($value) <= 200 && preg_match('/\p{L}/u', $value)) {
+                    return ['value' => $value, 'confidence' => 'high', 'evidence' => 'Labelled ' . $label . ' in resume'];
+                }
+            }
+        }
+
+        $best = null; $bestScore = 0;
+        foreach (array_slice($topLines, 0, 40) as $i => $line) {
+            $segments = preg_split('/\s*(?:\||·|•|\s{3,})\s*/u', $line);
+            foreach ($segments as $segment) {
+                $segment = $this->cleanAddress($segment);
+                if ($segment === '' || ($name !== '' && mb_strtolower($segment) === mb_strtolower($name))) continue;
+                $score = $this->addressScore($segment);
+                // Two-line addresses: "Blk 5 Lot 12, Phase 2," + "San Jose City, Nueva Ecija".
+                $next = isset($topLines[$i + 1]) ? $this->cleanAddress($topLines[$i + 1]) : '';
+                if ($score >= 2 && $next !== '' && count($segments) === 1 && (str_ends_with(trim($line), ',') || ($this->addressScore($next) >= 3 && $score < 4 && !preg_match('/\b(19|20)\d{2}\b/', $next)))) {
+                    $joined = rtrim($segment, ',') . ', ' . $next;
+                    if ($this->addressScore($joined) > $score) { $segment = $joined; $score = $this->addressScore($joined); }
+                }
+                $score -= intdiv($i, 15); // later lines are less likely to be the home address
+                if ($score > $bestScore) { $bestScore = $score; $best = $segment; }
+            }
+        }
+        if ($best === null || $bestScore < 3) return null;
+        return ['value' => mb_substr($best, 0, 200), 'confidence' => $bestScore >= 5 ? 'medium' : 'low', 'evidence' => 'Address-like line near the top of the resume'];
+    }
+
+    /** @return array{0:?string,1:?string,2:?string} city, province, ZIP code */
     private function splitLocation(string $location): array {
         $lower = mb_strtolower($location);
         $province = null;
         foreach (self::PROVINCES as $p) {
             if (preg_match('/\b' . preg_quote($p, '/') . '\b/u', $lower)) {
-                $province = mb_convert_case($p, MB_CASE_TITLE, 'UTF-8');
+                $province = $p === 'ncr' ? 'Metro Manila' : mb_convert_case($p, MB_CASE_TITLE, 'UTF-8');
                 break;
             }
         }
-        $parts = array_values(array_filter(array_map('trim', preg_split('/,/', $location)), fn($p) => $p !== ''));
+        // ZIP: the last 4-digit number, never the house number at the start; year-like values need a province.
+        $zip = null;
+        if (preg_match('/(?<![\d\-])(\d{4})(?![\d\-])[^\d]*$/u', $location, $zm, PREG_OFFSET_CAPTURE) && $zm[1][1] > 0) {
+            $candidate = $zm[1][0];
+            if (!preg_match('/^(19|20)\d{2}$/', $candidate) || $province !== null || preg_match('/philippines/i', $location)) $zip = $candidate;
+        }
+        $parts = array_values(array_filter(array_map(fn($p) => trim(preg_replace('/\b\d{4}\b/', '', $p)), preg_split('/,|\s+-\s+/', $location)), fn($p) => $p !== ''));
         $city = null;
         foreach ($parts as $part) {
-            if (preg_match('/\bcity\b/i', $part) && !preg_match('/\d/', $part)) { $city = $part; break; }
+            if (preg_match('/\bcity\b/i', $part) && !preg_match('/\d|city hall|city proper|\b(brgy|barangay|purok|st\.|street|subd|blk|lot)\b/i', $part) && mb_strlen($part) <= 30) { $city = $part; break; }
+        }
+        if ($city === null) {
+            foreach ($parts as $part) {
+                if ($this->isKnownPlace($part) && mb_strtolower($part) !== mb_strtolower((string)$province)) { $city = $part; break; }
+            }
+        }
+        if ($city === null) {
+            // A municipality written inside a longer part ("Brgy. Sto. Rosario Talavera").
+            foreach ($this->placesByLength() as $place) {
+                if (preg_match('/(?<![\p{L}])' . preg_quote($place, '/') . '(?![\p{L}])/u', $lower, $pm, PREG_OFFSET_CAPTURE) && $place !== mb_strtolower((string)$province) && !preg_match('/\b(brgy|barangay)\.?\s+' . preg_quote($place, '/') . '/u', $lower)) {
+                    // Same position in the original text keeps the resume's spelling and capitalisation.
+                    $city = substr($location, $pm[0][1], strlen($pm[0][0]));
+                    if (preg_match('/^\s+city\b/iu', substr($location, $pm[0][1] + strlen($pm[0][0])), $cm)) $city .= $cm[0];
+                    break;
+                }
+            }
         }
         if ($city === null && $province !== null) {
             foreach ($parts as $i => $part) {
-                if (mb_strtolower($part) === mb_strtolower($province) && $i > 0 && !preg_match('/\d|brgy|barangay|purok|street|st\./i', $parts[$i - 1])) {
+                if (mb_strtolower($part) === mb_strtolower($province) && $i > 0 && !preg_match('/\d|brgy|barangay|purok|street|st\.|blk|lot|phase|subd/i', $parts[$i - 1])) {
                     $city = $parts[$i - 1];
                     break;
                 }
             }
         }
-        if ($city !== null && preg_match('/^(\p{L}[\p{L}\s.\-]+)$/u', $city) === 0) $city = null;
-        return [$city, $province];
+        if ($city !== null && !preg_match('/^\p{L}[\p{L}\s.\-ñÑ]+$/u', $city)) $city = null;
+        if ($city !== null && $province !== null && mb_strtolower($city) === mb_strtolower($province)) $city = null;
+        return [$city, $province, $zip];
     }
 
     // ─── Objective ──────────────────────────────────────────────────────────
@@ -863,15 +1026,22 @@ class ResumeParser {
 
     private function parseFullDate(string $text): ?string {
         $text = trim(preg_replace('/\s+/', ' ', $text));
-        if (preg_match('/^((' . self::MONTHS . ')\.?\s+\d{1,2},?\s+(19|20)\d{2}|\d{1,2}\s+(' . self::MONTHS . ')\.?,?\s+(19|20)\d{2}|(19|20)\d{2}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/(19|20)\d{2})/iu', $text, $m)) {
-            $ts = strtotime(str_replace(',', '', $m[1]));
-            if ($ts !== false) {
-                $date = date('Y-m-d', $ts);
-                $age = (int)date('Y') - (int)substr($date, 0, 4);
-                if ($age >= 14 && $age <= 90) return $date;
-            }
+        $text = preg_replace('/\b(\d{1,2})(?:st|nd|rd|th)\b(?:\s+of)?/i', '$1', $text);
+        $date = null;
+        if (preg_match('/^((' . self::MONTHS . ')\.?\s+\d{1,2},?\s+(19|20)\d{2}|\d{1,2}\s+(' . self::MONTHS . ')\.?,?\s+(19|20)\d{2})/iu', $text, $m)) {
+            $ts = strtotime(str_replace([',', '.'], ['', ''], $m[1]));
+            if ($ts !== false) $date = date('Y-m-d', $ts);
+        } elseif (preg_match('/^((?:19|20)\d{2})[\/\-.](\d{1,2})[\/\-.](\d{1,2})\b/', $text, $m)) {
+            $date = checkdate((int)$m[2], (int)$m[3], (int)$m[1]) ? sprintf('%04d-%02d-%02d', $m[1], $m[2], $m[3]) : null;
+        } elseif (preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.]((?:19|20)\d{2})\b/', $text, $m)) {
+            // Philippine resumes normally write month first; a first number above 12 must be the day.
+            [$a, $b, $y] = [(int)$m[1], (int)$m[2], (int)$m[3]];
+            [$month, $day] = $a > 12 ? [$b, $a] : [$a, $b];
+            $date = checkdate($month, $day, $y) ? sprintf('%04d-%02d-%02d', $y, $month, $day) : null;
         }
-        return null;
+        if ($date === null) return null;
+        $age = (int)date('Y') - (int)substr($date, 0, 4);
+        return ($age >= 14 && $age <= 90) ? $date : null;
     }
 
     // ─── Skills ────────────────────────────────────────────────────────────
@@ -1074,11 +1244,18 @@ class ResumeParser {
 
     // ─── Helpers ───────────────────────────────────────────────────────────
 
-    private function labelled(string $text, array $labels): ?string {
+    private function labelled(string $text, array $labels, bool $allowSpace = false): ?string {
+        $sep = $allowSpace ? '(?:[:\-–|]|\s)' : '(?:[:\-–|]|\s{2,})';
         foreach ($labels as $label) {
-            if (preg_match('/(?:^|\n|\|)\s*' . preg_quote($label, '/') . '\s*[:\-–]\s*([^\n|]{2,200})/iu', $text, $m)) {
-                $value = trim($m[1]);
+            $l = preg_quote($label, '/');
+            if (preg_match('/(?:^|\n|\|)[^\S\n]*[•]?[^\S\n]*' . $l . '[^\S\n]*' . $sep . '[^\S\n]*([^\n|]{2,200})/iu', $text, $m)) {
+                $value = trim($m[1], " \t:-–");
                 if ($value !== '') return $value;
+            }
+            // Label alone on its line, value on the next line.
+            if (preg_match('/(?:^|\n)[^\S\n]*[•]?[^\S\n]*' . $l . '[^\S\n]*:?[^\S\n]*\n[^\S\n]*([^\n|]{2,200})/iu', $text, $m)) {
+                $value = trim($m[1]);
+                if ($value !== '' && $this->headingSection($value) === null && !preg_match('/^[\p{L}\s\/]{2,30}\s*:/u', $value)) return $value;
             }
         }
         return null;

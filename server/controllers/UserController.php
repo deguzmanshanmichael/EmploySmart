@@ -316,8 +316,8 @@ class UserController {
             $lines[] = 'No approved jobs recorded yet.';
         }
 
-        $dir = __DIR__ . '/../uploads/resumes/generated/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $dir = dataDir() . '/storage/generated/';
+        if (!is_dir($dir)) mkdir($dir, 0750, true);
 
         $filename = 'resume_' . $id . '_generated.pdf';
         $filepath = $dir . $filename;
@@ -552,8 +552,7 @@ class UserController {
             sendError('Invalid image file detected', 422);
         }
 
-        $dir = __DIR__ . '/../uploads/avatars/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $dir = uploadsDir('avatars') . '/';
         
         $safeDir = realpath($dir) ?: $dir;
         if (!is_dir($safeDir) || !is_writable($safeDir)) {

@@ -142,7 +142,7 @@ class SettingsController {
             sendError('Only JPG, PNG, and WebP images are allowed', 422);
         }
 
-        $dir = __DIR__ . '/../uploads/landing/';
+        $dir = uploadsDir('landing') . '/';
         if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
             sendError('Unable to prepare image upload directory', 500);
         }

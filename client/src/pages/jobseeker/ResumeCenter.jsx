@@ -21,7 +21,8 @@ const SELECT_OPTIONS = {
 }
 const PROFILE_FIELDS = [
   ['first_name', 'First name', 'first_name'], ['middle_name', 'Middle name', 'middle_name'], ['last_name', 'Last name', 'last_name'],
-  ['phone', 'Phone', 'phone'], ['address', 'Address', 'location'], ['city', 'City / Municipality', 'city'], ['province', 'Province', 'province'],
+  ['phone', 'Phone', 'phone'], ['alternate_phone', 'Alternate phone', 'alternate_phone'], ['address', 'Address', 'location'],
+  ['city', 'City / Municipality', 'city'], ['province', 'Province', 'province'], ['zip_code', 'ZIP code', 'zip_code'],
   ['birth_date', 'Birth date', 'birth_date'], ['sex', 'Sex', 'sex'], ['civil_status', 'Civil status', 'civil_status'],
 ]
 const CONFIDENCE_STYLE = { high: 'badge-green', medium: 'badge-yellow', low: 'badge-gray' }

@@ -195,6 +195,20 @@ if ($resource === 'auth') {
     if ($id === null && $method === 'POST') { $ctrl->create(); }
     elseif ($id !== null && $action !== null && $method === 'GET') { $ctrl->listForTarget($id, $action); }
     else { sendError('Route not found', 404); }
+} elseif ($resource === 'uploads' && $method === 'GET') {
+    // Uploaded images and documents live outside the deployed folder (config/paths.php);
+    // serve them at the same /api/uploads/... URLs the frontend already uses. Resumes are never served here.
+    $publicFolders = ['avatars', 'landing', 'training_certificates', 'verification_docs'];
+    $file = in_array($parts[1] ?? '', $publicFolders, true) ? resolveUploadPath(implode('/', $parts)) : null;
+    $types = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp', 'gif' => 'image/gif', 'pdf' => 'application/pdf', 'doc' => 'application/msword', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    $ext = $file ? strtolower(pathinfo($file, PATHINFO_EXTENSION)) : '';
+    if (!$file || !isset($types[$ext])) { sendError('File not found', 404); }
+    header('Content-Type: ' . $types[$ext]);
+    header('Content-Length: ' . filesize($file));
+    header('Content-Disposition: inline; filename="' . basename($file) . '"');
+    header('Cache-Control: public, max-age=86400');
+    readfile($file);
+    exit;
 } elseif ($resource === 'resume-profile') {
     require_once __DIR__ . '/controllers/ResumeProfileController.php';
     $ctrl = new ResumeProfileController();

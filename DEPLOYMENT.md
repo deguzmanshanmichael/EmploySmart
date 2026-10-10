@@ -14,8 +14,8 @@ Legend: **[hPanel]** = Hostinger control panel or File Manager, no SSH needed. *
 | PHP extensions | `mysqli`, `mbstring`, `json`, `fileinfo`, `zlib`, `iconv`, `curl` | Usually on by default. `zip` is needed only for DOCX resumes. `curl` is needed only for AI assistance. |
 | PHP limits | `upload_max_filesize` and `post_max_size` ≥ 8M, `memory_limit` ≥ 256M, `max_execution_time` ≥ 120 | **[hPanel] → PHP Configuration → PHP options**. |
 | MySQL / MariaDB | MySQL 5.7+ or MariaDB 10.3+ (InnoDB) | |
-| Node.js (build machine only) | Node 18+ and npm 9+ | Used to build the React frontend. Not needed on Hostinger. |
-| Composer (optional) | 2.x | `server/vendor/` is committed, so Composer is only needed to update dependencies. |
+| Node.js | Node 18+ and npm 9+ | Used by Hostinger's GitHub deployment to run `npm run build` (or on your computer for manual uploads). |
+| Composer (optional) | 2.x | `server/vendor/` is committed and bundled by the build, so Composer is only needed to update dependencies. |
 
 ### What runs where (resume feature)
 
@@ -30,50 +30,70 @@ Tesseract or other OCR engines cannot be installed on shared hosting, so OCR del
 
 ---
 
-## 2. Get the latest code
+## 2. How a redeploy works now
 
-**[SSH]**
-```bash
-cd ~/domains/YOUR_DOMAIN/          # or wherever your clone lives
-git pull origin main
+Hostinger's GitHub deployment runs the build and **replaces `public_html` with the build output (`dist/`)**. Anything uploaded into `public_html` by hand, such as an `api/` folder or its `.env`, is deleted on the next deploy. That is why the API used to disappear.
+
+The build now produces the whole site:
+
+```
+dist/                       → published to public_html on every deploy
+├── index.html, assets/     ← React frontend
+├── .htaccess               ← routes /api to the PHP API, blocks .env/.git
+└── api/                    ← the PHP API (copied from server/, including vendor/)
 ```
 
-**[hPanel]** If you connected the repository in **Advanced → Git**, click **Deploy** (or enable auto-deployment). Otherwise download the repository ZIP from GitHub on your computer and upload the files with File Manager as described below.
+Everything that must **survive** deploys lives in a private folder beside `public_html`, which deployments never touch:
 
-Never upload your local `.env`, `server/storage/`, or `server/uploads/` folders; they hold secrets and personal data.
+```
+/home/uXXXXXXXXX/domains/YOUR_DOMAIN/
+├── employsmart_private/    ← persistent, created automatically
+│   ├── .env                ← database password, JWT secret, API keys
+│   ├── uploads/            ← avatars, certificates, permits, landing images
+│   └── storage/resumes/    ← uploaded resumes (never web-accessible)
+└── public_html/            ← replaced on every deploy
+```
+
+Uploaded files keep their old URLs (`/api/uploads/avatars/...`); the API serves them from the private folder. Resumes are only available through the logged-in download route.
+
+### Hostinger deployment settings **[hPanel]**
+
+In **Websites → your site → GitHub deployment** (or the Node.js/frontend app settings), use:
+
+| Setting | Value |
+|---|---|
+| Repository / branch | `deguzmanshanmichael/EmploySmart` / `main` |
+| Install command | `npm install` (default) |
+| Build command | `npm run build` |
+| Output / publish directory | `dist` |
+| Node version | 18 or newer |
+
+`npm run build` builds the frontend and copies `server/` into `dist/api` (see `client/scripts/bundleApi.js`). After this, **Deploy** is the only step for code changes: no File Manager uploads.
 
 ---
 
-## 3. Build and deploy the frontend
+## 3. One-time setup of the private folder
 
-On your computer (or over SSH if Node is available):
-```bash
-npm run build          # from the repository root; installs client deps and builds
-```
-The build is written to `dist/` at the repository root.
+Do this once. Later deploys need nothing.
 
-Upload **the contents** of `dist/` to `public_html/` **[hPanel File Manager or SFTP]**, together with the repository's root `.htaccess` (it routes `/api/*` to the PHP backend, blocks secrets, and serves the React app).
+**Option A (easiest):** deploy once, then upload your `.env` to `public_html/api/.env` with File Manager as before and open `https://YOUR_DOMAIN/api/` in a browser. The API copies the file to `employsmart_private/.env` automatically, and later deploys no longer remove it.
 
-The frontend calls the API at `https://YOUR_DOMAIN/api` automatically. Set `VITE_API_URL` before building only if the API lives on a different domain.
+**Option B:** in File Manager, open `/home/uXXXXXXXXX/domains/YOUR_DOMAIN/` (the folder that contains `public_html`), create the folder `employsmart_private` (permission 750), and create `.env` inside it (permission 600).
+
+Check: after the next deploy, the site and login still work, and `employsmart_private/` still contains `.env`.
+
+Notes:
+- If the API cannot create `employsmart_private` (unusual hosting restrictions), set `DATA_DIR` in `.env` to any writable folder outside `public_html`.
+- To change a setting later, edit `employsmart_private/.env`, not `public_html/api/.env`; the private file takes priority.
+- Files uploaded before this change were stored inside `public_html/api/uploads` and were already removed by earlier deploys. Affected users need to upload their photo or resume again.
 
 ---
 
-## 4. Deploy the PHP backend
+## 4. Manual deployment (only without GitHub deployment)
 
-Recommended layout:
-```
-public_html/
-├── .htaccess              ← repository root .htaccess
-├── index.html, assets/    ← contents of dist/
-└── api/                   ← contents of server/ (including vendor/ and .htaccess)
-    └── .env               ← production settings (permission 600)
-```
+On your computer: `npm run build`, then upload the **contents** of `dist/` (including `.htaccess` and `api/`) to `public_html/` **[hPanel File Manager or SFTP]**. Do the one-time setup in section 3.
 
-1. Upload everything inside `server/` to `public_html/api/` **[hPanel]**, including `vendor/`, `storage/.htaccess`, `uploads/resumes/.htaccess` and `.htaccess`. If you use Git, a symlink or copy step over **[SSH]** does the same: `rsync -a --exclude storage/resumes server/ ~/public_html/api/`.
-2. Make `api/storage/` and `api/uploads/` writable (755 for folders) **[hPanel → File Manager → Permissions]**.
-3. Create the private resume folder **outside** `public_html` **[hPanel File Manager]**, e.g. `/home/uXXXXXXXXX/employsmart_private/resumes`, permission 750. Put its absolute path in `RESUME_STORAGE_DIR` (step 6).
-
-If `RESUME_STORAGE_DIR` is empty, resumes are stored in `api/storage/resumes/`, which is protected by `api/storage/.htaccess` (`Require all denied`). Storing them outside `public_html` is safer because it does not depend on `.htaccess` support.
+**[SSH]** alternative: `git pull && npm run build && rsync -a --delete dist/ ~/domains/YOUR_DOMAIN/public_html/`
 
 ---
 
@@ -94,7 +114,7 @@ The migration only adds a table; existing tables and data are not changed. It is
 
 ## 6. Environment variables
 
-Edit `public_html/api/.env` **[hPanel File Manager]** (start from `.env.example`). Never commit this file.
+Edit `employsmart_private/.env` **[hPanel File Manager]** (start from `.env.example`). Never commit this file, and never put it in the repository.
 
 ```env
 DB_HOST=localhost
@@ -107,8 +127,11 @@ CORS_ALLOW_EMPTY_ORIGIN=false
 APP_ENV=production
 APP_DEBUG=false
 
-# Resume feature
-RESUME_STORAGE_DIR=/home/uXXXXXXXXX/employsmart_private/resumes
+# Persistent data: leave empty to use employsmart_private/ automatically
+DATA_DIR=
+
+# Resume feature (empty RESUME_STORAGE_DIR = employsmart_private/storage/resumes)
+RESUME_STORAGE_DIR=
 RESUME_MAX_SIZE_MB=5
 RESUME_MAX_PAGES=10
 RESUME_USE_PDFTOTEXT=auto
@@ -120,12 +143,12 @@ RESUME_AI_MODEL=claude-opus-5-5
 RESUME_AI_TIMEOUT=60
 ```
 
-`.env` is read from `public_html/.env` first and then `public_html/api/.env`. Keep it in `api/`, which the API's `.htaccess` protects, and set permission **600**.
+`.env` is read from `employsmart_private/.env` first, then `public_html/.env`, then `public_html/api/.env`. Only the first location survives deploys. Set permission **600**.
 
 ### Optional: AI-assisted resume reading
 
 1. Create an API key in the Anthropic Console.
-2. Set `RESUME_AI_ENABLED=true` and `ANTHROPIC_API_KEY=...` in `api/.env` only. The key is never sent to the browser.
+2. Set `RESUME_AI_ENABLED=true` and `ANTHROPIC_API_KEY=...` in `employsmart_private/.env` only. The key is never sent to the browser.
 3. Resume text is sent to the Claude API for processing when this is on. Tell your users so, and turn it off if your data-handling policy does not allow it.
 
 Every AI-extracted value is checked against the resume text before it is shown. If the API is slow, rate-limited, or unreachable, the system falls back to the built-in parser automatically.
@@ -135,16 +158,19 @@ Every AI-extracted value is checked against the resume text before it is shown. 
 ## 7. Test the deployed workflow
 
 1. `https://YOUR_DOMAIN/api/` should return `{"success":true,"message":"EmploySmart API v1.0"}`.
+   - After every deploy, File Manager should show `public_html/api/` (shipped by the build) and `employsmart_private/` beside `public_html`.
 2. Log in as a jobseeker → **My Resume** → upload a text PDF. You should see "Waiting for your review" with extracted details.
 3. Correct anything that is wrong → **Confirm & Update Profile** → check **My Profile** and **My Skills**.
 4. Recommendations labelled **"Based on Your Uploaded Resume"** should appear on **My Resume**, the **Dashboard** and **Recommended**. **Apply Now** opens the normal application form.
-5. Upload a scanned PDF → **Recognise Text** should run in the browser.
-6. **Delete** the resume → the file and extracted data are removed.
-7. Security checks: opening `https://YOUR_DOMAIN/api/storage/`, `https://YOUR_DOMAIN/api/vendor/composer.json` and `https://YOUR_DOMAIN/.env` must return **403** or **404**.
+5. Upload a profile photo, click **Deploy** again in hPanel, and confirm the photo and resume are still there.
+6. Upload a scanned PDF → **Recognise Text** should run in the browser.
+7. **Delete** the resume → the file and extracted data are removed.
+8. Security checks: opening `https://YOUR_DOMAIN/api/storage/`, `https://YOUR_DOMAIN/api/vendor/composer.json` and `https://YOUR_DOMAIN/.env` must return **403** or **404**.
 
 Automated tests (local or **[SSH]**, never against the production database):
 ```bash
 php server/tests/resume_parsing_test.php
+php server/tests/resume_contact_test.php
 php server/tests/resume_matching_test.php
 php server/tests/job_matching_service_test.php
 php -S 127.0.0.1:8099 server/index.php &       # then, against a development database:
@@ -157,15 +183,18 @@ php server/tests/resume_api_integration_test.php http://127.0.0.1:8099/api
 
 | Symptom | Cause and fix |
 |---|---|
-| "Resume processing is not installed on the server (missing server/vendor)" | `vendor/` was not uploaded. Upload `server/vendor/` to `public_html/api/vendor/`, or run `composer install --no-dev` in `api/` **[SSH]**. |
-| "Resume storage is not available on the server" | `RESUME_STORAGE_DIR` does not exist or is not writable. Create it and set permission 750/755 **[hPanel]**. |
+| `public_html/api` is missing after a deploy | The build did not run `client/scripts/bundleApi.js`. Check that the build command is `npm run build` and the output directory is `dist`, and read the deploy log for `[employsmart] PHP API bundled into dist/api`. |
+| Database errors / "Database connection failed" right after a deploy | No `.env` was found. Create `employsmart_private/.env` (section 3). |
+| Photos or resumes disappear after a deploy | They were uploaded before this version, into `public_html/api/uploads`. New uploads go to `employsmart_private/` and are kept. If `employsmart_private/` was never created, check `api/error_log` and set `DATA_DIR`. |
+| "Resume processing is not installed on the server (missing server/vendor)" | `server/vendor/` is missing from the repository or the build. It is committed; redeploy, or run `composer install --no-dev` in `server/` before building. |
+| "Resume storage is not available on the server" | `employsmart_private/storage/resumes` (or `RESUME_STORAGE_DIR`) is not writable. Fix the folder permission (750/755) **[hPanel]**. |
 | "The file is too large" for files under 5 MB | Raise `upload_max_filesize` and `post_max_size` **[hPanel → PHP Configuration]**. |
 | Upload hangs, then shows a 500 or 504 error | Raise `max_execution_time` to 120 or more; if AI assistance is on, lower `RESUME_AI_TIMEOUT` or disable it. |
 | Every PDF is reported as scanned | The PDF really has no text layer, or uses fonts without a Unicode map. Use **Recognise Text**, or export the resume again from Word, Google Docs or Canva as a "standard" PDF. |
 | Scanned-resume OCR never finishes | The browser cannot reach `cdn.jsdelivr.net`, or the device has little memory. Try a desktop browser or upload a text PDF. |
 | AI assistance never used | Check `RESUME_AI_ENABLED=true`, the API key, PHP 8.1+, the `curl` extension, and `api/error_log` (messages start with "Resume AI extraction"). |
-| API calls return 404 or the HTML page | The root `.htaccess` is missing, or `mod_rewrite` routing does not reach `api/index.php`. Re-upload both `.htaccess` files. |
+| API calls return 404 or the HTML page | `public_html/.htaccess` or `public_html/api/.htaccess` is missing. Both come from the build; make sure the deployment publishes dotfiles from `dist/`. |
 | CORS errors in the browser console | Set `CORS_ALLOWED_ORIGINS` to your exact `https://` domains. |
 | "View Uploaded Resume" says no resume | Resume files stored in another folder were not migrated. Ask the jobseeker to upload again. |
 
-Do not deploy straight to the live site without a backup: export the database **[hPanel → phpMyAdmin → Export]** and download `public_html/api/storage` (or your private resume folder) first.
+Do not deploy straight to the live site without a backup: export the database **[hPanel → phpMyAdmin → Export]** and download `employsmart_private/` first.

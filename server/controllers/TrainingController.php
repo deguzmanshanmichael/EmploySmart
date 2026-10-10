@@ -252,8 +252,7 @@ class TrainingController {
         $cert = null;
         if (isset($_FILES['certificate'])) {
             $file = $_FILES['certificate'];
-            $dir = __DIR__ . '/../uploads/training_certificates/';
-            if (!is_dir($dir)) mkdir($dir, 0755, true);
+            $dir = uploadsDir('training_certificates') . '/';
             $filename = "cert_{$userId}_{$trainingId}_" . time() . ".pdf";
             move_uploaded_file($file['tmp_name'], $dir . $filename);
             $cert = "uploads/training_certificates/$filename";

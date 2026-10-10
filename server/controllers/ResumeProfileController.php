@@ -11,7 +11,7 @@ require_once __DIR__ . '/../helpers/rate_limiter.php';
  */
 class ResumeProfileController {
 
-    private const PROFILE_FIELDS = ['first_name', 'middle_name', 'last_name', 'suffix', 'phone', 'address', 'city', 'province', 'birth_date', 'sex', 'civil_status', 'education_level', 'employment_status', 'bio'];
+    private const PROFILE_FIELDS = ['first_name', 'middle_name', 'last_name', 'suffix', 'phone', 'alternate_phone', 'address', 'city', 'province', 'zip_code', 'birth_date', 'sex', 'civil_status', 'education_level', 'employment_status', 'bio'];
     private const NAME_FIELDS = ['first_name', 'middle_name', 'last_name', 'suffix'];
 
     public function __construct() {
@@ -359,7 +359,7 @@ class ResumeProfileController {
         $path = ResumeProcessor::resolvePath($stored);
         if ($path === null) return;
         $real = realpath($path);
-        $allowed = array_filter([realpath(ResumeProcessor::storageDir()), realpath(__DIR__ . '/../uploads/resumes')]);
+        $allowed = array_filter([realpath(ResumeProcessor::storageDir()), realpath(apiRootDir() . '/storage/resumes'), realpath(uploadsDir('resumes')), realpath(apiRootDir() . '/uploads/resumes')]);
         foreach ($allowed as $dir) {
             if ($real !== false && str_starts_with($real, $dir . DIRECTORY_SEPARATOR)) {
                 @unlink($real);
@@ -369,8 +369,10 @@ class ResumeProfileController {
     }
 
     private function deleteLegacyParsedText(int $userId): void {
-        $legacy = __DIR__ . '/../uploads/resumes/parsed/resume_' . $userId . '.txt';
-        if (is_file($legacy)) @unlink($legacy);
+        foreach ([uploadsDir('resumes/parsed'), apiRootDir() . '/uploads/resumes/parsed'] as $dir) {
+            $legacy = $dir . '/resume_' . $userId . '.txt';
+            if (is_file($legacy)) @unlink($legacy);
+        }
     }
 
     /** JSON body without the HTML-entity encoding used by getJsonBody(); values are sanitized below. */
@@ -505,7 +507,7 @@ class ResumeProfileController {
                 case 'suffix':
                     if (mb_strlen($value) > 20) $errors[$field] = 'Suffix is too long.';
                     break;
-                case 'phone':
+                case 'phone': case 'alternate_phone':
                     if (!preg_match('/^\+?[\d\s\-()]+$/', $value) || !validatePhone($value)) $errors[$field] = 'Enter a valid phone number (10 to 15 digits).';
                     break;
                 case 'birth_date':
@@ -522,6 +524,9 @@ class ResumeProfileController {
                     break;
                 case 'employment_status':
                     if (!in_array($value, ['unemployed', 'employed', 'self_employed', 'student'], true)) $errors[$field] = 'Invalid value.';
+                    break;
+                case 'zip_code':
+                    if (!preg_match('/^\d{4,10}$/', $value)) $errors[$field] = 'Enter a valid ZIP code.';
                     break;
                 case 'city': case 'province':
                     if (mb_strlen($value) > 100) $errors[$field] = 'Too long.';

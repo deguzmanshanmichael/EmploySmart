@@ -5,10 +5,18 @@
  */
 function loadEnv($path = null) {
     if ($path === null) {
-        $root = dirname(__DIR__, 2);
-        $path = $root . '/.env';
-        if (!file_exists($path)) {
-            $path = __DIR__ . '/../.env';
+        $apiRoot = dirname(__DIR__);
+        // The private folder beside public_html survives redeploys (see config/paths.php);
+        // the repository root and the API folder are kept for local development.
+        $candidates = array_filter([
+            getenv('EMPLOYSMART_ENV_FILE') ?: null,
+            dirname($apiRoot, 2) . '/employsmart_private/.env',
+            dirname($apiRoot) . '/.env',
+            $apiRoot . '/.env',
+        ]);
+        $path = '';
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate)) { $path = $candidate; break; }
         }
     }
     if (!file_exists($path)) {
@@ -64,4 +72,20 @@ function envList($key, $default = []) {
     return array_filter(array_map('trim', explode(',', $value)));
 }
 
+/**
+ * One-time move of an uploaded api/.env into the private folder beside public_html,
+ * so the next GitHub deployment (which replaces public_html) cannot delete it.
+ */
+function migrateEnvToPrivateDir() {
+    $apiRoot = dirname(__DIR__);
+    $deployed = basename($apiRoot) === 'api' && is_file(dirname($apiRoot) . '/index.html');
+    $source = $apiRoot . '/.env';
+    $privateDir = dirname($apiRoot, 2) . '/employsmart_private';
+    if (!$deployed || !is_file($source) || is_file($privateDir . '/.env')) return;
+    if (!is_dir($privateDir) && !@mkdir($privateDir, 0750, true)) return;
+    if (@copy($source, $privateDir . '/.env')) @chmod($privateDir . '/.env', 0600);
+}
+
+migrateEnvToPrivateDir();
 loadEnv();
+require_once __DIR__ . '/paths.php';

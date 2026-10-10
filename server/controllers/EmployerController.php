@@ -185,8 +185,7 @@ class EmployerController {
             sendError('Invalid file type detected', 422);
         }
 
-        $dir = __DIR__ . '/../uploads/verification_docs/employers/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $dir = uploadsDir('verification_docs/employers') . '/';
         
         // Generate secure filename
         $filename = "permit_{$id}_" . bin2hex(random_bytes(8)) . ".$ext";

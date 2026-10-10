@@ -1,8 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import bundleApi from './scripts/bundleApi.js'
+
+const clientDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
-  plugins: [react()],
+  // The PHP API ships inside the build (dist/api) so a Hostinger redeploy never removes it.
+  plugins: [react(), bundleApi({ serverDir: path.resolve(clientDir, '../server'), outDir: path.resolve(clientDir, '../dist') })],
   server: {
     port: 5173,
     host: '0.0.0.0',

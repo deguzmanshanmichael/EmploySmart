@@ -1,6 +1,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Never serve secrets or repository metadata.
+    RewriteRule (^|/)\.(env|git|github|vscode)(/|$|\.) - [F,L]
+
     # Route API requests before the React SPA fallback. Support both the
     # recommended public_html/api layout and a repository-root deployment.
     RewriteCond %{DOCUMENT_ROOT}/api/index.php -f

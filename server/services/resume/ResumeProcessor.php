@@ -16,13 +16,13 @@ class ResumeProcessor {
     /** Directory for uploaded resumes; configure RESUME_STORAGE_DIR outside public_html in production. */
     public static function storageDir(): string {
         $configured = trim((string)env('RESUME_STORAGE_DIR', ''));
-        $dir = $configured !== '' ? $configured : dirname(__DIR__, 2) . '/storage/resumes';
+        $dir = $configured !== '' ? $configured : dataDir() . '/storage/resumes';
         if (!is_dir($dir)) {
             @mkdir($dir, 0750, true);
         }
         // When the default location is inside the web root, make sure Apache refuses direct access.
         $guard = dirname($dir) . '/.htaccess';
-        if ($configured === '' && is_dir(dirname($dir)) && !is_file($guard)) {
+        if ($configured === '' && dataDir() === apiRootDir() && is_dir(dirname($dir)) && !is_file($guard)) {
             @file_put_contents($guard, "Require all denied\n<IfModule !mod_authz_core.c>\n  Deny from all\n</IfModule>\n");
         }
         return rtrim($dir, '/\\');
@@ -34,13 +34,13 @@ class ResumeProcessor {
         if ($stored === '') return null;
         if (str_starts_with($stored, self::PRIVATE_PREFIX)) {
             $name = basename(substr($stored, strlen(self::PRIVATE_PREFIX)));
-            $path = self::storageDir() . DIRECTORY_SEPARATOR . $name;
-        } else {
-            $base = realpath(dirname(__DIR__, 2));
-            $path = realpath($base . '/' . ltrim($stored, '/'));
-            if ($path === false || $base === false || !str_starts_with($path, $base)) return null;
+            // Current storage first, then the pre-DATA_DIR location inside the API folder.
+            foreach ([self::storageDir(), apiRootDir() . '/storage/resumes'] as $dir) {
+                if (is_file($dir . DIRECTORY_SEPARATOR . $name)) return $dir . DIRECTORY_SEPARATOR . $name;
+            }
+            return null;
         }
-        return is_file($path) ? $path : null;
+        return resolveUploadPath($stored);
     }
 
     // ─── Processing ─────────────────────────────────────────────────────────
