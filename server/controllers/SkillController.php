@@ -103,12 +103,62 @@ class SkillController {
         ]);
     }
 
+    /**
+     * POST /skills/user/{id}/custom — a jobseeker adds a skill that is not in the list.
+     * Reuses an existing catalog skill when the name (or a known synonym) matches,
+     * otherwise creates it, then adds it to the user's skills.
+     */
+    public function addCustomUserSkill($userId) {
+        $payload = requireAuth();
+        verifyOwnership($userId, $payload, ['admin']);
+        require_once __DIR__ . '/../helpers/rate_limiter.php';
+        require_once __DIR__ . '/../services/resume/SkillNormalizer.php';
+        $data = json_decode((string)file_get_contents('php://input'), true) ?: [];
+        $raw = (string)($data['skill_name'] ?? '');
+        if (preg_match('/[<>]/', $raw)) sendError('Skill names cannot contain < or >.', 422);
+        $name = trim(preg_replace('/\s+/u', ' ', $raw));
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 60) sendError('Skill name must be 2 to 60 characters.', 422);
+        if (!preg_match('/^[\p{L}\p{N}][\p{L}\p{N} +#.&\/\'()\-]*$/u', $name)) sendError('Skill names may contain letters, numbers, spaces and + # . & / \' ( ) -', 422);
+        if (!throttleRequest('custom_skill:' . (int)$payload['sub'], 30, 3600)) sendError('Too many new skills added. Please try again later.', 429);
+
+        $db = getDB();
+        $catalog = $db->query("SELECT id, skill_name, archived FROM skills")->fetch_all(MYSQLI_ASSOC);
+        $skill = null;
+        foreach ($catalog as $row) {
+            if (mb_strtolower($row['skill_name']) === mb_strtolower($name)) { $skill = $row; break; }
+        }
+        if ($skill === null) {
+            $match = SkillNormalizer::mapToCatalog($name, array_values(array_filter($catalog, fn($r) => !$r['archived'])));
+            // Exact/synonym matches reuse the existing skill ("MS Excel" → "Microsoft Excel" if listed);
+            // a broader category is not a substitute for the specific skill the user typed.
+            if ($match && $match['match'] !== 'broader') $skill = ['id' => $match['id'], 'skill_name' => $match['skill_name'], 'archived' => 0];
+        }
+        $created = false;
+        if ($skill === null) {
+            $stmt = $db->prepare("INSERT INTO skills (skill_name) VALUES (?)");
+            $stmt->bind_param('s', $name);
+            $stmt->execute();
+            $skill = ['id' => $db->insert_id, 'skill_name' => $name, 'archived' => 0];
+            $created = true;
+        } elseif ($skill['archived']) {
+            $stmt = $db->prepare("UPDATE skills SET archived = 0 WHERE id = ?");
+            $stmt->bind_param('i', $skill['id']);
+            $stmt->execute();
+        }
+        $uid = (int)$userId; $sid = (int)$skill['id'];
+        $stmt = $db->prepare("INSERT INTO user_skills (user_id, skill_id) SELECT ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM user_skills WHERE user_id = ? AND skill_id = ?)");
+        $stmt->bind_param('iiii', $uid, $sid, $uid, $sid);
+        $stmt->execute();
+        sendSuccess($created ? 'New skill added' : 'Skill added', ['id' => $sid, 'skill_name' => $skill['skill_name'], 'created' => $created], $created ? 201 : 200);
+    }
+
     public function updateUserSkills($userId) {
         $payload = requireAuth();
         verifyOwnership($userId, $payload, ['admin']);
         
         $data = getJsonBody();
         if (!isset($data['skills']) || !is_array($data['skills'])) sendError('Skills array required', 422);
+        $data['skills'] = array_values(array_unique(array_map('intval', array_filter($data['skills'], 'validateInteger'))));
         
         // Validate skills array length
         if (!validateArrayLength($data['skills'], 100)) {

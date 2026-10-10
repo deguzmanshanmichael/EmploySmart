@@ -366,52 +366,63 @@ class UserController {
     public function update($id) {
         $payload = requireAuth();
         verifyOwnership($id, $payload, ['admin']);
-        $data = getJsonBody();
+        // Raw JSON: values are cleaned below and stored as typed (React escapes output),
+        // so "Purok 1 & 2" is not saved as "Purok 1 &amp; 2".
+        $data = json_decode((string)file_get_contents('php://input'), true);
+        if (!is_array($data)) sendError('Invalid request body', 400);
         $db = getDB();
 
-        $allowed = ['first_name','middle_name','last_name','suffix','sex','birth_date','phone','alternate_phone','address','city','province','zip_code','civil_status','nationality','education_level','employment_status','bio'];
-        $sets = []; $params = []; $types = '';
-        
-        // Validate each field if provided
-        foreach ($allowed as $field) {
-            if (array_key_exists($field, $data)) {
-                $value = $data[$field];
-                
-                // Type-specific validation
-                if ($field === 'email' && $value) {
-                    if (!validateEmail($value)) sendError('Invalid email format', 422);
-                    // Check email uniqueness
-                    $stmt = $db->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
-                    $stmt->bind_param('si', $value, $id);
-                    $stmt->execute();
-                    if ($stmt->get_result()->num_rows > 0) sendError('Email already in use', 409);
-                }
-                
-                if ($field === 'phone' && $value) {
-                    if (!validatePhone($value)) sendError('Invalid phone number format', 422);
-                }
-                
-                if ($field === 'birth_date' && $value) {
-                    if (!validateDate($value, 'Y-m-d')) sendError('Invalid birth date format', 422);
-                }
-                
-                // Validate string lengths
-                if (!validateStringLength($value, 1, 255)) {
-                    sendError(ucfirst(str_replace('_', ' ', $field)) . ' too long', 422);
-                }
-                
-                $sets[] = "$field = ?";
-                $params[] = $value;
-                $types .= 's';
+        $labels = [
+            'first_name' => 'First name', 'middle_name' => 'Middle name', 'last_name' => 'Last name', 'suffix' => 'Suffix',
+            'sex' => 'Sex', 'birth_date' => 'Birth date', 'phone' => 'Phone', 'alternate_phone' => 'Alternate phone',
+            'address' => 'Address', 'city' => 'City', 'province' => 'Province', 'zip_code' => 'ZIP code',
+            'civil_status' => 'Civil status', 'nationality' => 'Nationality', 'education_level' => 'Education level',
+            'employment_status' => 'Employment status', 'bio' => 'Bio',
+        ];
+        $enums = [
+            'sex' => ['male', 'female', 'other'],
+            'civil_status' => ['single', 'married', 'widowed', 'separated'],
+            'education_level' => ['no_formal_education', 'elementary', 'high_school', 'senior_high', 'vocational', 'college', 'postgraduate'],
+            'employment_status' => ['unemployed', 'employed', 'self_employed', 'student'],
+        ];
+        $maxLength = ['suffix' => 20, 'phone' => 30, 'alternate_phone' => 30, 'zip_code' => 20, 'address' => 500, 'bio' => 2000];
+        $required = ['first_name', 'last_name'];
+        // Columns that cannot be NULL keep their current value when left blank.
+        $keepWhenBlank = ['sex', 'employment_status'];
+
+        $sets = []; $params = []; $errors = [];
+        foreach ($labels as $field => $label) {
+            if (!array_key_exists($field, $data)) continue;
+            $value = $data[$field];
+            if ($value !== null && !is_scalar($value)) { $errors[$field] = "$label is invalid."; continue; }
+            $value = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', strip_tags((string)($value ?? ''))));
+
+            if ($value === '') {
+                if (in_array($field, $required, true)) { $errors[$field] = "$label is required."; continue; }
+                if (in_array($field, $keepWhenBlank, true)) continue;
+                $sets[] = "$field = NULL";
+                continue;
             }
+            if (mb_strlen($value) > ($maxLength[$field] ?? 100)) { $errors[$field] = "$label is too long (maximum " . ($maxLength[$field] ?? 100) . ' characters).'; continue; }
+            if (isset($enums[$field]) && !in_array($value, $enums[$field], true)) { $errors[$field] = "Please choose a valid $label."; continue; }
+            if (($field === 'phone' || $field === 'alternate_phone') && (!preg_match('/^\+?[\d\s\-()]+$/', $value) || !validatePhone($value))) { $errors[$field] = "$label must be a valid number (10 to 15 digits)."; continue; }
+            if ($field === 'birth_date' && (!validateDate($value, 'Y-m-d') || $value > date('Y-m-d'))) { $errors[$field] = 'Birth date must be a valid past date.'; continue; }
+            if ($field === 'zip_code' && !preg_match('/^\d{4,10}$/', $value)) { $errors[$field] = 'ZIP code must be 4 to 10 digits.'; continue; }
+            $sets[] = "$field = ?";
+            $params[] = $value;
         }
+        if ($errors) sendError(reset($errors), 422, $errors);
         if (empty($sets)) sendError('No fields to update', 400);
 
-        $params[] = $id; $types .= 'i';
-        $stmt = $db->prepare("UPDATE users SET " . implode(',', $sets) . " WHERE id = ?");
-        $stmt->bind_param($types, ...$params);
-        if (!$stmt->execute()) sendError('Update failed', 500);
-
+        $params[] = (int)$id;
+        try {
+            $stmt = $db->prepare("UPDATE users SET " . implode(', ', $sets) . " WHERE id = ?");
+            $stmt->bind_param(str_repeat('s', count($params) - 1) . 'i', ...$params);
+            $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('Profile update failed: ' . $e->getMessage());
+            sendError('Your profile could not be saved. Please check the fields and try again.', 422);
+        }
         sendSuccess('Profile updated');
     }
 

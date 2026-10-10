@@ -59,6 +59,7 @@ export const skillService = {
   getUserSkills: (userId) => api.get(`/skills/user/${userId}`),
   getProgression: (userId) => api.get(`/skills/progression/${userId}`),
   updateUserSkills: (userId, skills) => api.put(`/skills/user/${userId}`, { skills }),
+  addCustom: (userId, skillName) => api.post(`/skills/user/${userId}/custom`, { skill_name: skillName }),
 }
 
 export const settingsService = {

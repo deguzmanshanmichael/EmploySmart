@@ -68,7 +68,10 @@ export default function Profile() {
       updateUser(form)
       setErrors({})
       toast.success('Profile updated!')
-    } catch (err) { toast.error(err.response?.data?.message || 'Update failed') }
+    } catch (err) {
+      if (err.response?.data?.errors) setErrors(err.response.data.errors)
+      toast.error(err.response?.data?.message || 'Update failed')
+    }
     setSaving(false)
   }
 

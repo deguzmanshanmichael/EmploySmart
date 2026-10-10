@@ -13,6 +13,8 @@ export default function SkillsForm() {
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [search, setSearch]         = useState('')
+  const [newSkill, setNewSkill]     = useState('')
+  const [adding, setAdding]         = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -62,6 +64,31 @@ export default function SkillsForm() {
     setSaving(false)
   }
 
+  const addCustomSkill = async (rawName) => {
+    const name = rawName.trim().replace(/\s+/g, ' ')
+    if (name.length < 2) { toast.error('Please type a skill name (at least 2 characters).'); return }
+    const existing = allSkills.find(s => s.skill_name.toLowerCase() === name.toLowerCase())
+    if (existing) {
+      setSelected(s => new Set([...s, existing.id]))
+      toast.success(`"${existing.skill_name}" selected. Remember to save.`)
+      setNewSkill(''); setSearch('')
+      return
+    }
+    setAdding(true)
+    try {
+      const res = await skillService.addCustom(user.id, name)
+      const skill = res.data.data
+      setAllSkills(list => list.some(s => s.id === skill.id) ? list : [...list, { id: skill.id, skill_name: skill.skill_name }].sort((a, b) => a.skill_name.localeCompare(b.skill_name)))
+      setSelected(s => new Set([...s, skill.id]))
+      toast.success(skill.skill_name.toLowerCase() === name.toLowerCase() ? `"${skill.skill_name}" added to your skills.` : `Added as "${skill.skill_name}" (same skill in the list).`)
+      setNewSkill(''); setSearch('')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Could not add the skill')
+    } finally {
+      setAdding(false)
+    }
+  }
+
   const filtered = allSkills.filter(s =>
     s.skill_name.toLowerCase().includes(search.toLowerCase())
   )
@@ -102,6 +129,12 @@ export default function SkillsForm() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
+        {search.trim() && filtered.length === 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+            No skill named "{search.trim()}" in the list.
+            <button onClick={() => addCustomSkill(search)} disabled={adding} className="btn-primary btn-sm"><FiPlus /> Add "{search.trim()}" as a new skill</button>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {filtered.map(s => {
             const active = selected.has(s.id)
@@ -120,6 +153,19 @@ export default function SkillsForm() {
               </button>
             )
           })}
+        </div>
+      </div>
+
+      {/* Skills not in the list */}
+      <div className="card-flat space-y-2">
+        <h3 className="font-bold text-gray-800">Can't find your skill?</h3>
+        <p className="text-sm text-gray-500">Type it below to add it to your profile, e.g. "Forklift Operation" or "Canva".</p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input className="input" maxLength={60} placeholder="New skill name" value={newSkill}
+            onChange={e => setNewSkill(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCustomSkill(newSkill)} />
+          <button onClick={() => addCustomSkill(newSkill)} disabled={adding || !newSkill.trim()} className="btn-outline flex-shrink-0">
+            {adding ? <><div className="spinner w-4 h-4" /> Adding...</> : <><FiPlus /> Add Skill</>}
+          </button>
         </div>
       </div>
 

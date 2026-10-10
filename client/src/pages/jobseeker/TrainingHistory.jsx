@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { trainingService } from '../../services/index'
 import { useAuth } from '../../context/AuthContext'
-import { LoadingSpinner, EmptyState } from '../../components/index'
+import { LoadingSpinner, EmptyState, Modal } from '../../components/index'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { API_BASE_URL } from '../../config/api.js'
@@ -14,6 +14,7 @@ export default function TrainingHistory() {
   const [availableTrainings, setAvailableTrainings] = useState([])
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(null)
+  const [confirmTraining, setConfirmTraining] = useState(null)
   const BASE_URL = API_BASE_URL
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function TrainingHistory() {
     setApplying(trainingId)
     try {
       await trainingService.enroll(trainingId, user.id)
+      setConfirmTraining(null)
       toast.success('Training application submitted for CLCDO approval')
       const res = await trainingService.getUserTrainings(user.id)
       setMyTrainings(res.data?.data || [])
@@ -189,7 +191,7 @@ export default function TrainingHistory() {
                     ))}
                   </div>
                 )}
-                <button onClick={() => applyForTraining(training.id)} disabled={applying === training.id} className="btn-primary btn-sm inline-flex items-center gap-2">
+                <button onClick={() => setConfirmTraining(training)} disabled={applying === training.id} className="btn-primary btn-sm inline-flex items-center gap-2">
                   <FiSend size={14} /> {applying === training.id ? 'Applying...' : 'Apply for Training'}
                 </button>
               </div>
@@ -197,6 +199,30 @@ export default function TrainingHistory() {
           </div>
         )}
       </div>
+      {confirmTraining && (
+        <Modal
+          title="Apply for this training?"
+          onClose={() => applying ? null : setConfirmTraining(null)}
+          size="sm"
+          footer={
+            <>
+              <button onClick={() => setConfirmTraining(null)} className="btn-secondary" disabled={applying === confirmTraining.id}>Cancel</button>
+              <button onClick={() => applyForTraining(confirmTraining.id)} className="btn-primary" disabled={applying === confirmTraining.id}>
+                {applying === confirmTraining.id ? 'Applying...' : 'Yes, apply'}
+              </button>
+            </>
+          }
+        >
+          <div className="space-y-2 text-sm text-gray-600">
+            <p className="font-semibold text-gray-900">{confirmTraining.program_name}</p>
+            {(confirmTraining.start_date || confirmTraining.end_date) && (
+              <p>📅 {confirmTraining.start_date ? format(new Date(confirmTraining.start_date), 'MMM d, yyyy') : ''}{confirmTraining.end_date ? ` – ${format(new Date(confirmTraining.end_date), 'MMM d, yyyy')}` : ''}</p>
+            )}
+            {confirmTraining.location && <p>📍 {confirmTraining.location}</p>}
+            <p>Your application will be sent to CLCDO for approval. Please make sure you can attend the full schedule.</p>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

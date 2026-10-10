@@ -135,6 +135,7 @@ if ($resource === 'auth') {
     if ($id === null && $method === 'GET')  { $ctrl->getAll(); }
     elseif ($id === null && $method === 'POST') { $ctrl->create(); }
     elseif ($id !== null && $action === null && $method === 'DELETE') { $ctrl->delete($id); }
+    elseif ($id === 'user' && $action !== null && ($parts[3] ?? null) === 'custom' && $method === 'POST') { $ctrl->addCustomUserSkill($action); }
     elseif ($id === 'user' && $action !== null) {
         match($method) { 'GET'=>$ctrl->getUserSkills($action),'POST'=>$ctrl->updateUserSkills($action),'PUT'=>$ctrl->updateUserSkills($action),default=>sendError('Method not allowed',405) };
     }
