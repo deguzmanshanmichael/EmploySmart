@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import PasswordField from '../../components/PasswordField'
-import { userService, resumeRecommendationService } from '../../services/index'
+import { Link } from 'react-router-dom'
+import { userService, resumeProfileService } from '../../services/index'
 import toast from 'react-hot-toast'
-import { FiSave, FiLock, FiUpload, FiUser, FiAward } from 'react-icons/fi'
+import { FiSave, FiLock, FiUpload, FiUser, FiAward, FiUploadCloud } from 'react-icons/fi'
 import { API_BASE_URL } from '../../config/api.js'
 
 const BASE_URL = API_BASE_URL
@@ -13,10 +14,7 @@ export default function Profile() {
   const [tab, setTab] = useState('personal')
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
-  const [recommendations, setRecommendations] = useState([])
-  const [matchedJobs, setMatchedJobs] = useState([])
   const [otherDocuments, setOtherDocuments] = useState([])
-  const resumeInputRef = useRef(null)
   const otherDocsInputRef = useRef(null)
   const [form, setForm] = useState({
     first_name: user?.first_name || '',
@@ -39,20 +37,6 @@ export default function Profile() {
   const [passForm, setPassForm] = useState({ current_password: '', new_password: '', confirm: '' })
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-
-  const loadRecommendations = async () => {
-    try {
-      const res = await resumeRecommendationService.getForUser(user?.id)
-      setRecommendations(res.data?.data?.recommendations || [])
-      setMatchedJobs(res.data?.data?.matched_jobs || [])
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  useEffect(() => {
-    if (user?.id) loadRecommendations()
-  }, [user?.id])
 
   const validateProfile = () => {
     const e = {}
@@ -100,21 +84,14 @@ export default function Profile() {
     setSaving(false)
   }
 
-  const handleResumeUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    const fd = new FormData()
-    fd.append('resume', file)
-
+  const handleViewResume = async () => {
     try {
-      const res = await userService.uploadResume(user.id, fd)
-      updateUser({ resume_path: res.data.data?.resume_path })
-      toast.success('Resume uploaded! Matching jobs are being refreshed...')
-      await loadRecommendations()
-      if (resumeInputRef.current) resumeInputRef.current.value = ''
+      const res = await resumeProfileService.downloadFile(user.id)
+      const url = window.URL.createObjectURL(res.data)
+      window.open(url, '_blank', 'noopener')
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000)
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed')
+      toast.error('Unable to open your resume')
     }
   }
 
@@ -302,30 +279,24 @@ export default function Profile() {
         <div className="card-flat space-y-5">
           <div className="space-y-3">
             <h3 className="font-bold text-gray-800 flex items-center gap-2">
-              <FiAward /> Resume-Driven Recommendations
+              <FiAward /> Resume
             </h3>
-
+            <p className="text-sm text-gray-600">
+              Upload your resume on the My Resume page. EmploySmart reads it, lets you review what it found, updates your profile and skills, and recommends jobs based on it.
+            </p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => resumeInputRef.current?.click()} className="btn-outline inline-flex items-center gap-2">
-                <FiUpload /> Upload Resume
-              </button>
+              <Link to="/jobseeker/resume" className="btn-outline inline-flex items-center gap-2">
+                <FiUploadCloud /> {user?.resume_path ? 'Manage Resume & Recommendations' : 'Upload & Analyze Resume'}
+              </Link>
               <button onClick={handleGenerateResume} className="btn-primary btn-sm inline-flex items-center gap-2">
                 🧾 Generate Resume
               </button>
+              {user?.resume_path && (
+                <button type="button" onClick={handleViewResume} className="btn-success btn-sm inline-flex">
+                  📄 View Current Resume
+                </button>
+              )}
             </div>
-            <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleResumeUpload} />
-
-            {user?.resume_path && (
-              <a href={`${BASE_URL}/${user.resume_path}`} target="_blank" rel="noopener noreferrer" className="btn-success btn-sm inline-flex">
-                📄 View Current Resume
-              </a>
-            )}
-
-            <p className="text-sm text-gray-600">
-              {recommendations.length > 0
-                ? `${recommendations.length} recommendation${recommendations.length > 1 ? 's' : ''} based on your uploaded resume.`
-                : 'Upload your resume to complete your profile and help employers understand your experience.'}
-            </p>
           </div>
 
           <div className="border-t border-gray-200 pt-4 space-y-3">
@@ -353,47 +324,6 @@ export default function Profile() {
             )}
           </div>
 
-          {recommendations.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-              <div className="flex items-center gap-2 text-gray-700"><FiUpload /> Add a resume to generate recommendations.</div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recommendations.map((item) => (
-                <div key={item.job_id || item.skill_id || item.skill_name} className="rounded-lg border border-indigo-100 bg-indigo-50 p-3 flex items-center justify-between gap-3">
-                  <div>
-                    <span className="font-medium text-gray-800 block">{item.skill_name || item.title}</span>
-                    {item.company_name && <span className="text-xs text-gray-500">{item.company_name}</span>}
-                  </div>
-                  <span className="text-xs text-indigo-600 bg-indigo-100 px-2.5 py-1 rounded-full font-semibold">
-                    {typeof item.match_score === 'number' ? `${item.match_score}%` : 'Suggested'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {matchedJobs.length > 0 && (
-            <div className="pt-3 border-t border-gray-200">
-              <h4 className="font-semibold text-gray-800 mb-2">Matched Jobs</h4>
-              <div className="space-y-2">
-                {matchedJobs.map((job) => (
-                  <div key={job.job_id} className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-gray-800">{job.title}</p>
-                        <p className="text-xs text-gray-600">{job.company_name}</p>
-                      </div>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full">{job.match_score}% match</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {job.matched_skills.length} matching skill{job.matched_skills.length === 1 ? '' : 's'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

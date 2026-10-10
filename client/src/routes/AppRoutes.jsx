@@ -33,6 +33,7 @@ import SkillsForm          from '../pages/jobseeker/SkillsForm'
 import TrainingHistory     from '../pages/jobseeker/TrainingHistory'
 import JobSeekerProfile    from '../pages/jobseeker/Profile'
 import GrowthCenter         from '../pages/jobseeker/GrowthCenter'
+import ResumeCenter        from '../pages/jobseeker/ResumeCenter'
 import NotificationsPage   from '../pages/notifications/NotificationsPage'
 
 // Employer pages
@@ -128,6 +129,7 @@ export default function AppRoutes() {
         <Route path="skills" element={<SkillsForm />} />
         <Route path="trainings" element={<TrainingHistory />} />
         <Route path="growth" element={<GrowthCenter />} />
+        <Route path="resume" element={<ResumeCenter />} />
         <Route path="profile" element={<JobSeekerProfile />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>

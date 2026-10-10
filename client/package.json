@@ -14,12 +14,14 @@
     "date-fns": "^3.3.1",
     "employsmart": "file:..",
     "jwt-decode": "^4.0.0",
+    "pdfjs-dist": "^4.10.38",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "react-icons": "^5.0.1",
     "react-router-dom": "^7.18.2",
-    "recharts": "^2.12.0"
+    "recharts": "^2.12.0",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.0",

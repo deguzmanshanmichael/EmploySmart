@@ -58,3 +58,13 @@ Thumbs.db
 .settings
 .toolstarget
 
+
+# Private resume storage (uploaded resumes are personal data)
+server/storage/*
+!server/storage/.htaccess
+!server/storage/resumes/
+server/storage/resumes/*
+!server/storage/resumes/.gitkeep
+!server/uploads/resumes/
+server/uploads/resumes/*
+!server/uploads/resumes/.htaccess

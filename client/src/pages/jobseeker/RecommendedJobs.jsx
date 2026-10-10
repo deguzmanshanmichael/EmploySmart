@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { matchService, applicationService, skillService } from '../../services/index'
 import { JobCard, LoadingSpinner, EmptyState, Modal } from '../../components/index'
+import ResumeRecommendations from '../../components/ResumeRecommendations'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
@@ -66,7 +67,12 @@ export function RecommendedJobs() {
     <div className="animate-fade-in space-y-5">
       <div className="page-header">
         <h1 className="page-title">Recommended Jobs ⭐</h1>
-        <p className="page-subtitle">Matched based on your skills, education, and training</p>
+        <p className="page-subtitle">Matched based on your uploaded resume and your profile</p>
+      </div>
+      <ResumeRecommendations limit={10} />
+      <div className="border-t border-gray-200 pt-5">
+        <h2 className="text-lg font-bold text-gray-900">Based on Your Profile Skills</h2>
+        <p className="text-sm text-gray-500">Matched using the skills, education and completed trainings saved in your profile.</p>
       </div>
       {applyModalJob && (
         <Modal

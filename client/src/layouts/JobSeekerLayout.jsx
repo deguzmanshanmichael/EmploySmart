@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import EvaluationNotice from '../components/EvaluationNotice'
-import { FiHome, FiSearch, FiStar, FiFileText, FiAward, FiBook, FiUser, FiTrendingUp } from 'react-icons/fi'
+import { FiHome, FiSearch, FiStar, FiFileText, FiAward, FiBook, FiUser, FiTrendingUp, FiUploadCloud } from 'react-icons/fi'
 
 const links = [
   { to: '/jobseeker',             label: 'Dashboard',        icon: <FiHome />,     end: true },
@@ -16,6 +16,7 @@ const links = [
   { to: '/jobseeker/growth',       label: 'Growth Center',    icon: <FiTrendingUp /> },
   { to: '/jobseeker/trainings',   label: 'Training History', icon: <FiBook /> },
   { type: 'divider', label: 'Account' },
+  { to: '/jobseeker/resume',      label: 'My Resume',        icon: <FiUploadCloud /> },
   { to: '/jobseeker/profile',     label: 'My Profile',       icon: <FiUser /> },
 ]
 

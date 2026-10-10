@@ -80,7 +80,28 @@ export const feedbackService = {
 }
 
 export const resumeRecommendationService = {
-  getForUser: (userId) => api.get(`/resume-recommendations/${userId}`),
+  getForUser: (userId, params) => api.get(`/resume-recommendations/${userId}`, { params }),
+  getMine: (params) => api.get('/resume-recommendations/me', { params }),
+}
+
+// Resume parsing can take longer than ordinary requests (large PDFs, optional AI assistance).
+const RESUME_TIMEOUT = 180000
+
+export const resumeProfileService = {
+  get: () => api.get('/resume-profile'),
+  upload: (file, onUploadProgress) => {
+    const formData = new FormData()
+    formData.append('resume', file)
+    return api.post('/resume-profile/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: RESUME_TIMEOUT,
+      onUploadProgress,
+    })
+  },
+  submitOcrText: (text) => api.post('/resume-profile/ocr', { text }, { timeout: RESUME_TIMEOUT }),
+  confirm: (data) => api.post('/resume-profile/confirm', data, { timeout: 60000 }),
+  remove: (removeSkills = false) => api.delete('/resume-profile', { params: removeSkills ? { remove_skills: 1 } : {} }),
+  downloadFile: (userId) => api.get(`/users/${userId}/uploaded-resume`, { responseType: 'blob', timeout: 60000 }),
 }
 
 export const userService = {

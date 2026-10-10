@@ -195,6 +195,15 @@ if ($resource === 'auth') {
     if ($id === null && $method === 'POST') { $ctrl->create(); }
     elseif ($id !== null && $action !== null && $method === 'GET') { $ctrl->listForTarget($id, $action); }
     else { sendError('Route not found', 404); }
+} elseif ($resource === 'resume-profile') {
+    require_once __DIR__ . '/controllers/ResumeProfileController.php';
+    $ctrl = new ResumeProfileController();
+    if ($id === null && $method === 'GET') { $ctrl->show(); }
+    elseif ($id === null && $method === 'DELETE') { $ctrl->destroy(); }
+    elseif ($id === 'upload' && $method === 'POST') { $ctrl->upload(); }
+    elseif ($id === 'ocr' && $method === 'POST') { $ctrl->submitOcrText(); }
+    elseif ($id === 'confirm' && $method === 'POST') { $ctrl->confirm(); }
+    else { sendError('Route not found', 404); }
 } elseif ($resource === 'resume-recommendations') {
     require_once __DIR__ . '/controllers/ResumeRecommendationController.php';
     $ctrl = new ResumeRecommendationController();

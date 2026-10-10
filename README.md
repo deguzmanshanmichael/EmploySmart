@@ -92,6 +92,8 @@ A full-stack application for managing job placement, employer profiles, job seek
 
 EmploySmart is ready for production deployment on Hostinger Shared Hosting!
 
+> **Start with [`DEPLOYMENT.md`](DEPLOYMENT.md)** — the current redeployment guide, including the resume upload, OCR/AI configuration and the `resume_profiles` migration.
+
 **Quick Setup:**
 1. Push this repository to GitHub
 2. Follow the deployment guide below

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { jobService } from '../../services/jobService'
 import { applicationService, matchService, skillService } from '../../services/index'
 import { StatCard, JobCard, LoadingSpinner, EmptyState, Modal } from '../../components/index'
+import ResumeRecommendations from '../../components/ResumeRecommendations'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { FiBriefcase, FiFileText, FiAward, FiStar } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -109,10 +110,18 @@ export default function JobSeekerDashboard() {
         <StatCard label="My Skills" value={stats.skills} icon={<FiAward />} color="bg-purple-50 text-purple-600" />
       </div>
 
+      {/* Resume-driven recommendations */}
+      <div className="card-flat">
+        <ResumeRecommendations limit={3} compact title="Recommended From Your Resume" />
+        <div className="mt-4 text-right">
+          <Link to="/jobseeker/resume" className="text-sm font-semibold text-blue-600 hover:underline">Manage my resume →</Link>
+        </div>
+      </div>
+
       {/* Recommended Jobs */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">⭐ Recommended For You</h2>
+          <h2 className="text-lg font-bold text-gray-900">⭐ Recommended From Your Profile Skills</h2>
           <Link to="/jobseeker/recommended" className="text-sm text-blue-600 font-semibold hover:underline">
             View all →
           </Link>
@@ -246,7 +255,7 @@ export default function JobSeekerDashboard() {
         {[
           { to: '/jobseeker/jobs',         icon: '🔍', label: 'Browse All Jobs' },
           { to: '/jobseeker/applications', icon: '📄', label: 'My Applications' },
-          { to: '/jobseeker/skills',       icon: '🎓', label: 'Manage Skills' },
+          { to: '/jobseeker/resume',       icon: '📑', label: 'My Resume' },
           { to: '/jobseeker/trainings',    icon: '📚', label: 'Training History' },
         ].map(link => (
           <Link

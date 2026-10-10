@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/validator.php';
+require_once __DIR__ . '/../services/resume/ResumeProcessor.php';
 
 class UserController {
 
@@ -79,9 +80,8 @@ class UserController {
         $user = $stmt->get_result()->fetch_assoc();
         if (!$user) sendError('User not found', 404);
         unset($user['password']);
-        if (!empty($user['resume_path'])) {
-            $resumeFile = __DIR__ . '/../' . ltrim($user['resume_path'], '/');
-            if (!is_file($resumeFile)) $user['resume_path'] = null;
+        if (!empty($user['resume_path']) && ResumeProcessor::resolvePath($user['resume_path']) === null) {
+            $user['resume_path'] = null;
         }
 
         // Get skills
@@ -266,11 +266,7 @@ class UserController {
         $aStmt->execute();
         $approvedJobs = $aStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-        $resumePath = null;
-        if (!empty($user['resume_path'])) {
-            $resumePath = __DIR__ . '/../' . ltrim($user['resume_path'], '/');
-            if (!file_exists($resumePath)) $resumePath = null;
-        }
+        $resumePath = !empty($user['resume_path']) ? ResumeProcessor::resolvePath($user['resume_path']) : null;
 
         $extractedText = $resumePath ? $this->parseResumeText($resumePath) : null;
         $lines = [];
@@ -342,15 +338,15 @@ class UserController {
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
-        $path = $user['resume_path'] ?? '';
-        $filePath = $path ? __DIR__ . '/../' . ltrim($path, '/') : '';
-        if (!$filePath || !is_file($filePath)) {
+        $filePath = ResumeProcessor::resolvePath($user['resume_path'] ?? '');
+        if (!$filePath) {
             sendError("This jobseeker hasn't uploaded any resume yet.", 404);
         }
         $mime = mime_content_type($filePath) ?: 'application/octet-stream';
         header('Content-Type: ' . $mime);
         header('Content-Disposition: inline; filename="' . basename($filePath) . '"');
         header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, no-store');
         readfile($filePath);
         exit;
     }
@@ -486,9 +482,7 @@ class UserController {
             sendError('Invalid file type detected', 422);
         }
 
-        $dir = __DIR__ . '/../uploads/resumes/';
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        
+        $dir = ResumeProcessor::storageDir();
         $safeDir = realpath($dir) ?: $dir;
         if (!is_dir($safeDir) || !is_writable($safeDir)) {
             sendError('Upload directory is not writable', 500);
@@ -502,18 +496,15 @@ class UserController {
             sendError('Upload failed', 500);
         }
 
-        $path = "uploads/resumes/$filename";
+        $path = ResumeProcessor::PRIVATE_PREFIX . $filename;
         $db = getDB();
         $stmt = $db->prepare("UPDATE users SET resume_path = ? WHERE id = ?");
         $stmt->bind_param('si', $path, $id);
         $stmt->execute();
-
-        $parsedDir = __DIR__ . '/../uploads/resumes/parsed/';
-        if (!is_dir($parsedDir)) mkdir($parsedDir, 0755, true);
-        $parsedText = $this->parseResumeText($filepath);
-        if ($parsedText) {
-            file_put_contents($parsedDir . 'resume_' . $id . '.txt', $parsedText);
-        }
+        // Information extracted from a previous resume no longer describes the current file.
+        $stmt = $db->prepare("DELETE FROM resume_profiles WHERE user_id = ? AND file_path <> ?");
+        $stmt->bind_param('is', $id, $path);
+        $stmt->execute();
 
         sendSuccess('Resume uploaded', ['resume_path' => $path]);
     }
