@@ -65,10 +65,18 @@ In **Websites → your site → GitHub deployment** (or the Node.js/frontend app
 | Repository / branch | `deguzmanshanmichael/EmploySmart` / `main` |
 | Install command | `npm install` (default) |
 | Build command | `npm run build` |
-| Output / publish directory | `dist` |
+| Output / publish directory | `dist` (or `client/dist` — both contain the identical, complete site) |
 | Node version | 18 or newer |
 
 `npm run build` builds the frontend and copies `server/` into `dist/api` (see `client/scripts/bundleApi.js`). After this, **Deploy** is the only step for code changes: no File Manager uploads.
+
+### Check which version is live
+
+Open `https://YOUR_DOMAIN/build-info.json`, or Admin → Municipality Settings (the "Deployed build" badge). The version is the GitHub commit the build was made from. If it is older than the latest commit on GitHub, the host published an old folder:
+
+- Make sure the output/publish directory is `dist` or `client/dist`.
+- `client/dist/` is committed to GitHub and refreshed with every release, so even a deployment that skips the build step publishes the current site. Before committing code changes, run `npm run build` so `client/dist/` is updated.
+- Reload the page with Ctrl+F5 after deploying.
 
 ---
 

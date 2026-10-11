@@ -1,4 +1,4 @@
-const CACHE_NAME = "employsmart-cache-v1";
+const CACHE_NAME = "employsmart-cache-v3";
 
 const urlsToCache = [
   "/",
@@ -8,6 +8,8 @@ const urlsToCache = [
 
 // Install service worker
 self.addEventListener("install", (event) => {
+  // Activate a new deployment immediately instead of waiting for every tab to close.
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(urlsToCache);
@@ -15,13 +17,22 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Fetch cached resources
+// Prefer the deployed app shell so every device receives the current bundle.
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+  if (event.request.mode === "navigate" || event.request.destination === "script" || event.request.destination === "style") {
+    event.respondWith(
+      fetch(event.request, { cache: "no-store" })
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  event.respondWith(caches.match(event.request).then((response) => response || fetch(event.request)));
 });
 
 // Activate new version
@@ -37,6 +48,6 @@ self.addEventListener("activate", (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });

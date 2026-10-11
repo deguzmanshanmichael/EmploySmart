@@ -1,0 +1,140 @@
+<?php
+require_once __DIR__ . '/env.php';
+
+$dbHost = env('DB_HOST', 'localhost');
+$dbUser = env('DB_USER', 'root');
+$dbPass = env('DB_PASS', '');
+$dbName = env('DB_NAME', 'employsmart');
+
+define('DB_HOST', $dbHost);
+define('DB_USER', $dbUser);
+define('DB_PASS', $dbPass);
+define('DB_NAME', $dbName);
+
+function ensureRequiredTables($conn) {
+    $statements = [
+        "CREATE TABLE IF NOT EXISTS system_settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            setting_key VARCHAR(100) NOT NULL UNIQUE,
+            setting_value TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )",
+        "CREATE TABLE IF NOT EXISTS feedback_threads (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            sender_id INT,
+            sender_role VARCHAR(50),
+            target_type ENUM('employer','jobseeker','placement') NOT NULL,
+            target_id INT NOT NULL,
+            rating INT DEFAULT 5,
+            feedback TEXT NOT NULL,
+            status ENUM('open','closed') DEFAULT 'open',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL
+        )",
+        "CREATE TABLE IF NOT EXISTS message_threads (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            application_id INT NOT NULL UNIQUE,
+            employer_id INT NOT NULL,
+            jobseeker_id INT NOT NULL,
+            initiated_by_role VARCHAR(50) NOT NULL DEFAULT 'employer',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE,
+            FOREIGN KEY (employer_id) REFERENCES employers(id) ON DELETE CASCADE,
+            FOREIGN KEY (jobseeker_id) REFERENCES users(id) ON DELETE CASCADE
+        )",
+        "CREATE TABLE IF NOT EXISTS messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            thread_id INT NOT NULL,
+            sender_id INT NOT NULL,
+            sender_role VARCHAR(50) NOT NULL,
+            receiver_id INT NOT NULL,
+            message_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (thread_id) REFERENCES message_threads(id) ON DELETE CASCADE,
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+        )",
+        "CREATE TABLE IF NOT EXISTS notifications (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            target_user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            priority ENUM('normal','high') DEFAULT 'normal',
+            category VARCHAR(100) DEFAULT 'general',
+            is_read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
+        )",
+        // One active uploaded resume per jobseeker with its extracted and confirmed data.
+        "CREATE TABLE IF NOT EXISTS resume_profiles (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL UNIQUE,
+            file_path VARCHAR(255) NOT NULL,
+            original_name VARCHAR(255),
+            mime_type VARCHAR(100),
+            file_size INT,
+            file_hash CHAR(64),
+            page_count INT,
+            status ENUM('needs_ocr','parsed','confirmed') NOT NULL DEFAULT 'parsed',
+            extraction_method VARCHAR(30),
+            ai_used TINYINT(1) NOT NULL DEFAULT 0,
+            raw_text MEDIUMTEXT,
+            parsed_data LONGTEXT,
+            confirmed_data LONGTEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            confirmed_at DATETIME NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    ];
+
+    // Replies in PESO ↔ employer placement feedback threads.
+    $statements[] = "CREATE TABLE IF NOT EXISTS feedback_replies (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            thread_id INT NOT NULL,
+            sender_id INT NULL,
+            sender_role VARCHAR(50) NOT NULL,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_feedback_replies_thread (thread_id),
+            FOREIGN KEY (thread_id) REFERENCES feedback_threads(id) ON DELETE CASCADE,
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+    foreach ($statements as $sql) {
+        if (!$conn->query($sql)) {
+            error_log('Schema initialization warning: ' . $conn->error);
+        }
+    }
+
+    // Placement outcome and last-activity columns on feedback threads (added once).
+    $columns = [];
+    $res = $conn->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'feedback_threads'");
+    while ($res && ($row = $res->fetch_row())) $columns[] = $row[0];
+    if ($columns && !in_array('outcome', $columns, true)) {
+        $conn->query("ALTER TABLE feedback_threads ADD COLUMN outcome VARCHAR(40) NULL AFTER rating");
+    }
+    if ($columns && !in_array('updated_at', $columns, true)) {
+        $conn->query("ALTER TABLE feedback_threads ADD COLUMN updated_at TIMESTAMP NULL DEFAULT NULL");
+    }
+
+    // Add the jobseeker training application state to existing deployments.
+    $conn->query("ALTER TABLE user_training MODIFY status ENUM('pending','enrolled','completed','dropped','in_progress') DEFAULT 'pending'");
+}
+
+function getDB() {
+    static $conn = null;
+    if ($conn === null) {
+        $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+        if ($conn->connect_error) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $conn->connect_error]);
+            exit;
+        }
+        $conn->set_charset('utf8mb4');
+        ensureRequiredTables($conn);
+    }
+    return $conn;
+}

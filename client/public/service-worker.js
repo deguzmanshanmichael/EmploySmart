@@ -1,4 +1,4 @@
-const CACHE_NAME = "employsmart-cache-v2";
+const CACHE_NAME = "employsmart-cache-v3";
 
 const urlsToCache = [
   "/",
@@ -8,6 +8,8 @@ const urlsToCache = [
 
 // Install service worker
 self.addEventListener("install", (event) => {
+  // Activate a new deployment immediately instead of waiting for every tab to close.
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(urlsToCache);
@@ -46,6 +48,6 @@ self.addEventListener("activate", (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });

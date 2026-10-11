@@ -37,7 +37,12 @@ export function copyApi(serverDir, outDir) {
 }
 
 /** Vite plugin: run after the frontend bundle is written. */
-export default function bundleApi({ serverDir, outDir }) {
+/**
+ * Vite plugin: run after the frontend bundle is written.
+ * `mirrorDirs` receive an identical copy of the complete site, so the deployment works
+ * whichever output folder the host publishes (dist/ or client/dist/).
+ */
+export default function bundleApi({ serverDir, outDir, mirrorDirs = [], buildInfo = {} }) {
   return {
     name: 'employsmart-bundle-api',
     apply: 'build',
@@ -49,7 +54,16 @@ export default function bundleApi({ serverDir, outDir }) {
         throw new Error('server/vendor is missing; run "composer install --no-dev" in server/ before building.')
       }
       const { target, files } = copyApi(serverDir, outDir)
+      // Lets anyone check which version is live: https://YOUR_DOMAIN/build-info.json
+      fs.writeFileSync(path.join(outDir, 'build-info.json'), JSON.stringify(buildInfo, null, 2))
       console.log(`\n[employsmart] PHP API bundled into ${path.relative(process.cwd(), target) || target} (${files} files)`)
+      for (const mirror of mirrorDirs) {
+        if (path.resolve(mirror) === path.resolve(outDir)) continue
+        fs.rmSync(mirror, { recursive: true, force: true })
+        fs.cpSync(outDir, mirror, { recursive: true })
+        console.log(`[employsmart] Site mirrored to ${path.relative(process.cwd(), mirror) || mirror}`)
+      }
+      console.log(`[employsmart] Build ${buildInfo.version || ''} ${buildInfo.built_at || ''}`)
     },
   }
 }

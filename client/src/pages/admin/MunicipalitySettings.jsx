@@ -118,6 +118,11 @@ export default function MunicipalitySettings() {
       <div className="page-header">
         <h1 className="page-title">Municipality Configuration</h1>
         <p className="page-subtitle">Configure public-facing service details for municipal deployment.</p>
+        {typeof __APP_BUILD__ !== 'undefined' && (
+          <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            Deployed build {__APP_BUILD__.version} · built {new Date(__APP_BUILD__.built_at).toLocaleString()}
+          </p>
+        )}
       </div>
 
       <div className="card-flat space-y-4 max-w-3xl">
