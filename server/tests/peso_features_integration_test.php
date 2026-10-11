@@ -135,6 +135,23 @@ try {
     $row2 = array_values(array_filter(http('GET', "$base/skill-gaps", $peso)['json']['data']['skills'], fn($x) => $x['skill_id'] === $skillId))[0] ?? null;
     check($row2 && $row2['jobseekers_with_skill'] === 1 && $row2['shortage'] === 3, 'gap shrinks when a jobseeker gains the skill', $row2);
 
+    echo "Printable report data\n";
+    [, $clcdo] = $user('clcdo', 'Clara');
+    [, $admin] = $user('admin', 'Adam');
+    $today = date('Y-m-d');
+    $r = http('GET', "$base/reports/employment?from=$today&to=$today", $peso);
+    $d = $r['json']['data'] ?? [];
+    check($r['status'] === 200 && in_array($seekerId, array_map('intval', array_column($d['jobseekers'] ?? [], 'id')), true), 'employment report lists jobseekers registered in range', $r['json']);
+    check(in_array($jobId, array_map('intval', array_column($d['jobs'] ?? [], 'id')), true) && in_array($appId, array_map('intval', array_column($d['applications'] ?? [], 'id')), true), 'employment report lists jobs and applications in range');
+    $old = http('GET', "$base/reports/employment?from=2000-01-01&to=2000-01-31", $peso)['json']['data'] ?? [];
+    check(($old['jobseekers'] ?? null) === [] && ($old['applications'] ?? null) === [], 'records outside the range are excluded');
+    check(http('GET', "$base/reports/employment?from=2026-05-01&to=2026-01-01", $peso)['status'] === 422, 'reversed date range rejected');
+    check(http('GET', "$base/reports/employment?from=bad&to=2026-01-01", $peso)['status'] === 422, 'invalid date rejected');
+    check(http('GET', "$base/reports/employment", $emp)['status'] === 403 && http('GET', "$base/reports/employment", $seeker)['status'] === 403, 'employment report is PESO/admin only');
+    $r = http('GET', "$base/reports/training?from=$today&to=" . date('Y-m-d', strtotime('+60 days')), $clcdo);
+    check($r['status'] === 200 && in_array($trainingId, array_map('intval', array_column($r['json']['data']['programs'] ?? [], 'id')), true), 'training report lists programs running in range', $r['json']);
+    check(http('GET', "$base/reports/logs", $admin)['status'] === 200 && http('GET', "$base/reports/logs", $peso)['status'] === 403, 'log report is admin only');
+
     echo "Municipality configuration\n";
     $r = http('POST', "$base/settings/municipality", $peso, ['municipality_name' => 'Talavera', 'municipality_province' => 'Nueva Ecija', 'contact_address' => 'Municipal Hall, Talavera', 'office_hours' => 'Mon–Fri 8–5']);
     check($r['status'] === 200, 'PESO saves municipality settings');

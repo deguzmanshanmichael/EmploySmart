@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { FiRefreshCw, FiPrinter } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { printReport } from '../../utils/printReport'
+import { fetchReport, systemLogsReport, quarterStart, todayIso } from '../../utils/reportBuilders'
 
 export default function SystemLogs() {
   const [logs, setLogs]   = useState([])
@@ -42,18 +43,13 @@ export default function SystemLogs() {
   }
 
   const printLogs = () => {
-    if (!printReport({
-      title: 'System Logs',
-      subtitle: 'System activity audit report',
-      summary: `${logs.length} displayed entries · Filters: ${role || 'all roles'} · ${dateFrom || 'any date'} to ${dateTo || 'any date'}`,
-      tableHeaders: ['Username', 'Role', 'Activity', 'Date and time'],
-      tableRows: logs.map(log => [
-        log.first_name ? `${log.first_name} ${log.last_name || ''}` : 'System',
-        log.role || 'system',
-        log.action,
-        format(new Date(log.log_time), 'MMM d, yyyy h:mm a'),
-      ]),
-    })) toast.error('Please allow pop-ups to print logs.')
+    // Prints every entry matching the current filters (not only the visible page).
+    const from = dateFrom || (dateTo && dateTo < quarterStart() ? `${dateTo.slice(0, 4)}-01-01` : quarterStart())
+    const to = dateTo || todayIso()
+    if (from > to) { toast.error('The start date must be on or before the end date.'); return }
+    if (!printReport(async () => systemLogsReport(await fetchReport('logs', from, to, { role: role || undefined, search: search || undefined }), { role, search }))) {
+      toast.error('Please allow pop-ups to print logs.')
+    }
   }
 
   return (

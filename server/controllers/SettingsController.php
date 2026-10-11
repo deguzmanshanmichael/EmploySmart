@@ -28,6 +28,8 @@ class SettingsController {
             'landing_clcdo' => env('APP_LANDING_CLCDO', 'CLCDO coordinates training programs, participant enrollment, skills development, and completion tracking for local residents.'),
             'landing_hero_image' => env('APP_LANDING_HERO_IMAGE', ''),
             'landing_logo_image' => env('APP_LANDING_LOGO_IMAGE', ''),
+            // Second seal on printed reports (e.g. the PESO/CLCDO office logo).
+            'landing_office_image' => env('APP_OFFICE_LOGO_IMAGE', ''),
             'landing_primary_color' => env('APP_LANDING_PRIMARY_COLOR', '#047857'),
             'landing_accent_color' => env('APP_LANDING_ACCENT_COLOR', '#f59e0b'),
             'landing_primary_light_color' => env('APP_LANDING_PRIMARY_LIGHT_COLOR', '#34d399'),
@@ -93,7 +95,7 @@ class SettingsController {
             'contact_email', 'contact_phone', 'service_scope', 'welcome_message',
             'landing_hero_title', 'landing_hero_subtitle', 'landing_about', 'landing_mission',
             'landing_vision', 'landing_peso', 'landing_clcdo', 'landing_hero_image',
-            'landing_logo_image', 'landing_primary_color', 'landing_accent_color', 'landing_footer_text'
+            'landing_logo_image', 'landing_office_image', 'landing_primary_color', 'landing_accent_color', 'landing_footer_text'
             , 'landing_primary_light_color', 'landing_primary_dark_color', 'landing_dark_color',
             'landing_background_color', 'landing_surface_color', 'landing_text_color',
             'landing_muted_text_color', 'landing_border_color'
@@ -128,7 +130,7 @@ class SettingsController {
 
     public function uploadLandingImage($imageType) {
         requireRole(['admin']);
-        if (!in_array($imageType, ['hero', 'logo'], true)) {
+        if (!in_array($imageType, ['hero', 'logo', 'office'], true)) {
             sendError('Invalid landing image type', 422);
         }
         if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {

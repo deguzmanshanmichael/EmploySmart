@@ -6,6 +6,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { FiUsers, FiBriefcase, FiShield, FiFileText, FiCheckSquare, FiClock } from 'react-icons/fi'
 import { FiPrinter } from 'react-icons/fi'
 import { printReport } from '../../utils/printReport'
+import { fetchReport, employmentSummaryReport, quarterStart, todayIso } from '../../utils/reportBuilders'
+import toast from 'react-hot-toast'
 import useMunicipality from '../../hooks/useMunicipality'
 
 export default function PesoDashboard() {
@@ -31,20 +33,9 @@ export default function PesoDashboard() {
     { name: 'Pending employers', total: stats?.pending_employers || 0 },
     { name: 'Pending applications', total: stats?.pending_applications || 0 },
   ]
-  const printReportView = () => printReport({
-    title: 'PESO Employment Report',
-    subtitle: 'Employment office dashboard summary',
-    summary: 'Current review workload and employment activity from the EmploySmart platform.',
-    tableHeaders: ['Metric', 'Value'],
-    tableRows: [
-      ['Total Jobseekers', stats?.total_jobseekers || 0],
-      ['Active Jobs', stats?.total_jobs || 0],
-      ['Pending Employers', stats?.pending_employers || 0],
-      ['Pending Jobs', stats?.pending_jobs || 0],
-      ['Pending Applications', stats?.pending_applications || 0],
-      ['Total Applications', stats?.total_applications || 0],
-    ],
-  })
+  const printReportView = () => {
+    if (!printReport(async () => employmentSummaryReport(await fetchReport('employment', quarterStart(), todayIso())))) toast.error('Please allow pop-ups to print reports.')
+  }
 
   return (
     <div className="animate-fade-in space-y-6">

@@ -217,6 +217,15 @@ if ($resource === 'auth') {
     header('Cache-Control: public, max-age=86400');
     readfile($file);
     exit;
+} elseif ($resource === 'reports' && $method === 'GET') {
+    require_once __DIR__ . '/controllers/ReportController.php';
+    $ctrl = new ReportController();
+    match($id) {
+        'employment' => $ctrl->employment(),
+        'training' => $ctrl->training(),
+        'logs' => $ctrl->logs(),
+        default => sendError('Route not found', 404),
+    };
 } elseif ($resource === 'skill-gaps') {
     require_once __DIR__ . '/controllers/SkillGapController.php';
     $ctrl = new SkillGapController();

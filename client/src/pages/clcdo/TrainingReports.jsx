@@ -4,7 +4,13 @@ import { LoadingSpinner, StatCard } from '../../components/index'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { FiBook, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi'
 import { FiPrinter } from 'react-icons/fi'
-import { printReport } from '../../utils/printReport'
+import ReportPrintPanel from '../../components/ReportPrintPanel'
+import { fetchReport, trainingProgramsReport, trainingCompletionsReport } from '../../utils/reportBuilders'
+
+const TRAINING_REPORTS = [
+  { value: 'programs', label: 'Training programs (by start month)', build: async (from, to) => trainingProgramsReport(await fetchReport('training', from, to)) },
+  { value: 'completions', label: 'Training completions (by month)', build: async (from, to) => trainingCompletionsReport(await fetchReport('training', from, to)) },
+]
 
 export default function TrainingReports() {
   const [programs, setPrograms] = useState([])
@@ -33,21 +39,14 @@ export default function TrainingReports() {
     max: p.max_participants || 0,
   }))
 
-  const printReportView = () => {
-    if (!printReport({
-      title: 'CLCDO Training Report',
-      subtitle: 'Training programs, enrollment, and capacity overview',
-      summary: `${programs.length} training programs · ${stats.enrolled} total enrolled participants`,
-      tableHeaders: ['Program', 'Location', 'Status', 'Enrolled', 'Capacity'],
-      tableRows: programs.map(p => [p.program_name, p.location || '—', p.status, p.enrolled_count || 0, p.max_participants || 'Unlimited']),
-    })) return
-  }
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="page-header">
-        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">Training Reports 📊</h1><p className="page-subtitle">Overview of all CLCDO training programs</p></div><button onClick={printReportView} className="btn-secondary btn-sm"><FiPrinter /> Print Report</button></div>
+        <div className="flex items-start justify-between gap-3"><div><h1 className="page-title">Training Reports 📊</h1><p className="page-subtitle">Overview of all CLCDO training programs</p></div></div>
       </div>
+
+      <ReportPrintPanel reports={TRAINING_REPORTS} title="Print a training report" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Programs" value={stats.total}     icon={<FiBook />}        color="bg-blue-50 text-blue-600" />

@@ -19,7 +19,7 @@ const FALLBACK = {
 let cached = null
 let pending = null
 
-function load() {
+export function loadMunicipality() {
   if (cached) return Promise.resolve(cached)
   if (!pending) {
     pending = settingsService.getLanding()
@@ -41,7 +41,7 @@ export default function useMunicipality() {
   const [config, setConfig] = useState(cached || FALLBACK)
   useEffect(() => {
     let active = true
-    load().then((c) => { if (active) setConfig(c) })
+    loadMunicipality().then((c) => { if (active) setConfig(c) })
     return () => { active = false }
   }, [])
   return { config, place: placeLabel(config), loaded: config !== FALLBACK }

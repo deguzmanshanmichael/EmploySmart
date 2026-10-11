@@ -6,6 +6,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { FiBook, FiUsers, FiCheckCircle, FiClock } from 'react-icons/fi'
 import { FiPrinter } from 'react-icons/fi'
 import { printReport } from '../../utils/printReport'
+import { fetchReport, trainingProgramsReport, quarterStart, todayIso } from '../../utils/reportBuilders'
+import toast from 'react-hot-toast'
 
 export default function ClcdoDashboard() {
   const [programs, setPrograms] = useState([])
@@ -36,13 +38,9 @@ export default function ClcdoDashboard() {
     enrolled: program.enrolled_count || 0,
     capacity: program.max_participants || 0,
   }))
-  const printReportView = () => printReport({
-    title: 'CLCDO Training Report',
-    subtitle: 'Community livelihood and development training summary',
-    summary: `${programs.length} programs and ${stats.enrolled} enrolled participants.`,
-    tableHeaders: ['Program', 'Location', 'Status', 'Enrolled', 'Capacity'],
-    tableRows: programs.map(program => [program.program_name, program.location || '—', program.status, program.enrolled_count || 0, program.max_participants || 'Unlimited']),
-  })
+  const printReportView = () => {
+    if (!printReport(async () => trainingProgramsReport(await fetchReport('training', quarterStart(), todayIso())))) toast.error('Please allow pop-ups to print reports.')
+  }
 
   return (
     <div className="animate-fade-in space-y-6">
