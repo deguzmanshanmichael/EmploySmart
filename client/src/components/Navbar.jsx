@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Avatar from './Avatar'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useNotifications } from '../context/NotificationContext'
@@ -46,10 +47,6 @@ export default function Navbar({ onToggleSidebar, sidebarOpen }) {
     navigate('/login/user')
   }
 
-  const avatar = user?.profile_picture
-    ? `${BASE_URL}/${user.profile_picture}`
-    : null
-
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm">
       <div className="flex items-center justify-between h-16 px-4 md:px-6">
@@ -95,12 +92,7 @@ export default function Navbar({ onToggleSidebar, sidebarOpen }) {
               className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {avatar
-                  ? <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
-                  : <span className="text-white text-xs font-bold">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </span>
-                }
+                <Avatar user={user} className="w-full h-full" textClassName="text-white text-xs font-bold" />
               </div>
               <div className="hidden md:flex flex-col items-start">
                 <span className="text-sm font-semibold text-gray-800 leading-tight">

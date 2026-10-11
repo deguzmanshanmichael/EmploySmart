@@ -78,6 +78,35 @@ try {
     check(http('POST', "$base/skills/user/$uid/custom", $otherTok, ['skill_name' => 'Welding'])['status'] === 403, "cannot add skills to someone else's profile");
     $r = http('PUT', "$base/skills/user/$uid", $tok, ['skills' => [$skillId, $skillId, (string)$existing['id']]]);
     check($r['status'] === 200 && (int)$db->query("SELECT COUNT(*) FROM user_skills WHERE user_id = $uid")->fetch_row()[0] === 2, 'saving the skill list removes duplicates', $r['json']);
+    echo "Profile photo\n";
+    // A small JPEG: embeddable in the PDF with or without the GD extension.
+    $png = tempnam(sys_get_temp_dir(), 'av');
+    file_put_contents($png, base64_decode('/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAAIAAgDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABwj/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCeArsDv//Z'));
+    $ch = curl_init("$base/users/$uid/avatar");
+    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['X-Requested-With: XMLHttpRequest', "Authorization: Bearer $tok"], CURLOPT_POSTFIELDS => ['photo' => new CURLFile($png, 'image/jpeg', 'me.jpg')]]);
+    $photo = json_decode((string)curl_exec($ch), true)['data']['profile_picture'] ?? '';
+    @unlink($png);
+    check(str_starts_with($photo, 'uploads/avatars/'), 'photo uploaded', $photo);
+    $me = http('GET', "$base/auth/me", $tok)['json']['data'] ?? [];
+    check(($me['profile_picture'] ?? null) === $photo, 'photo returned after signing in again (/auth/me)', $me['profile_picture'] ?? null);
+    $ch = curl_init("$base/$photo"); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true]); $img = curl_exec($ch);
+    check(curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200 && str_starts_with((string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE), 'image/jpeg'), 'photo URL serves the image');
+
+    echo "Generated resume\n";
+    $ch = curl_init("$base/users/$uid/resume");
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ["Authorization: Bearer $tok"]]);
+    $pdf = (string)curl_exec($ch);
+    check(curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200 && str_starts_with($pdf, '%PDF') && strlen($pdf) > 10000, 'owner downloads the generated resume PDF', substr($pdf, 0, 200));
+    check(str_contains($pdf, '/Image') || str_contains($pdf, '/XObject'), 'resume PDF embeds the profile photo');
+    $ch = curl_init("$base/users/$uid/resume"); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ["Authorization: Bearer $otherTok"]]); curl_exec($ch);
+    check(curl_getinfo($ch, CURLINFO_HTTP_CODE) === 403, "another jobseeker cannot download it");
+
+    // A photo whose file was lost (e.g. in an old redeploy) is reported as missing, not as a broken link.
+    @unlink(resolveUploadPath($photo));
+    $me = http('GET', "$base/auth/me", $tok)['json']['data'] ?? [];
+    check(array_key_exists('profile_picture', $me) && $me['profile_picture'] === null, 'missing photo file reported as no photo', $me['profile_picture'] ?? 'absent');
+    $ch = curl_init("$base/users/$uid/resume"); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ["Authorization: Bearer $tok"]]);
+    check(str_starts_with((string)curl_exec($ch), '%PDF'), 'resume still generates without a photo (initials badge)');
 } finally {
     foreach ([$uid, $otherId] as $id) {
         $db->query("DELETE FROM rate_limits WHERE key_hash = '" . hash('sha256', "custom_skill:$id") . "'");

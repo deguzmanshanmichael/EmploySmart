@@ -49,6 +49,7 @@ export default function MunicipalitySettings() {
   const [form, setForm] = useState(initialState)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState('')
+  const [storage, setStorage] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -61,6 +62,7 @@ export default function MunicipalitySettings() {
     }
 
     load()
+    settingsService.getStorageStatus().then((res) => setStorage(res.data?.data || null)).catch(() => setStorage(null))
   }, [])
 
   const setValue = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
@@ -122,6 +124,19 @@ export default function MunicipalitySettings() {
           <p className="mt-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
             Deployed build {__APP_BUILD__.version} · built {new Date(__APP_BUILD__.built_at).toLocaleString()}
           </p>
+        )}
+        {storage && (!storage.persistent || !storage.writable) && (
+          <div className="alert-warning mt-3 max-w-3xl">
+            <div>
+              <p className="font-semibold">Uploaded photos, seals and resumes are not stored safely.</p>
+              <p className="mt-1 font-normal">
+                {!storage.writable
+                  ? 'The upload folder is not writable, so new uploads will fail.'
+                  : 'They are saved inside public_html/api, which is replaced on every redeploy, so profile pictures and resumes will disappear.'}
+                {' '}In Hostinger File Manager, create the folder <strong>employsmart_private</strong> next to public_html (permission 750), or set DATA_DIR in .env. See DEPLOYMENT.md.
+              </p>
+            </div>
+          </div>
         )}
       </div>
 

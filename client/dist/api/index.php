@@ -180,7 +180,9 @@ if ($resource === 'auth') {
 } elseif ($resource === 'settings') {
     require_once __DIR__ . '/controllers/SettingsController.php';
     $ctrl = new SettingsController();
-    if ($id === 'landing' && $method === 'GET') {
+    if ($id === 'storage' && $method === 'GET') {
+        $ctrl->storageStatus();
+    } elseif ($id === 'landing' && $method === 'GET') {
         $ctrl->getPublicLandingConfig();
     } elseif ($id === 'municipality' && $action === 'upload' && $method === 'POST') {
         $ctrl->uploadLandingImage($_POST['image_type'] ?? '');

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import PasswordField from '../../components/PasswordField'
+import Avatar from '../../components/Avatar'
 import { Link } from 'react-router-dom'
 import { userService, resumeProfileService } from '../../services/index'
 import toast from 'react-hot-toast'
@@ -174,10 +175,7 @@ export default function Profile() {
       <div className="card-flat flex items-center gap-5">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center overflow-hidden">
-            {user?.profile_picture
-              ? <img src={`${BASE_URL}/${user.profile_picture}`} className="w-full h-full object-cover" alt="avatar" />
-              : <span className="text-white text-2xl font-bold">{user?.first_name?.charAt(0)}</span>
-            }
+            <Avatar user={user} className="w-full h-full" textClassName="text-white text-2xl font-bold" />
           </div>
         </div>
         <div>

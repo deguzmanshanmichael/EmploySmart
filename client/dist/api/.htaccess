@@ -9,7 +9,7 @@
     RewriteRule ^\.env$ - [F]
     RewriteRule ^\.git - [F]
     RewriteRule ^config/ - [F]
-    RewriteRule ^(vendor|storage|services|tests)/ - [F]
+    RewriteRule ^(vendor|storage|services|tests|resources)/ - [F]
     RewriteRule ^\. - [F]
     
     # Route all requests to index.php (for REST API)

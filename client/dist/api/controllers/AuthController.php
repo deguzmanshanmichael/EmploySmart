@@ -228,7 +228,7 @@ class AuthController {
                 'last_name'       => $user['last_name'],
                 'email'           => $user['email'],
                 'role'            => $user['role'],
-                'profile_picture' => $user['profile_picture'],
+                'profile_picture' => existingUploadPath($user['profile_picture']),
                 'is_verified'     => (bool)$user['is_verified'],
                 'employer_status' => $user['employer_status'] ?? null,
             ]
@@ -291,7 +291,7 @@ class AuthController {
                 'last_name'       => $result['last_name'],
                 'email'           => $result['email'],
                 'role'            => $result['role'],
-                'profile_picture' => $result['profile_picture'],
+                'profile_picture' => existingUploadPath($result['profile_picture']),
             ]
         ]);
     }
@@ -316,6 +316,7 @@ class AuthController {
         $user = $stmt->get_result()->fetch_assoc();
         if (!$user) sendError('User not found', 404);
         unset($user['password']);
+        $user['profile_picture'] = existingUploadPath($user['profile_picture']);
         sendSuccess('User data', $user);
     }
 

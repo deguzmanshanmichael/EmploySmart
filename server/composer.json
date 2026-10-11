@@ -6,7 +6,8 @@
         "php": ">=8.1",
         "smalot/pdfparser": "^2.12",
         "anthropic-ai/sdk": "*",
-        "guzzlehttp/guzzle": "^7"
+        "guzzlehttp/guzzle": "^7",
+        "dompdf/dompdf": "^3.1"
     },
     "config": {
         "optimize-autoloader": true,

@@ -80,6 +80,7 @@ class UserController {
         $user = $stmt->get_result()->fetch_assoc();
         if (!$user) sendError('User not found', 404);
         unset($user['password']);
+        $user['profile_picture'] = existingUploadPath($user['profile_picture'] ?? null);
         if (!empty($user['resume_path']) && ResumeProcessor::resolvePath($user['resume_path']) === null) {
             $user['resume_path'] = null;
         }
@@ -104,229 +105,28 @@ class UserController {
         sendSuccess('User data', $user);
     }
 
-    private function parseResumeText($filePath) {
-        if (!is_file($filePath)) return null;
-
-        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        if ($ext === 'txt') {
-            $text = file_get_contents($filePath);
-            return $text ? trim($text) : null;
-        }
-
-        if ($ext === 'docx') {
-            if (class_exists('ZipArchive')) {
-                $zip = new ZipArchive();
-                if ($zip->open($filePath) === true) {
-                    $xml = $zip->getFromName('word/document.xml');
-                    $zip->close();
-                    if ($xml) {
-                        $text = preg_replace('/<[^>]+>/', ' ', $xml);
-                        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                        $text = preg_replace('/\s+/', ' ', $text);
-                        return trim($text);
-                    }
-                }
-            }
-        }
-
-        if ($ext === 'pdf') {
-            if (function_exists('shell_exec')) {
-                $command = 'pdftotext ' . escapeshellarg($filePath) . ' - 2>/dev/null';
-                $output = shell_exec($command);
-                if (!empty($output)) {
-                    return trim($output);
-                }
-            }
-
-            $content = file_get_contents($filePath);
-            if ($content) {
-                $matches = [];
-                preg_match_all('/\((?:[^()]|\\.)*\)/', $content, $matches);
-                $text = implode(' ', $matches[0] ?? []);
-                $text = str_replace(['\\(', '\\)'], ['(', ')'], $text);
-                $text = preg_replace('/\s+/', ' ', $text);
-                return trim($text);
-            }
-        }
-
-        return null;
-    }
-
-    private function wrapText($text, $limit = 96) {
-        $text = preg_replace('/\s+/', ' ', trim($text));
-        if (empty($text)) return [];
-
-        $words = preg_split('/\s+/', $text);
-        $lines = [];
-        $current = '';
-
-        foreach ($words as $word) {
-            $candidate = $current === '' ? $word : $current . ' ' . $word;
-            if (mb_strlen($candidate) <= $limit) {
-                $current = $candidate;
-            } else {
-                if ($current !== '') $lines[] = $current;
-                $current = $word;
-            }
-        }
-
-        if ($current !== '') $lines[] = $current;
-        return $lines;
-    }
-
-    private function escapePdfText($text) {
-        $text = str_replace('\\', '\\\\', $text);
-        $text = str_replace('(', '\\(', $text);
-        $text = str_replace(')', '\\)', $text);
-        $text = preg_replace('/[^\x20-\x7E]/', '', $text);
-        return $text;
-    }
-
-    private function buildResumePdf($lines) {
-        $pageWidth = 612;
-        $pageHeight = 792;
-        $marginLeft = 50;
-        $marginTop = 760;
-        $lineHeight = 13;
-        $fontSize = 11;
-
-        $stream = '';
-        $stream .= "q\n";
-        $stream .= "0.15 0.31 0.58 rg\n";
-        $stream .= "50 720 512 60 re f\n";
-        $stream .= "0.98 0.99 1 rg\n";
-        $stream .= "50 720 512 60 re S\n";
-        $stream .= "Q\n";
-        $stream .= "BT /F1 16 Tf 70 750 Td (EmploySmart Professional Resume) Tj ET\n";
-        $stream .= "BT /F1 10 Tf 70 730 Td (Generated from your profile, training, and approved roles) Tj ET\n";
-        $stream .= "0.55 0.59 0.66 rg\n";
-        $stream .= "BT /F1 8 Tf 50 25 Td (EmploySmart | Generated " . $this->escapePdfText(date('Y-m-d H:i')) . " | Page 1) Tj ET\n";
-        $y = $marginTop - 30;
-        foreach ($lines as $line) {
-            if ($y < 40) {
-                break;
-            }
-            $stream .= "BT /F1 $fontSize Tf $marginLeft $y Td (" . $this->escapePdfText($line) . ") Tj ET\n";
-            $y -= $lineHeight;
-        }
-
-        $objects = [];
-        $objects[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj";
-        $objects[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj";
-        $objects[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 $pageWidth $pageHeight] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj";
-        $objects[] = "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj";
-        $objects[] = "5 0 obj\n<< /Length 6 0 R >>\nstream\n$stream\nendstream\nendobj";
-        $objects[] = "6 0 obj\n" . strlen($stream) . "\nendobj";
-
-        $pdf = "%PDF-1.4\n";
-        $offsets = [];
-        $pos = strlen($pdf);
-        foreach ($objects as $obj) {
-            $offsets[] = $pos;
-            $pdf .= $obj . "\n";
-            $pos = strlen($pdf);
-        }
-
-        $xrefOffset = strlen($pdf);
-        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
-        $pdf .= "0000000000 65535 f \n";
-        foreach ($offsets as $offset) {
-            $pdf .= sprintf("%010d 00000 n \n", $offset);
-        }
-
-        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\n";
-        $pdf .= "startxref\n$xrefOffset\n%%EOF";
-
-        return $pdf;
-    }
-
+    /** System-generated resume (PDF) in the EmploySmart design, with the profile photo. */
     public function generateResume($id) {
         $payload = requireAuth();
         $this->authorizeResumeViewer($id, $payload);
-        $db = getDB();
-
-        $stmt = $db->prepare("SELECT u.*, e.company_name FROM users u LEFT JOIN employers e ON e.user_id = u.id WHERE u.id = ?");
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $user = $stmt->get_result()->fetch_assoc();
-        if (!$user) sendError('User not found', 404);
-
-        $sStmt = $db->prepare("SELECT s.skill_name FROM user_skills us JOIN skills s ON s.id = us.skill_id WHERE us.user_id = ? ORDER BY s.skill_name");
-        $sStmt->bind_param('i', $id);
-        $sStmt->execute();
-        $skills = $sStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $tStmt = $db->prepare("SELECT ut.status, ut.completion_date, tp.program_name, tp.location FROM user_training ut JOIN training_programs tp ON tp.id = ut.training_id WHERE ut.user_id = ? AND ut.status = 'completed' ORDER BY ut.completion_date DESC, ut.id DESC");
-        $tStmt->bind_param('i', $id);
-        $tStmt->execute();
-        $trainings = $tStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $aStmt = $db->prepare("SELECT a.application_status, a.applied_at, j.title, j.location, e.company_name FROM applications a JOIN jobs j ON j.id = a.job_id JOIN employers e ON e.id = j.employer_id WHERE a.user_id = ? AND a.application_status = 'accepted' ORDER BY a.applied_at DESC");
-        $aStmt->bind_param('i', $id);
-        $aStmt->execute();
-        $approvedJobs = $aStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-        $resumePath = !empty($user['resume_path']) ? ResumeProcessor::resolvePath($user['resume_path']) : null;
-
-        $extractedText = $resumePath ? $this->parseResumeText($resumePath) : null;
-        $lines = [];
-        $lines[] = '';
-        $lines[] = '';
-        $lines[] = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
-        $lines[] = $user['email'] ?? '';
-        $lines[] = $user['phone'] ?? '';
-        $lines[] = trim(($user['address'] ?? '') . ' ' . ($user['city'] ?? ''));
-        $lines[] = '';
-        $lines[] = 'PROFILE';
-        $lines[] = '--------------------------------';
-        $lines[] = $user['bio'] ?: 'Motivated professional ready to contribute to a growing team.';
-        $lines[] = '';
-        $lines[] = 'EDUCATION & STATUS';
-        $lines[] = '--------------------------------';
-        $lines[] = 'Education: ' . ($user['education_level'] ? str_replace('_', ' ', $user['education_level']) : 'Not provided');
-        $lines[] = 'Employment: ' . ($user['employment_status'] ? str_replace('_', ' ', $user['employment_status']) : 'Not provided');
-        $lines[] = '';
-        $lines[] = 'SKILLS';
-        $lines[] = '--------------------------------';
-        if (!empty($skills)) {
-            $lines[] = implode(', ', array_map(fn($item) => $item['skill_name'], $skills));
-        } else {
-            $lines[] = 'No skills recorded yet.';
+        $autoload = __DIR__ . '/../vendor/autoload.php';
+        if (!is_file($autoload)) sendError('Resume generation is not installed on the server (missing server/vendor).', 503);
+        require_once $autoload;
+        require_once __DIR__ . '/../services/ResumePdfService.php';
+        @set_time_limit(60);
+        try {
+            [$pdf, $filename] = (new ResumePdfService(getDB()))->render((int)$id);
+        } catch (RuntimeException $e) {
+            sendError('User not found', 404);
+        } catch (\Throwable $e) {
+            error_log('Resume generation failed: ' . $e->getMessage());
+            sendError('The resume could not be generated. Please try again.', 422);
         }
-        $lines[] = '';
-        $lines[] = 'COMPLETED TRAININGS';
-        $lines[] = '--------------------------------';
-        if (!empty($trainings)) {
-            foreach ($trainings as $training) {
-                $lines[] = '- ' . ($training['program_name'] ?? 'Training') . ' (' . ($training['completion_date'] ?? 'Completed') . ')';
-                $lines[] = '  Location: ' . ($training['location'] ?? 'N/A');
-            }
-        } else {
-            $lines[] = 'No completed trainings recorded yet.';
-        }
-        $lines[] = '';
-        $lines[] = 'APPROVED JOBS';
-        $lines[] = '--------------------------------';
-        if (!empty($approvedJobs)) {
-            foreach ($approvedJobs as $job) {
-                $lines[] = '- ' . ($job['title'] ?? 'Position') . ' at ' . ($job['company_name'] ?? 'Employer');
-                $lines[] = '  Location: ' . ($job['location'] ?? 'N/A');
-            }
-        } else {
-            $lines[] = 'No approved jobs recorded yet.';
-        }
-
-        $dir = dataDir() . '/storage/generated/';
-        if (!is_dir($dir)) mkdir($dir, 0750, true);
-
-        $filename = 'resume_' . $id . '_generated.pdf';
-        $filepath = $dir . $filename;
-        file_put_contents($filepath, $this->buildResumePdf($lines));
-
         header('Content-Type: application/pdf');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        readfile($filepath);
+        header('Content-Length: ' . strlen($pdf));
+        header('Cache-Control: private, no-store');
+        echo $pdf;
         exit;
     }
 

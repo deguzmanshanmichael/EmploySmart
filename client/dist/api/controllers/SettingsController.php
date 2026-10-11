@@ -73,6 +73,12 @@ class SettingsController {
         sendSuccess('Municipality settings', $config);
     }
 
+    /** GET /settings/storage — admin: are uploads stored where redeploys cannot delete them? */
+    public function storageStatus() {
+        requireRole(['admin']);
+        sendSuccess('Upload storage status', uploadStorageStatus());
+    }
+
     public function getPublicLandingConfig() {
         $config = $this->landingDefaults();
         // The public home page must remain available while hosting/database setup is incomplete.

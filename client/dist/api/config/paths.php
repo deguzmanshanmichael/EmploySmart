@@ -72,3 +72,18 @@ function resolveUploadPath(?string $stored): ?string {
     }
     return null;
 }
+
+/** The stored upload path when its file still exists, otherwise null (e.g. lost in an old redeploy). */
+function existingUploadPath(?string $stored): ?string {
+    return $stored && resolveUploadPath($stored) !== null ? $stored : null;
+}
+
+/**
+ * Whether uploaded files are kept somewhere a redeploy cannot delete them.
+ * @return array{persistent: bool, path: string, writable: bool}
+ */
+function uploadStorageStatus(): array {
+    $dir = dataDir();
+    $insideDeployment = isDeployedBuild() && realpath($dir) === realpath(apiRootDir());
+    return ['persistent' => !$insideDeployment, 'path' => $insideDeployment ? 'public_html/api (deleted on redeploy)' : basename(dirname($dir)) . '/' . basename($dir), 'writable' => is_writable($dir)];
+}
