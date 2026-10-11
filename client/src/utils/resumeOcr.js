@@ -1,3 +1,5 @@
+import { openPdf } from './pdfjs'
+
 /**
  * In-browser text recognition for scanned resumes.
  *
@@ -9,13 +11,8 @@ export async function recognizeResumePdf(fileOrBlob, { maxPages = 5, onProgress 
   const report = (stage, value) => onProgress?.({ stage, value })
 
   report('loading', 0)
-  const pdfjs = await import('pdfjs-dist')
-  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
   const { createWorker } = await import('tesseract.js')
-
-  const data = new Uint8Array(await fileOrBlob.arrayBuffer())
-  const pdf = await pdfjs.getDocument({ data, isEvalSupported: false }).promise
+  const pdf = await openPdf(new Uint8Array(await fileOrBlob.arrayBuffer()))
   const pages = Math.min(pdf.numPages, maxPages)
 
   let currentPage = 1

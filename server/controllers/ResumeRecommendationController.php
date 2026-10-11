@@ -33,6 +33,8 @@ class ResumeRecommendationController {
         }
 
         $resume = json_decode($row['confirmed_data'], true) ?: [];
+        // Resumes confirmed before skill validation may hold years or ratings as "skills".
+        $resume['skills'] = SkillNormalizer::cleanList((array)($resume['skills'] ?? []));
         $limit = (int)($_GET['limit'] ?? 10);
         $recommendations = (new ResumeMatchingService($db))->recommend($userId, $resume, $limit > 0 ? $limit : 10);
 

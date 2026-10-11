@@ -45,6 +45,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // PDF reading and OCR load only when a resume is previewed or scanned.
+          if (id.includes('pdfjs-dist') || id.includes('tesseract')) return undefined
           if (id.includes('node_modules')) {
             if (id.includes('react-router-dom') || id.includes('react') || id.includes('scheduler') || id.includes('react-dom')) {
               return 'react-vendor'

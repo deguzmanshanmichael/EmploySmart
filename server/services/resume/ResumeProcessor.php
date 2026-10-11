@@ -10,6 +10,8 @@ require_once __DIR__ . '/ResumeAiExtractor.php';
 class ResumeProcessor {
 
     public const PRIVATE_PREFIX = 'private/resumes/';
+    /** Raised when parsing improves, so results stored by older versions are read again. */
+    public const PARSER_VERSION = 2;
 
     // ─── Storage ─────────────────────────────────────────────────────────────
 
@@ -104,6 +106,7 @@ class ResumeProcessor {
         }
         unset($skill);
         $parsed['warnings'] = array_values(array_unique($parsed['warnings']));
+        $parsed['parser_version'] = self::PARSER_VERSION;
         return $parsed;
     }
 
@@ -151,8 +154,10 @@ class ResumeProcessor {
         $known = [];
         foreach ($parsed['skills'] as $s) $known[SkillNormalizer::key($s['name'])] = true;
         foreach ($ai['skills'] as $name) {
+            $name = SkillNormalizer::acceptable($name); // the AI may also return years or ratings
+            if ($name === null) continue;
             $key = SkillNormalizer::key($name);
-            if (isset($known[$key]) || mb_strlen($name) > 60) continue;
+            if (isset($known[$key])) continue;
             $known[$key] = true;
             $canonical = SkillNormalizer::canonicalize($name);
             $parsed['skills'][] = ['name' => $name, 'as_written' => $name, 'canonical' => $canonical, 'category' => SkillNormalizer::categorize($canonical ?? $name), 'confidence' => 'medium', 'sources' => ['ai'], 'evidence' => $evidence, 'duplicates' => 0];

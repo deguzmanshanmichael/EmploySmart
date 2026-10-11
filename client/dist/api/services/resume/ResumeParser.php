@@ -18,20 +18,37 @@ class ResumeParser {
         'objective' => ['career objective', 'job objective', 'objective', 'objectives', 'professional summary', 'career summary', 'executive summary', 'summary of qualifications', 'qualifications summary', 'summary', 'professional profile', 'career profile', 'profile', 'about me', 'about', 'personal statement', 'career goal', 'career goals', 'introduction', 'overview', 'who i am'],
         'education' => ['educational background', 'educational attainment', 'educational history', 'educational qualifications', 'education and training', 'education & training', 'academic background', 'academic history', 'academic qualifications', 'academic profile', 'academic record', 'scholastic record', 'scholastic background', 'schools attended', 'education', 'academics', 'studies', 'tertiary education'],
         'experience' => ['work experience', 'working experience', 'work experiences', 'professional experience', 'employment history', 'employment record', 'employment background', 'employment', 'work history', 'career history', 'job history', 'relevant experience', 'related experience', 'work background', 'professional background', 'positions held', 'experience', 'experiences', 'internship experience', 'internships', 'internship', 'on-the-job training', 'on the job training', 'ojt', 'practicum', 'career experience', 'professional history'],
-        'skills' => ['technical skills', 'key skills', 'core skills', 'core competencies', 'competencies', 'areas of expertise', 'area of expertise', 'expertise', 'skills and abilities', 'skills & abilities', 'skills and competencies', 'skill set', 'skillset', 'skills', 'skill', 'abilities', 'proficiencies', 'technical proficiency', 'computer skills', 'soft skills', 'hard skills', 'strengths', 'special skills', 'other skills', 'tools and technologies', 'technologies', 'tech stack', 'qualifications', 'key qualifications', 'capabilities', 'knowledge'],
-        'certifications' => ['licenses and certifications', 'licenses & certifications', 'certifications and licenses', 'certifications', 'certification', 'certificates', 'licenses', 'license', 'licensure', 'eligibility', 'eligibilities', 'civil service eligibility', 'credentials', 'accreditations', 'professional licenses', 'national certificates'],
+        'skills' => ['technical skills', 'key skills', 'core skills', 'core competencies', 'competencies', 'areas of expertise', 'area of expertise', 'expertise', 'skills and abilities', 'skills & abilities', 'skills and competencies', 'skill set', 'skillset', 'skills', 'skill', 'abilities', 'proficiencies', 'technical proficiency', 'computer skills', 'soft skills', 'hard skills', 'strengths', 'special skills', 'other skills', 'tools and technologies', 'technologies', 'tech stack', 'qualifications', 'key qualifications', 'capabilities', 'knowledge', 'tools', 'software', 'software skills', 'tools and software', 'programming languages', 'digital skills', 'it skills', 'technical tools'],
+        'certifications' => ['licenses and certifications', 'licenses & certifications', 'certifications and licenses', 'certifications', 'certification', 'certificates', 'licenses', 'license', 'licences', 'licence', 'certificates and licenses', 'licensure', 'eligibility', 'eligibilities', 'civil service eligibility', 'credentials', 'accreditations', 'professional licenses', 'national certificates'],
         'trainings' => ['trainings attended', 'trainings and seminars', 'seminars and trainings', 'seminars attended', 'seminars and workshops', 'trainings', 'training', 'seminars', 'seminar', 'workshops', 'conferences', 'courses', 'courses taken', 'continuing education', 'professional development', 'relevant coursework', 'coursework'],
         'projects' => ['projects', 'project', 'academic projects', 'personal projects', 'capstone project', 'capstone', 'thesis', 'research', 'portfolio'],
         'awards' => ['awards and honors', 'honors and awards', 'awards', 'award', 'honors', 'achievements', 'accomplishments', 'recognition', 'recognitions', 'distinctions', 'scholarships'],
-        'languages' => ['languages', 'language', 'language proficiency', 'languages spoken', 'dialects'],
+        'languages' => ['languages', 'language', 'language proficiency', 'languages spoken', 'dialects', 'mother tongue', 'mother tongues', 'other languages', 'other language'],
         'volunteer' => ['volunteer experience', 'volunteer work', 'volunteering', 'volunteer', 'community involvement', 'community service', 'civic involvement', 'extracurricular activities', 'extra-curricular activities', 'extracurricular', 'organizations', 'affiliations', 'memberships', 'organizational affiliations', 'leadership experience', 'activities'],
         'references' => ['character references', 'references', 'reference', 'referees'],
         'interests' => ['interests', 'hobbies', 'hobbies and interests'],
     ];
 
-    private const TITLE_WORDS = ['developer', 'engineer', 'programmer', 'analyst', 'manager', 'supervisor', 'assistant', 'associate', 'clerk', 'cashier', 'staff', 'crew', 'officer', 'specialist', 'coordinator', 'technician', 'operator', 'driver', 'nurse', 'teacher', 'instructor', 'tutor', 'professor', 'accountant', 'bookkeeper', 'encoder', 'secretary', 'receptionist', 'agent', 'representative', 'consultant', 'designer', 'intern', 'trainee', 'apprentice', 'helper', 'laborer', 'labourer', 'carpenter', 'mason', 'electrician', 'plumber', 'welder', 'mechanic', 'cook', 'chef', 'baker', 'barista', 'server', 'waiter', 'waitress', 'bartender', 'housekeeper', 'caregiver', 'nanny', 'guard', 'merchandiser', 'promodiser', 'salesman', 'salesperson', 'saleslady', 'sales lady', 'inspector', 'administrator', 'head', 'lead', 'director', 'president', 'owner', 'proprietor', 'researcher', 'scientist', 'writer', 'editor', 'photographer', 'farmer', 'tailor', 'seamstress', 'dressmaker', 'cleaner', 'janitor', 'utility', 'messenger', 'rider', 'courier', 'dispatcher', 'storekeeper', 'stockman', 'warehouseman', 'checker', 'bagger', 'packer', 'foreman', 'aide', 'midwife', 'pharmacist', 'therapist', 'physician', 'dentist', 'architect', 'draftsman', 'surveyor', 'auditor', 'teller', 'collector', 'steward', 'executive', 'volunteer', 'freelancer', 'tester', 'support', 'admin', 'attendant', 'custodian', 'vendor', 'machinist', 'fabricator', 'painter', 'gardener', 'landscaper', 'stylist', 'cosmetologist', 'therapist', 'lineman', 'installer', 'estimator', 'planner', 'buyer', 'purchaser', 'controller', 'treasurer', 'auditor', 'paralegal', 'counselor', 'librarian', 'chief', 'leader', 'qa'];
+    /** When a heading names several sections ("Skills & Interests") the first of these wins. */
+    private const SECTION_PRIORITY = ['experience', 'education', 'skills', 'certifications', 'trainings', 'objective', 'projects', 'awards', 'languages', 'volunteer', 'references', 'personal', 'interests'];
 
-    private const COMPANY_WORDS = ['inc', 'inc.', 'corp', 'corp.', 'corporation', 'company', 'co.', 'ltd', 'ltd.', 'llc', 'enterprises', 'enterprise', 'store', 'restaurant', 'hotel', 'resort', 'hospital', 'clinic', 'bank', 'group', 'solutions', 'services', 'systems', 'agency', 'office', 'department', 'municipal', 'municipality', 'government', 'school', 'university', 'college', 'trading', 'mart', 'mall', 'foods', 'industries', 'industry', 'international', 'technologies', 'technology', 'consulting', 'cooperative', 'foundation', 'association', 'center', 'centre', 'firm', 'factory', 'farm', 'supermarket', 'pharmacy', 'bakery', 'cafe', 'café', 'shop', 'sm', 'jollibee', 'mcdonald', 'puregold', 'robinsons', 'lgu', 'peso', 'dole', 'tesda', 'deped', 'barangay', 'philippines', 'phils', 'corporation'];
+    /** Words that may accompany a section keyword in a heading ("Key Skills", "Relevant Work Experience"). */
+    private const HEADING_MODIFIERS = ['key', 'core', 'main', 'top', 'relevant', 'related', 'professional', 'technical', 'work', 'working', 'job', 'career', 'employment', 'personal', 'special', 'other', 'additional', 'selected', 'recent', 'notable', 'major', 'academic', 'educational', 'computer', 'it', 'soft', 'hard', 'language', 'practical', 'industry', 'field', 'volunteer', 'leadership', 'community', 'summary', 'history', 'background', 'highlights', 'profile', 'my', 'our', 'and', '&', 'of', 'the', 'list', 'areas', 'area', 'tools', 'software', 'programs', 'applications', 'digital', 'information', 'record', 'records', 'attended', 'obtained', 'earned', 'received', 'completed', 'taken', 'held', 'available', 'upon', 'request', 'details', 'data', 'statement', 'specialized', 'specialised', 'general', 'functional', 'transferable', 'detailed', 'brief', 'driving', 'drivers', 'driver', 'prc', 'board', 'national', 'government', 'spoken', 'written', 'me', 'tongue', 'mother'];
+
+    /** Keywords that, written alone in ordinary case inside a list, are more likely an item than a heading. */
+    private const ITEM_LIKE_KEYWORDS = ['research', 'knowledge', 'training', 'license', 'licensure', 'volunteer', 'volunteering', 'internship', 'practicum', 'ojt', 'employment', 'expertise', 'strengths', 'abilities', 'capabilities', 'competencies', 'proficiencies', 'qualifications', 'about', 'overview', 'introduction', 'studies', 'thesis', 'capstone', 'credentials', 'eligibility', 'technologies'];
+
+    /** Column titles of resume/biodata tables; a row made only of these carries no data. */
+    private const TABLE_HEADER_WORDS = ['level', 'levels', 'school', 'schools', 'name', 'of', 'the', 'and', 'course', 'courses', 'degree', 'degrees', 'program', 'year', 'years', 'graduated', 'graduation', 'date', 'dates', 'inclusive', 'from', 'to', 'period', 'duration', 'position', 'positions', 'designation', 'title', 'job', 'company', 'agency', 'employer', 'office', 'institution', 'address', 'location', 'honors', 'awards', 'received', 'attainment', 'educational', 'units', 'earned', 'status', 'salary', 'remarks', 'reason', 'for', 'leaving', 'responsibilities', 'duties', 'skill', 'skills', 'proficiency', 'rating', 'contact', 'number', 'no', 'relationship', 'occupation', 'nature', 'work', 'highest', 'grade', 'completed', 'attended', 'type', 'sector', 'appointment', 'monthly', 'conducted', 'sponsored', 'by', 'hours', 'venue', 'organizer', 'certificate', 'license', 'validity', 'exam', 'examination', 'place', 'mode'];
+
+    private const EDUCATION_LEVEL_WORDS = ['tertiary' => 'college', 'college' => 'college', 'undergraduate' => 'college', 'post graduate' => 'postgraduate', 'postgraduate' => 'postgraduate', 'graduate studies' => 'postgraduate', 'graduate school' => 'postgraduate', 'masteral' => 'postgraduate', 'doctoral' => 'postgraduate',
+        'vocational' => 'vocational', 'technical vocational' => 'vocational', 'tech voc' => 'vocational', 'techvoc' => 'vocational', 'senior high school' => 'senior_high', 'senior high' => 'senior_high', 'shs' => 'senior_high',
+        'secondary' => 'high_school', 'high school' => 'high_school', 'junior high school' => 'high_school', 'junior high' => 'high_school', 'secondary school' => 'high_school',
+        'primary' => 'elementary', 'elementary' => 'elementary', 'grade school' => 'elementary', 'primary school' => 'elementary', 'elementary school' => 'elementary'];
+
+    private const TITLE_WORDS = ['developer', 'engineer', 'programmer', 'analyst', 'manager', 'supervisor', 'assistant', 'associate', 'clerk', 'cashier', 'staff', 'crew', 'officer', 'specialist', 'coordinator', 'technician', 'operator', 'driver', 'nurse', 'teacher', 'instructor', 'tutor', 'professor', 'accountant', 'bookkeeper', 'encoder', 'secretary', 'receptionist', 'agent', 'representative', 'consultant', 'designer', 'intern', 'trainee', 'apprentice', 'helper', 'laborer', 'labourer', 'carpenter', 'mason', 'electrician', 'plumber', 'welder', 'mechanic', 'cook', 'chef', 'baker', 'barista', 'server', 'waiter', 'waitress', 'bartender', 'housekeeper', 'caregiver', 'nanny', 'guard', 'merchandiser', 'promodiser', 'salesman', 'salesperson', 'saleslady', 'sales lady', 'inspector', 'administrator', 'head', 'lead', 'director', 'president', 'owner', 'proprietor', 'researcher', 'scientist', 'writer', 'editor', 'photographer', 'farmer', 'tailor', 'seamstress', 'dressmaker', 'cleaner', 'janitor', 'utility', 'messenger', 'rider', 'courier', 'dispatcher', 'storekeeper', 'stockman', 'warehouseman', 'checker', 'bagger', 'packer', 'foreman', 'aide', 'midwife', 'pharmacist', 'therapist', 'physician', 'dentist', 'architect', 'draftsman', 'surveyor', 'auditor', 'teller', 'collector', 'steward', 'executive', 'volunteer', 'freelancer', 'tester', 'support', 'admin', 'attendant', 'custodian', 'vendor', 'machinist', 'fabricator', 'painter', 'gardener', 'landscaper', 'stylist', 'cosmetologist', 'therapist', 'lineman', 'installer', 'estimator', 'planner', 'buyer', 'purchaser', 'controller', 'treasurer', 'auditor', 'paralegal', 'counselor', 'librarian', 'chief', 'leader', 'qa', 'worker', 'workers', 'stocker', 'picker', 'loader', 'sorter', 'assembler', 'technologist', 'caretaker', 'trainer', 'coach', 'porter', 'dishwasher', 'butcher', 'telemarketer', 'typist', 'veterinarian', 'lawyer', 'attorney', 'dispatcher', 'barber', 'manicurist', 'masseur', 'masseuse', 'lifeguard', 'bookbinder', 'printer', 'programmer'];
+
+    private const COMPANY_WORDS = ['inc', 'inc.', 'corp', 'corp.', 'corporation', 'company', 'co.', 'ltd', 'ltd.', 'llc', 'enterprises', 'enterprise', 'store', 'restaurant', 'hotel', 'resort', 'hospital', 'clinic', 'bank', 'group', 'solutions', 'services', 'systems', 'agency', 'office', 'department', 'municipal', 'municipality', 'government', 'school', 'university', 'college', 'trading', 'mart', 'mall', 'foods', 'industries', 'industry', 'international', 'technologies', 'technology', 'consulting', 'cooperative', 'foundation', 'association', 'center', 'centre', 'firm', 'factory', 'farm', 'supermarket', 'pharmacy', 'bakery', 'cafe', 'café', 'shop', 'sm', 'jollibee', 'mcdonald', 'puregold', 'robinsons', 'lgu', 'peso', 'dole', 'tesda', 'deped', 'barangay', 'philippines', 'phils', 'corporation', 'hall', 'capitol'];
 
     private const PROVINCES = ['abra', 'agusan del norte', 'agusan del sur', 'aklan', 'albay', 'antique', 'apayao', 'aurora', 'basilan', 'bataan', 'batanes', 'batangas', 'benguet', 'biliran', 'bohol', 'bukidnon', 'bulacan', 'cagayan', 'camarines norte', 'camarines sur', 'camiguin', 'capiz', 'catanduanes', 'cavite', 'cebu', 'cotabato', 'davao de oro', 'davao del norte', 'davao del sur', 'davao occidental', 'davao oriental', 'dinagat islands', 'eastern samar', 'guimaras', 'ifugao', 'ilocos norte', 'ilocos sur', 'iloilo', 'isabela', 'kalinga', 'la union', 'laguna', 'lanao del norte', 'lanao del sur', 'leyte', 'maguindanao', 'marinduque', 'masbate', 'metro manila', 'misamis occidental', 'misamis oriental', 'mountain province', 'negros occidental', 'negros oriental', 'northern samar', 'nueva ecija', 'nueva vizcaya', 'occidental mindoro', 'oriental mindoro', 'palawan', 'pampanga', 'pangasinan', 'quezon', 'quirino', 'rizal', 'romblon', 'samar', 'sarangani', 'siquijor', 'sorsogon', 'south cotabato', 'southern leyte', 'sultan kudarat', 'sulu', 'surigao del norte', 'surigao del sur', 'tarlac', 'tawi-tawi', 'zambales', 'zamboanga del norte', 'zamboanga del sur', 'zamboanga sibugay', 'ncr'];
 
@@ -41,6 +58,8 @@ class ResumeParser {
 
     private array $lines = [];
     private array $warnings = [];
+    /** Languages written under a skills heading, passed on to extractLanguages(). */
+    private array $languageHints = [];
     private array $accountHints;
 
     /** @param array $accountHints optional ['first_name'=>..,'last_name'=>..,'email'=>..] used only to raise confidence */
@@ -52,6 +71,8 @@ class ResumeParser {
         $this->warnings = [];
         $this->lines = $this->prepareLines($text);
         $sections = $this->segment($this->lines);
+        // Layout markers only guide segmentation.
+        $this->lines = array_values(array_filter($this->lines, fn($l) => !in_array($l, ResumeTextExtractor::MARKERS, true)));
         $fullText = implode("\n", $this->lines);
 
         $personal = $this->extractPersonal($sections, $fullText);
@@ -59,7 +80,7 @@ class ResumeParser {
         $experience = $this->extractExperience($sections);
         $certifications = $this->extractCertifications($sections, $fullText);
         $trainings = $this->extractListSection($sections['trainings'] ?? [], 'training');
-        $skills = $this->extractSkills($sections, $experience, $certifications, $trainings);
+        $skills = $this->extractSkills($sections, $experience, $certifications, $trainings, $personal);
         $languages = $this->extractLanguages($sections, $fullText);
 
         $highest = $this->highestEducation($education);
@@ -95,6 +116,8 @@ class ResumeParser {
             // Normalise bullet glyphs to a single marker.
             $line = preg_replace('/^(?:[•●▪◦‣➢➤►▶✓✔☑❖◆◇■□\-*·o»]|\d+[.)])\s+/u', '• ', $line);
             $line = preg_replace('/^[•●▪◦‣➢➤►▶✓✔❖◆■·]\s*/u', '• ', $line);
+            // Tab-aligned forms: "Birthday | : | August 3, 1990" → "Birthday: August 3, 1990".
+            $line = preg_replace('/^([^|:]{2,40}?)\s*(?:\|\s*:\s*\|?|:\s*\|)\s*/u', '$1: ', $line) ?? $line;
             // Letter-spaced headings: "E D U C A T I O N" → "EDUCATION".
             if (preg_match('/^(?:\p{L} ){3,}\p{L}$/u', $line)) {
                 $line = str_replace(' ', '', $line);
@@ -111,59 +134,151 @@ class ResumeParser {
         return $out;
     }
 
-    /** Identify the section a heading-like line introduces, or null if it is not a heading. */
-    public function headingSection(string $line): ?array {
-        $raw = trim(preg_replace('/^[•#=*_\-\s]+|[#=*_\-\s]+$/u', '', $line));
-        if ($raw === '' || mb_strlen($raw) > 60) return null;
+    /**
+     * Identify the section a heading-like line introduces, or null if it is not a heading.
+     * A heading is a section keyword, optionally with heading words around it ("Key Skills",
+     * "Relevant Work Experience", "Skills & Interests") and decorations such as dates or icons.
+     * $current (the section being read) keeps list items like "Food Safety Seminar" or
+     * "Project Management" from being mistaken for headings.
+     */
+    public function headingSection(string $line, ?string $current = null): ?array {
+        $raw = trim(preg_replace('/^[•#=*_\-–—~\s]+|[#=*_\-–—~\s]+$/u', '', $line));
+        $raw = trim(preg_replace('/^[^\p{L}\p{N}(]+/u', '', $raw)); // leading icons
+        if ($raw === '' || mb_strlen($raw) > 400) return null;
         $remainder = '';
+        $labelled = false;
         if (preg_match('/^([^:|]{2,45})[:|]\s*(.*)$/u', $raw, $m)) {
             $raw = trim($m[1]);
             $remainder = trim($m[2]);
-        } elseif (preg_match('/^(\p{Lu}[\p{L}]+(?:\s(?:and|&|\p{Lu}[\p{L}]+))?)\s+(\S.*,.*)$/u', $raw, $m) && $this->headingSection($m[1]) !== null) {
+            $labelled = true;
+        } elseif (preg_match('/^(\p{Lu}[\p{L}]+(?:\s(?:and|&|\p{Lu}[\p{L}]+))?)\s+(\S.*,.*)$/u', $raw, $m) && $this->headingSection($m[1], $current) !== null) {
             // "Skills HTML, CSS, JavaScript": capitalised heading word followed by a list.
             $raw = $m[1];
             $remainder = trim($m[2]);
-        } elseif (preg_match('/[.!?]$/u', $raw) || preg_match('/\d{4}/', $raw)) {
-            return null;
         }
-        $norm = mb_strtolower(preg_replace('/[^\p{L}&\s\-]/u', ' ', $raw), 'UTF-8');
-        $norm = trim(preg_replace('/\s+/', ' ', $norm));
-        $words = $norm === '' ? 0 : count(explode(' ', $norm));
-        if ($words === 0 || $words > 6) return null;
+        if (mb_strlen($raw) > 70) return null; // the label itself is short; only a remainder may be long
+        // Dates are decoration in a heading: "Professional Experience (2015 – 2024)".
+        $label = trim(preg_replace('/\s*[(\[]?\s*(?:since\s+)?(?:(?:' . self::MONTHS . ')\.?\s*)?(?:19|20)\d{2}\s*(?:(?:-|–|—|to)\s*(?:(?:(?:' . self::MONTHS . ')\.?\s*)?(?:19|20)\d{2}|present|current|now|date))?\s*[)\]]?\s*$/iu', '', $raw));
+        if ($label === '' || preg_match('/[.!?]$/u', $label) || preg_match('/\d/', $label)) return null;
+        $norm = mb_strtolower(preg_replace(['/\(s\)/iu', "/['’]/u"], ['s', ''], $label), 'UTF-8');
+        $norm = trim(preg_replace('/\s+/', ' ', preg_replace('/[^\p{L}&\s\-]/u', ' ', str_replace('/', ' ', $norm))));
+        $words = $norm === '' ? [] : explode(' ', $norm);
+        if (!$words || count($words) > 7) return null;
+        $compact = str_replace([' ', '-'], '', $norm); // letter-spaced headings collapse to one word
 
-        $best = null;
-        $bestLen = 0;
-        $bestKeyword = '';
+        $vocabulary = self::headingVocabulary();
+        $composed = true;
+        foreach (preg_split('/[\s\-]+/u', $norm) as $w) {
+            if ($w !== '' && !isset($vocabulary[$w])) { $composed = false; break; }
+        }
+        $isCaps = $label === mb_strtoupper($label, 'UTF-8') && preg_match('/\p{Lu}/u', $label);
+        $isTitle = (bool)preg_match('/^(?:(?:\p{Lu}[\p{L}\'\-]*|&|and|of|the|in|for)\s*)+$/u', $label);
+
+        $candidates = []; // section => [exact, keyword]
         foreach (self::SECTION_KEYWORDS as $section => $keywords) {
             foreach ($keywords as $keyword) {
-                if ($norm === $keyword || (str_starts_with($norm, $keyword . ' ') && $words <= 5) || (str_ends_with($norm, ' ' . $keyword) && $words <= 4) || ($words <= 5 && str_contains($norm, ' ' . $keyword . ' '))) {
-                    // Prefer the most specific keyword ("work experience" over "experience").
-                    $len = mb_strlen($keyword) + ($norm === $keyword ? 100 : 0);
-                    if ($len > $bestLen) { $best = $section; $bestLen = $len; $bestKeyword = $keyword; }
+                $exact = $norm === $keyword || $compact === str_replace([' ', '-'], '', $keyword);
+                $within = !$exact && $composed && preg_match('/(?:^|\s)' . preg_quote($keyword, '/') . '(?:\s|$)/u', $norm);
+                if (!$exact && !$within) continue;
+                if (!isset($candidates[$section]) || ($exact && !$candidates[$section][0]) || mb_strlen($keyword) > mb_strlen($candidates[$section][1])) {
+                    $candidates[$section] = [$exact || ($candidates[$section][0] ?? false), $keyword];
                 }
             }
         }
-        if ($best === null) return null;
+        // "Teaching Experience", "Design Skills": an occupation in front of experience/skills.
+        if (!$candidates && ($isCaps || $isTitle || $labelled) && count($words) <= 3
+            && preg_match('/^[\p{L}\-]+(?:\s[\p{L}\-]+)?\s(experiences?|skills?)$/u', $norm, $om) && $this->companyScore($label) === 0) {
+            $candidates[str_starts_with($om[1], 'experience') ? 'experience' : 'skills'] = [false, $om[1]];
+        }
+        if (!$candidates) return null;
+        $exactSections = array_keys(array_filter($candidates, fn($c) => $c[0]));
+        $pool = $exactSections ?: array_keys($candidates);
+        usort($pool, fn($a, $b) => array_search($a, self::SECTION_PRIORITY, true) <=> array_search($b, self::SECTION_PRIORITY, true));
+        $best = $pool[0];
+        [$exact, $keyword] = $candidates[$best];
 
-        // Single generic words are only headings when they look like headings
-        // (upper/title case, short line), to avoid treating prose as structure.
-        $looksLikeHeading = $remainder !== '' || $raw === mb_strtoupper($raw, 'UTF-8') || preg_match('/^(\p{Lu}[\p{L}&\'\-]*\s*)+$/u', $raw) || $words <= 3;
-        if (!$looksLikeHeading) return null;
+        // Plain sentences are not headings; short, title-cased or labelled lines are.
+        if (!($remainder !== '' || $isCaps || $isTitle || count($words) <= 3)) return null;
+        // Employers such as "Bright Ideas Technologies Inc." are not headings.
+        if (!$exact && preg_match('/\b(?:inc|corp|corporation|ltd|llc|co|company|enterprises?|trading|cooperative|foundation|hospital|clinic|university|college|school|academy|institute)\b\.?/iu', $label)) return null;
+        // Inside a list, an item that merely contains the keyword ("Food Safety Seminar") stays an item.
+        $listSections = ['skills', 'languages', 'interests', 'certifications', 'trainings', 'awards', 'projects', 'volunteer', 'references'];
+        if (!$exact && $current === $best && !$isCaps && !$labelled) return null;
+        if ($exact && in_array($norm, self::ITEM_LIKE_KEYWORDS, true) && in_array($current, $listSections, true) && !$isCaps && !$labelled) return null;
+
+        // "Languages: Java, PHP" under technical skills is a sub-label, not the spoken-languages section.
+        if ($best === 'languages' && $remainder !== '' && !preg_match('/\b(?:' . implode('|', array_map(fn($l) => preg_quote($l, '/'), self::LANGUAGES)) . ')\b/iu', $remainder)) return null;
 
         // In credential sections a qualified heading ("Driving license", "PRC License") names the item itself.
-        $labelIsItem = $best === 'certifications' && $norm !== $bestKeyword && $words >= 2;
-        return ['section' => $best, 'remainder' => $remainder, 'label' => $raw, 'label_is_item' => $labelIsItem];
+        $labelIsItem = $best === 'certifications' && !$exact && count($words) >= 2;
+        return ['section' => $best, 'remainder' => $remainder, 'label' => $label, 'label_is_item' => $labelIsItem];
+    }
+
+    /** Every word used in section keywords plus heading modifiers. */
+    private static function headingVocabulary(): array {
+        static $vocabulary = null;
+        if ($vocabulary === null) {
+            $vocabulary = array_fill_keys(self::HEADING_MODIFIERS, true);
+            foreach (self::SECTION_KEYWORDS as $keywords) {
+                foreach ($keywords as $keyword) {
+                    foreach (preg_split('/[\s\-]+/u', $keyword) as $w) $vocabulary[$w] = true;
+                }
+            }
+        }
+        return $vocabulary;
+    }
+
+    /** A table's column-title row ("Level | School | Course | Year"). */
+    private function isTableHeaderRow(string $line): bool {
+        $cells = array_values(array_filter(array_map('trim', explode('|', $line)), fn($c) => $c !== ''));
+        if (count($cells) < 2) return false;
+        foreach ($cells as $cell) {
+            $words = preg_split('/[\s\/&,.():\-]+/u', mb_strtolower($cell), -1, PREG_SPLIT_NO_EMPTY);
+            if (!$words) return false;
+            foreach ($words as $w) {
+                if (!in_array($w, self::TABLE_HEADER_WORDS, true)) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * A line that is plainly employment or schooling history (used when a heading was missed):
+     * dates together with a role/employer or school, or dates on their own beside such a line.
+     */
+    private function looksLikeHistoryLine(string $line, array $before = [], array $after = []): bool {
+        [$start, $end, $isCurrent] = $this->dateRange($line);
+        if ($start === null || ($end === null && !$isCurrent)) return false;
+        $isEntry = fn(string $text) => $this->titleScore($text) > 0 && ($this->companyScore($text) > 0 || preg_match('/,|\s\|\s|\s[-–]\s|\sat\s/u', $text))
+            || ($this->educationLevelOf($text) !== null && $this->institutionOf($text) !== null);
+        $rest = trim(preg_replace('/[\s|,()\-–·•]+/u', ' ', $this->stripDates($line)));
+        if ($rest !== '') return $isEntry($line);
+        // A date range on its own line: only history when a role, employer or school sits next to it.
+        $neighbours = array_filter([end($before) ?: '', $after[0] ?? ''], fn($l) => $l !== '' && !in_array($l, ResumeTextExtractor::MARKERS, true));
+        foreach ($neighbours as $n) {
+            if ($this->titleScore($n) > 0 || $this->companyScore($n) > 0 || $this->institutionOf($n) !== null) return true;
+        }
+        return false;
     }
 
     private function segment(array $lines): array {
         $sections = ['header' => []];
         $current = 'header';
+        $stack = [];
         $pendingLabel = null;
-        foreach ($lines as $line) {
-            if ($line === ResumeTextExtractor::COLUMN_BREAK) {
-                // A new layout column starts; its leading lines are not part of the previous section.
+        foreach ($lines as $i => $line) {
+            if ($line === ResumeTextExtractor::COLUMN_BREAK || $line === ResumeTextExtractor::BLOCK_START) {
+                // A new layout column or floating block starts; its leading lines are not part of the previous section.
+                if ($line === ResumeTextExtractor::BLOCK_START) $stack[] = $current;
                 $current = 'header';
                 $sections['header'][] = '';
+                $pendingLabel = null;
+                continue;
+            }
+            if ($line === ResumeTextExtractor::BLOCK_END) {
+                // Back to the flow the block interrupted.
+                $current = array_pop($stack) ?? 'header';
+                $sections[$current][] = '';
                 $pendingLabel = null;
                 continue;
             }
@@ -171,7 +286,20 @@ class ResumeParser {
                 $sections[$current][] = '';
                 continue;
             }
-            $heading = $this->headingSection($line);
+            if ($this->isTableHeaderRow($line)) continue;
+            // Job or school history inside a list section means its heading was not recognised.
+            if (in_array($current, ['skills', 'languages', 'interests'], true) && $this->looksLikeHistoryLine($line, $sections[$current], array_slice($lines, $i + 1, 2))) {
+                // The job title or employer written just above the dates belongs to the same entry.
+                $moved = [];
+                while (count($moved) < 2 && ($last = end($sections[$current])) !== false && $last !== '' && ($this->titleScore($last) > 0 || $this->companyScore($last) > 0)) {
+                    array_unshift($moved, array_pop($sections[$current]));
+                }
+                $current = $this->educationLevelOf($line) !== null ? 'education' : 'experience';
+                $sections[$current] = $sections[$current] ?? [];
+                if (!empty($sections[$current])) $sections[$current][] = '';
+                array_push($sections[$current], ...$moved);
+            }
+            $heading = $this->headingSection($line, $current);
             if ($heading !== null) {
                 $current = $heading['section'];
                 $sections[$current] = $sections[$current] ?? [];
@@ -214,6 +342,13 @@ class ResumeParser {
 
         // Email (also "name @ gmail.com", "name[at]gmail[dot]com")
         $emailText = preg_replace(['/\s*(?:\[at\]|\(at\)|\s@\s|\s@|@\s)\s*/i', '/\s*(?:\[dot\]|\(dot\))\s*/i'], ['@', '.'], $fullText);
+        // An address broken over two lines in a narrow column ("juan@example.co" + "m").
+        $emailText = preg_replace_callback('/([A-Z0-9._%+\-]+@[A-Z0-9\-.]*)[ \t]*\n[ \t]*([A-Z0-9\-.]+)(?=\s|$)/i', function ($m) {
+            $joinedTld = strtolower(substr((string)strrchr($m[1] . $m[2], '.'), 1));
+            $incomplete = str_ends_with($m[1], '@') || str_ends_with($m[1], '.')
+                || (strlen($m[2]) <= 3 && ctype_alpha($m[2]) && in_array($joinedTld, ['com', 'net', 'org', 'edu', 'gov', 'info'], true));
+            return $incomplete ? $m[1] . $m[2] : $m[0];
+        }, $emailText);
         if (preg_match_all('/[A-Z0-9._%+\-]+@[A-Z0-9\-]+(?:\.[A-Z0-9\-]+)*\.[A-Z]{2,}/i', $emailText, $m)) {
             $emails = array_values(array_unique(array_map(fn($e) => rtrim(strtolower($e), '.'), $m[0])));
             $valid = array_values(array_filter($emails, fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
@@ -270,8 +405,16 @@ class ResumeParser {
         return $result;
     }
 
+    /** "Maria Clara D. Reyes, RN" → "Maria Clara D. Reyes"; "Engr. Juan Cruz" → "Juan Cruz". */
+    private static function withoutCredentials(string $name): string {
+        $name = preg_replace('/^(?:engr|atty|arch|dr|dra|prof|hon)\.?\s+/iu', '', trim($name));
+        $credentials = 'RN|RM|RMT|RPh|RRT|RL|LPT|CPA|MD|PhD|Ph\.\s?D|MBA|MAEd|MAN|MSN|MSc|MS|MA|DMD|DDS|PTRP|OTRP|RSW|REE|RME|ECE|CE|EE|ME|USRN|CHRA|CB|REB';
+        return trim((string)preg_replace('/(?:,\s*(?:' . $credentials . ')\.?)+$/u', '', $name), " ,");
+    }
+
     private function detectName(array $topLines, string $email): ?array {
         $labelled = $this->labelled(implode("\n", $topLines), ['full name', 'name']);
+        if ($labelled !== null) $labelled = self::withoutCredentials($labelled);
         if ($labelled !== null && $this->isNameLike($labelled)) {
             return $this->field($this->tidyName($labelled), 'high', 'Labelled name');
         }
@@ -284,7 +427,7 @@ class ResumeParser {
             // "Hello, I'm Cia Rodriguez" / "My name is ..." introductions.
             $line = preg_replace('/^(?:(?:hello|hi|hey)[,!.]?\s*)?(?:i[\'´’`]?m|i am|my name is|this is)\s+/iu', '', $line);
             foreach (preg_split('/\s*[|·]\s*/u', $line) as $candidate) {
-                $candidate = trim($candidate, " ,");
+                $candidate = self::withoutCredentials(trim($candidate, " ,"));
                 if (!$this->isNameLike($candidate)) continue;
                 $lower = mb_strtolower($candidate);
                 $score = 10 - $i;
@@ -314,9 +457,9 @@ class ResumeParser {
         foreach (self::TITLE_WORDS as $w) {
             if (preg_match('/\b' . preg_quote($w, '/') . 's?\b/u', $lower)) return false;
         }
-        foreach (['resume', 'curriculum', 'vitae', 'street', 'city', 'province', 'barangay', 'university', 'college', 'school', 'philippines', 'nueva', 'manila', 'responsible', 'hardworking', 'skills'] as $w) {
-            if (str_contains($lower, $w)) return false;
-        }
+        // Whole words only: "Villanueva" is a surname, "Nueva Ecija" a province.
+        if (preg_match('/\b(?:resume|curriculum|vitae|biodata|bio-data|street|st|avenue|ave|road|rd|city|province|barangay|brgy|bgy|purok|sitio|subdivision|subd|village|poblacion|district|region|highway|compound|blk|block|lot|phase|university|college|school|academy|institute|philippines|nueva ecija|metro manila|manila|responsible|hardworking|skills|objective|profile|summary|experience|education|references?|contact|information)\b/u', $lower)) return false;
+        if ($this->isKnownPlace($text) || in_array($lower, self::PROVINCES, true)) return false;
         // Every word should start with a capital letter (allowing particles like "dela", "de", "y").
         foreach ($words as $w) {
             if (!preg_match('/^\p{Lu}/u', $w) && !in_array(mb_strtolower($w), ['de', 'dela', 'del', 'delos', 'la', 'los', 'y', 'van', 'von', 'da', 'dos', 'di'], true)) return false;
@@ -532,6 +675,7 @@ class ResumeParser {
 
     /** @return array{0:?string,1:?string,2:?string} city, province, ZIP code */
     private function splitLocation(string $location): array {
+        $location = trim(preg_replace('/\s*\([^)]*\)\s*/u', ' ', $location)); // "(Philippines)"
         $lower = mb_strtolower($location);
         $province = null;
         foreach (self::PROVINCES as $p) {
@@ -595,7 +739,7 @@ class ResumeParser {
     public function educationLevelOf(string $text): ?string {
         $t = mb_strtolower($text);
         if (preg_match('/\b(ph\.?\s?d|doctor(?:ate)? (?:of|in)|master(?:\'?s)?(?: degree)? (?:of|in)|\bmba\b|\bm\.?a\.?\s+in\b|\bm\.?s\.?\s+in\b|graduate studies|post-?graduate)\b/u', $t)) return 'postgraduate';
-        if (preg_match('/\b(bachelor|baccalaureate|b\.?s\.?\s+in|b\.?s\.?\s+[a-z]|bs[a-z]{1,5}\b|a\.?b\.?\s+in|\bab\s+[a-z]|bachelor\'?s|college degree|associate(?:\'s)? (?:degree|in)|undergraduate|college level|tertiary)\b/u', $t)) return 'college';
+        if (preg_match('/\b(bachelor|baccalaureate|b\.?s\.?\s+in|b\.?s\.?\s+[a-z]+|bs[a-z]{1,5}\b|a\.?b\.?\s+in|\bab\s+[a-z]+|bachelor\'?s|college degree|associate(?:\'s)? (?:degree|in)|undergraduate|college level|tertiary)\b/u', $t)) return 'college';
         if (preg_match('/\b(vocational|tesda|national certificate|nc\s?(i{1,3}|iv)\b|technical[- ]vocational|tech-?voc|diploma(?: in| of)?|certificate in|short course)\b/u', $t)) return 'vocational';
         if (preg_match('/\b(senior high|shs\b|grade 1[12]\b|stem\b|abm\b|humss\b|tvl\b|gas strand|k-?12)\b/u', $t)) return 'senior_high';
         if (preg_match('/\b(high school|secondary|junior high|jhs\b)\b/u', $t)) return 'high_school';
@@ -606,46 +750,96 @@ class ResumeParser {
     private function institutionOf(string $text): ?string {
         foreach (preg_split('/\s*(?:\||,(?=\s*\p{Lu})|\s-\s|\s–\s)\s*/u', $text) as $segment) {
             if (preg_match('/\b(university|universidad|college|colegio|institute|institution|school|academy|polytechnic|seminary|tesda|training center|training centre|learning center|high school|elementary)\b/i', $segment)
-                && !preg_match('/^(bachelor|master|doctor|b\.?s|bs[a-z]|a\.?b)\b/i', $segment)) {
+                && !preg_match('/^(bachelor|master|doctor|b\.?s|bs[a-z]|a\.?b)\b/i', $segment)
+                && $this->levelWord($segment) === null) { // "High school diploma" is a level, not a school
                 return trim($segment, " ,.");
             }
         }
         return null;
     }
 
+    /** "Tertiary", "Secondary Level", "High school diploma": a schooling level written as a label. */
+    private function levelWord(string $text): ?string {
+        $t = trim(preg_replace('/\s+/u', ' ', mb_strtolower(preg_replace('/[^\p{L}\s]/u', ' ', $text))));
+        $t = preg_replace('/\s+(?:level|education|graduate|diploma|department|dept)$/u', '', $t);
+        return self::EDUCATION_LEVEL_WORDS[$t] ?? null;
+    }
+
+    /** Split one education line (or table row) into level label, degree, school and dates. */
+    private function educationParts(string $line): array {
+        $parts = ['level_word' => null, 'degree' => null, 'degree_level' => null, 'institution' => null, 'institution_level' => null, 'start' => null, 'end' => null, 'current' => false];
+        $cells = str_contains($line, ' | ') ? array_map('trim', explode(' | ', $line)) : [$line];
+        $leftover = [];
+        foreach ($cells as $cell) {
+            if ($cell === '') continue;
+            [$s, $e, $cur] = $this->dateRange($cell);
+            if ($s !== null || $e !== null) {
+                $parts['start'] = $parts['start'] ?? $s;
+                $parts['end'] = $parts['end'] ?? $e;
+                $parts['current'] = $parts['current'] || $cur;
+            }
+            $rest = trim($this->stripDates($cell), " ,|-–·");
+            if ($rest === '') continue;
+            if (($word = $this->levelWord($rest)) !== null) { $parts['level_word'] = $parts['level_word'] ?? $word; continue; }
+            // "Secondary - Sumacab National High School"
+            if (preg_match('/^(\p{L}[\p{L}\s]{2,25}?)\s*[-–:]\s+(.+)$/u', $rest, $m) && ($word = $this->levelWord($m[1])) !== null) {
+                $parts['level_word'] = $parts['level_word'] ?? $word;
+                $rest = trim($m[2]);
+            }
+            $institution = $this->institutionOf($rest);
+            if ($institution !== null && $parts['institution'] === null) {
+                $parts['institution'] = $institution;
+                $parts['institution_level'] = $this->educationLevelOf($institution);
+            }
+            $degree = $this->degreeText($rest, $institution);
+            if ($degree === null || $this->levelWord($degree) !== null) continue;
+            $level = $this->educationLevelOf($degree);
+            if ($level !== null && $parts['degree'] === null) {
+                $parts['degree'] = $degree;
+                $parts['degree_level'] = $level;
+            } elseif ($institution === null) {
+                $leftover[] = $degree;
+            }
+        }
+        // In a table row the remaining cell is the course ("Tertiary | School | Computer Engineering | 2016").
+        if ($parts['degree'] === null && count($cells) > 2 && $parts['institution'] !== null && $leftover) {
+            $parts['degree'] = $leftover[0];
+        }
+        return $parts;
+    }
+
     private function extractEducation(array $sections): array {
         $lines = $sections['education'] ?? [];
         $entries = [];
         $current = null;
+        $blank = fn() => ['degree' => null, 'field_of_study' => null, 'institution' => null, 'start_date' => null, 'end_date' => null, 'status' => null, 'honors' => null, 'level' => null, '_level_word' => null, '_degree_level' => null, '_institution_level' => null, 'raw' => []];
         foreach ($lines as $line) {
-            if ($line === '') { if ($current) { $entries[] = $current; $current = null; } continue; }
+            if ($line === '') { if ($current && $current['raw']) { $entries[] = $current; $current = null; } continue; }
             $clean = preg_replace('/^•\s*/u', '', $line);
-            $level = $this->educationLevelOf($clean);
-            $institution = $this->institutionOf($clean);
-            // A school line ("... National High School") followed by its level line ("Secondary") is one entry.
-            $completesSchool = $current !== null && $current['degree'] === null && $institution === null && $current['start_date'] === null && $current['end_date'] === null;
-            $startsNew = $current !== null && (
-                ($level !== null && $current['_level'] !== null && !$completesSchool && !$this->sameEducationLine($current, $clean)) ||
-                ($institution !== null && $current['institution'] !== null && $level === null && !preg_match('/\d{4}/', $clean) && $current['_has_degree_line'])
-            );
-            if ($startsNew) { $entries[] = $current; $current = null; }
-            if ($current === null) {
-                $current = ['degree' => null, 'field_of_study' => null, 'institution' => null, 'start_date' => null, 'end_date' => null, 'status' => null, 'honors' => null, 'level' => null, '_level' => null, '_has_degree_line' => false, 'raw' => []];
+            $parts = $this->educationParts($clean);
+            if ($current !== null) {
+                // A new degree, a second school, or a new level label after a complete entry starts the next entry.
+                $startsNew = ($parts['degree'] !== null && $current['degree'] !== null && !$this->sameEducationLine($current, $clean))
+                    || ($parts['institution'] !== null && $current['institution'] !== null)
+                    || ($parts['level_word'] !== null && $current['institution'] !== null && ($current['_level_word'] !== null || $current['degree'] !== null));
+                if ($startsNew) { $entries[] = $current; $current = null; }
             }
+            $current = $current ?? $blank();
             $current['raw'][] = $clean;
-            if ($level !== null && ($current['_level'] === null || $current['degree'] === null)) {
-                $current['_level'] = $current['_level'] ?? $level;
-                $current['level'] = $current['level'] ?? $level;
-                $current['_has_degree_line'] = true;
-                $current['degree'] = $this->degreeText($clean, $institution);
-                $current['field_of_study'] = $current['degree'] !== null ? $this->fieldOfStudy($current['degree']) : null;
+            if ($parts['degree'] !== null && $current['degree'] === null) {
+                $current['degree'] = mb_substr($parts['degree'], 0, 150);
+                $current['_degree_level'] = $parts['degree_level'];
+                $current['field_of_study'] = $this->fieldOfStudy($parts['degree']);
             }
-            if ($institution !== null && $current['institution'] === null) $current['institution'] = $institution;
-            [$start, $end, $isCurrent] = $this->dateRange($clean);
-            if ($start !== null || $end !== null) {
-                $current['start_date'] = $current['start_date'] ?? $start;
-                $current['end_date'] = $current['end_date'] ?? $end;
-                if ($isCurrent) $current['status'] = 'ongoing';
+            if ($parts['institution'] !== null && $current['institution'] === null) {
+                $current['institution'] = $parts['institution'];
+                $current['_institution_level'] = $parts['institution_level'];
+            }
+            $current['_level_word'] = $current['_level_word'] ?? $parts['level_word'];
+            if ($parts['start'] !== null || $parts['end'] !== null) {
+                $current['start_date'] = $current['start_date'] ?? $parts['start'];
+                $current['end_date'] = $current['end_date'] ?? $parts['end'];
+                if ($parts['current']) $current['status'] = 'ongoing';
             }
             $lower = mb_strtolower($clean);
             if (preg_match('/\b(undergraduate|undergrad|units earned|level\b|currently enrolled|on-?going|ongoing|candidate|expected|incomplete|\d(?:st|nd|rd|th) year)\b/u', $lower)) $current['status'] = 'incomplete';
@@ -653,12 +847,14 @@ class ResumeParser {
                 $current['honors'] = $current['honors'] ? $current['honors'] . '; ' . $hm[1] : $hm[1];
             }
         }
-        if ($current) $entries[] = $current;
+        if ($current && $current['raw']) $entries[] = $current;
 
         $result = [];
         $seen = [];
         $year = (int)date('Y');
         foreach ($entries as $e) {
+            $e['level'] = $e['_degree_level'] ?? $e['_level_word'] ?? $e['_institution_level'];
+            $e['_level'] = $e['level'];
             if ($e['_level'] === null && $e['institution'] === null) continue;
             if ($e['status'] === null) {
                 $endYear = $e['end_date'] ? (int)substr($e['end_date'], 0, 4) : null;
@@ -673,7 +869,7 @@ class ResumeParser {
             $seen[$key] = true;
             $e['confidence'] = ($e['_level'] !== null && $e['institution'] !== null) ? 'high' : 'medium';
             $e['raw'] = implode("\n", array_slice($e['raw'], 0, 6));
-            unset($e['_level'], $e['_has_degree_line']);
+            unset($e['_level'], $e['_level_word'], $e['_degree_level'], $e['_institution_level']);
             $result[] = $e;
         }
         return array_slice($result, 0, 10);
@@ -746,7 +942,8 @@ class ResumeParser {
             // after an entry's dates, a short line followed closely by another date starts a new entry.
             if ($current !== null && $this->headerHasDate($current['header']) && !str_starts_with($line, '• ')
                 && count(preg_split('/\s+/u', $line)) <= 8 && $this->dateRange($line)[0] === null && $this->dateRange($line)[1] === null
-                && $this->dateWithin(array_slice($lines, $i + 1, 3)) && (!$current['body'] || $this->titleScore($line) > 0 || $this->companyScore($line) > 0)) {
+                && ($current['body'] || count($current['header']) >= 2)
+                && $this->dateWithin($this->headerLinesAhead($lines, $i + 1)) && (!$current['body'] || $this->titleScore($line) > 0 || $this->companyScore($line) > 0)) {
                 $blocks[] = $current;
                 $current = ['header' => [$line], 'body' => []];
                 continue;
@@ -761,7 +958,7 @@ class ResumeParser {
             } elseif ($isHeader && $current['body'] && $this->blockLooksComplete($current)) {
                 $blocks[] = $current;
                 $current = ['header' => [], 'body' => []];
-            } elseif ($isHeader && !$current['body'] && $hasDate && $this->headerHasDate($current['header']) && count($current['header']) >= 2) {
+            } elseif ($isHeader && !$current['body'] && $hasDate && $this->headerHasDate($current['header']) && (count($current['header']) >= 2 || $this->headerIsComplete($current['header']))) {
                 $blocks[] = $current;
                 $current = ['header' => [], 'body' => []];
             }
@@ -786,6 +983,17 @@ class ResumeParser {
         return array_slice($entries, 0, 20);
     }
 
+    /** The header-like lines that follow (up to the first bullet, sentence or blank line). */
+    private function headerLinesAhead(array $lines, int $from): array {
+        $ahead = [];
+        for ($j = $from; $j < count($lines) && count($ahead) < 3; $j++) {
+            $l = $lines[$j];
+            if ($l === '' || str_starts_with($l, '• ') || preg_match('/[.;]$/u', $l) || count(preg_split('/\s+/u', $l)) > 10) break;
+            $ahead[] = $l;
+        }
+        return $ahead;
+    }
+
     private function dateWithin(array $lines): bool {
         foreach ($lines as $l) {
             if ($l === '' ) continue;
@@ -798,6 +1006,16 @@ class ResumeParser {
         foreach ($header as $h) {
             [$s, $e] = $this->dateRange($h);
             if ($s !== null || $e !== null) return true;
+        }
+        return false;
+    }
+
+    /** One header line already holding the dates and the role or employer ("Teacher I | DepEd | 2018 – Present"). */
+    private function headerIsComplete(array $header): bool {
+        foreach ($header as $h) {
+            [$s, $e] = $this->dateRange($h);
+            $rest = $this->stripDates($h);
+            if (($s !== null || $e !== null) && ($this->titleScore($rest) > 0 || $this->companyScore($rest) > 0) && preg_match('/\s\|\s|,|\s[-–]\s/u', $rest)) return true;
         }
         return false;
     }
@@ -991,6 +1209,12 @@ class ResumeParser {
             $end = $isCurrent ? null : $this->ym($m[4] ?? '', $m[5] ?? '', $m[6] ?? '');
             return [$start, $end, $isCurrent];
         }
+        // "February – May 2023": both months share the year written once at the end.
+        if (preg_match('/\b(' . self::MONTHS . ')\.?\s*(?:-|to|–|—|until)\s*(' . self::MONTHS . ')\.?\s*,?\s*((?:19|20)\d{2})\b/iu', $text, $m)) {
+            $start = $this->ym($m[1], '', $m[3]);
+            $end = $this->ym($m[2], '', $m[3]);
+            if ($start !== null && $end !== null && $start <= $end) return [$start, $end, false];
+        }
         if (preg_match("/{$point}\s*(?:-|to|–)\s*{$current}/iu", $text, $m)) {
             return [$this->ym($m[1] ?? '', $m[2] ?? '', $m[3] ?? ''), null, true];
         }
@@ -1046,23 +1270,69 @@ class ResumeParser {
 
     // ─── Skills ────────────────────────────────────────────────────────────
 
-    private function extractSkills(array $sections, array $experience, array $certifications, array $trainings): array {
+    /**
+     * Split a skills line into items at commas, semicolons, bullets, pipes and spaced
+     * slashes/dashes, but never inside brackets ("Computer literate (MS Word, Excel)").
+     */
+    private function splitSkillItems(string $text): array {
+        $items = [];
+        $buffer = '';
+        $depth = 0;
+        $hasComma = (bool)preg_match('/,(?![^(]*\))/u', $text);
+        $tokens = preg_split('/(\(|\)|[,;|•·●▪]|\s\/\s|\s[-–]\s|\s+and\s+)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        foreach ($tokens as $i => $token) {
+            if ($token === '(') $depth++;
+            if ($token === ')') $depth = max(0, $depth - 1);
+            $isSeparator = $depth === 0 && (preg_match('/^(?:[,;|•·●▪]|\s\/\s|\s[-–]\s)$/u', $token)
+                // "Cooking and baking" is one skill; "Excel, Word and PowerPoint" ends a list.
+                || (preg_match('/^\s+and\s+$/u', $token) && $hasComma && !str_contains(implode('', array_slice($tokens, $i + 1)), ',')));
+            if ($isSeparator) { $items[] = $buffer; $buffer = ''; continue; }
+            $buffer .= $token;
+        }
+        $items[] = $buffer;
+        return array_values(array_filter(array_map('trim', $items), fn($i) => $i !== ''));
+    }
+
+    /** Expand "Computer literate (MS Word, Excel, PowerPoint)" into the skill and the tools it names. */
+    private function expandBracketList(string $item): array {
+        if (preg_match('/^(.+?)\s*\(([^()]+)\)\s*$/u', $item, $m) && preg_match('/[,;\/]|\band\b/u', $m[2])) {
+            $inner = preg_split('/\s*(?:[,;]|\s\/\s|\band\b)\s*/u', $m[2]);
+            return array_merge([trim($m[1])], array_filter(array_map('trim', $inner), fn($i) => $i !== ''));
+        }
+        return [$item];
+    }
+
+    private function extractSkills(array $sections, array $experience, array $certifications, array $trainings, array $personal = []): array {
         $skills = [];
-        $add = function (string $name, string $confidence, string $source, string $evidence) use (&$skills) {
-            $name = trim($name, " \t-–•:;,.()");
-            if ($name === '' || mb_strlen($name) < 2 || mb_strlen($name) > 60) return;
+        $byName = [];
+        $byCanonical = [];
+        $personName = mb_strtolower((string)($personal['full_name']['value'] ?? ''));
+        $rank = ['high' => 3, 'medium' => 2, 'low' => 1];
+        $merge = function (int $index, string $confidence, string $source) use (&$skills, $rank) {
+            $skills[$index]['duplicates']++;
+            if (!in_array($source, $skills[$index]['sources'], true)) $skills[$index]['sources'][] = $source;
+            if ($rank[$confidence] > $rank[$skills[$index]['confidence']]) $skills[$index]['confidence'] = $confidence;
+        };
+        $add = function (string $name, string $confidence, string $source, string $evidence) use (&$skills, &$byName, &$byCanonical, $merge, $personName) {
+            $listed = $source === 'skills_section';
+            $name = $listed ? SkillNormalizer::cleanName($name) : SkillNormalizer::trimEdges($name);
+            if ($name === null || $name === '' || !SkillNormalizer::isPlausible($name)) return;
+            $lower = mb_strtolower($name);
+            // A person's name, a place or an employer line is not a skill.
+            if ($personName !== '' && ($lower === $personName || str_contains($personName, $lower) && str_contains($lower, ' '))) return;
+            if ($this->isLocationSegment($name) || $this->isKnownPlace($name) || in_array($lower, self::PROVINCES, true)) return;
+            if (preg_match('/\b(?:inc|corp|corporation|ltd|llc|company|enterprises|cooperative)\b\.?/iu', $name) || ($this->titleScore($name) > 0 && $this->companyScore($name) > 0)) return;
             $canonical = SkillNormalizer::canonicalize($name);
-            $key = SkillNormalizer::key($name);
-            $rank = ['high' => 3, 'medium' => 2, 'low' => 1];
-            if (isset($skills[$key])) {
-                $skills[$key]['duplicates']++;
-                if (!in_array($source, $skills[$key]['sources'], true)) $skills[$key]['sources'][] = $source;
-                if ($rank[$confidence] > $rank[$skills[$key]['confidence']]) $skills[$key]['confidence'] = $confidence;
-                return;
+            $key = SkillNormalizer::normalize($name);
+            if (isset($byName[$key])) { $merge($byName[$key], $confidence, $source); return; }
+            foreach ($byCanonical[$canonical ?? ''] ?? [] as $index) {
+                // Mentions join the listed skill they refer to; listed skills merge only when they
+                // share a word ("MS Excel" / "Microsoft Excel"), so "QuickBooks" stays next to "Bookkeeping".
+                if (!$listed || $this->shareWord($skills[$index]['as_written'], $name)) { $merge($index, $confidence, $source); return; }
             }
-            $skills[$key] = [
+            $skills[] = [
                 // Listed skills keep the jobseeker's wording; mentions use the canonical name.
-                'name' => $source === 'skills_section' ? $name : ($canonical ?? $name),
+                'name' => $listed ? $name : ($canonical ?? $name),
                 'as_written' => $name,
                 'canonical' => $canonical,
                 'category' => SkillNormalizer::categorize($canonical ?? $name),
@@ -1071,29 +1341,73 @@ class ResumeParser {
                 'evidence' => mb_substr($evidence, 0, 200),
                 'duplicates' => 0,
             ];
+            $index = count($skills) - 1;
+            $byName[$key] = $index;
+            if ($canonical !== null) $byCanonical[$canonical][] = $index;
         };
 
         // 1) Items listed under skill headings.
+        $this->languageHints = [];
         foreach ($sections['skills'] ?? [] as $line) {
             if ($line === '') continue;
             $text = preg_replace('/^•\s*/u', '', $line);
-            // "Technical: HTML, CSS" → drop the sub-label.
-            $text = preg_replace('/^[\p{L}\s&\/]{2,30}:\s*/u', '', $text);
-            $separators = str_contains($text, ',') ? '/\s*(?:[,;|•·●▪]|\s\/\s|\s-\s|\band\b(?=[^,]*$))\s*/u' : '/\s*(?:[;|•·●▪]|\s\/\s|\s-\s)\s*/u';
-            $items = preg_split($separators, $text);
-            foreach ($items as $item) {
-                $item = trim($item);
-                if ($item === '') continue;
-                if ($this->isLanguageItem($item)) continue; // handled by extractLanguages()
-                $words = count(preg_split('/\s+/u', $item));
-                if ($words <= 5 && !preg_match('/[.!?]$/u', $item)) {
-                    $add($item, 'high', 'skills_section', $line);
-                } else {
-                    // Sentence-like entries: keep only recognised skills mentioned inside.
-                    foreach (SkillNormalizer::findInText($item) as $canonical => $alias) {
-                        $add($canonical, 'high', 'skills_section', $line);
+            // "Label: values" / "Label | values": "Technical: HTML, CSS", "Digital skills | Microsoft Office",
+            // "Language: English" — or "Skill: level" / "Skill | 80%", where the label is the skill itself.
+            if (preg_match('/^([\p{L}\s&\/()\'\-+#.]{2,40}?)\s*(:|\s\|\s)\s*(.+)$/u', $text, $m) && !preg_match('/[,;]/u', $m[1])) {
+                $label = mb_strtolower(trim($m[1]));
+                $value = trim($m[3]);
+                $valueItems = $this->splitSkillItems($value);
+                $spoken = array_filter($valueItems, fn($v) => $this->isLanguageItem($v));
+                $plausible = array_filter($valueItems, function ($v) {
+                    $c = SkillNormalizer::cleanName($v);
+                    return $c !== null && SkillNormalizer::isPlausible($c);
+                });
+                if (!$plausible && !$spoken) {
+                    $text = trim($m[1]); // the value is only a level, rating or duration
+                } elseif (preg_match('/\b(?:languages?|dialects?|mother tongue|tongues?)\b/u', $label) && $spoken) {
+                    $this->languageHints[] = $value; // spoken languages belong to Languages
+                    continue;
+                } elseif (preg_match('/\b(?:interests?|hobbies|hobby)\b/u', $label)) {
+                    continue;
+                } elseif (preg_match('/\b(?:skills?|tools|software|languages?|frameworks?|databases?|platforms?|technologies|programs|applications|competencies|abilities|knowledge|licen[cs]e|tongues?|technical|others?)$/u', $label)) {
+                    $text = $value; // a category label in front of the list
+                } elseif (trim($m[2]) === ':' && count(preg_split('/\s+/u', $label)) <= 4) {
+                    // "Microsoft Office: Word, Excel" keeps both; "Technical: ..." style labels are dropped.
+                    $text = SkillNormalizer::canonicalize($m[1]) !== null ? trim($m[1]) . ', ' . $value : $value;
+                }
+            }
+            foreach ($this->splitSkillItems($text) as $item) {
+                foreach ($this->expandBracketList($item) as $part) {
+                    if ($this->isLanguageItem($part)) { $this->languageHints[] = $part; continue; } // handled by extractLanguages()
+                    $cleaned = SkillNormalizer::cleanName($part) ?? '';
+                    $pieces = [$cleaned];
+                    // "C++ and Java" is two skills; "Food safety and sanitation" is one known skill.
+                    if (preg_match('/^(.+?)\s+and\s+(.+)$/u', $cleaned, $am) && !str_contains($cleaned, '(') && SkillNormalizer::canonicalize($cleaned) === null
+                        && count(preg_split('/\s+/u', $am[1])) <= 3 && count(preg_split('/\s+/u', $am[2])) <= 3) {
+                        $pieces = [$am[1], $am[2]];
+                    }
+                    foreach ($pieces as $piece) {
+                        $words = $piece === '' ? 0 : count(preg_split('/\s+/u', $piece));
+                        if ($words >= 3 && ($known = SkillNormalizer::splitKnownList($piece)) !== null) {
+                            // Items whose separators were lost ("Customer Service Cash Handling MS Excel").
+                            foreach ($known as $k) $add($k, 'high', 'skills_section', $line);
+                        } elseif ($words >= 1 && $words <= 5 && !preg_match('/[.!?]$/u', $piece)) {
+                            $add($piece, 'high', 'skills_section', $line);
+                        } elseif ($words > 5) {
+                            // Sentence-like entries: keep only recognised skills mentioned inside.
+                            foreach (SkillNormalizer::findInText($piece) as $canonical => $alias) {
+                                $add($canonical, 'high', 'skills_section', $line);
+                            }
+                        }
                     }
                 }
+            }
+        }
+
+        // Technologies listed under a plain "Languages" heading ("Java, PHP, Python") are skills.
+        foreach ($sections['languages'] ?? [] as $line) {
+            foreach ($this->splitSkillItems(preg_replace('/^•\s*/u', '', $line)) as $item) {
+                if (!$this->isLanguageItem($item) && SkillNormalizer::canonicalize($item) !== null) $add($item, 'high', 'skills_section', $line);
             }
         }
 
@@ -1119,6 +1433,17 @@ class ResumeParser {
         $list = array_values($skills);
         usort($list, fn($a, $b) => [$b['confidence'] === 'high', $b['confidence'] === 'medium'] <=> [$a['confidence'] === 'high', $a['confidence'] === 'medium']);
         return array_slice($list, 0, 80);
+    }
+
+    /** Two skill names share a meaningful word ("MS Excel" / "Microsoft Excel"). */
+    private function shareWord(string $a, string $b): bool {
+        $ignore = ['and', 'of', 'the', 'in', 'skills', 'skill', 'management', 'operation', 'operations', 'service', 'services', 'basic', 'advanced', 'care', 'handling', 'work', 'control', 'support', 'system', 'systems'];
+        $wordsA = array_diff(explode(' ', SkillNormalizer::normalize($a)), $ignore);
+        $wordsB = array_diff(explode(' ', SkillNormalizer::normalize($b)), $ignore);
+        foreach ($wordsA as $w) {
+            if (mb_strlen($w) >= 3 && in_array($w, $wordsB, true)) return true;
+        }
+        return false;
     }
 
     // ─── Certifications, licenses, list sections ──────────────────────────
@@ -1207,7 +1532,7 @@ class ResumeParser {
     }
 
     private function extractLanguages(array $sections, string $fullText): array {
-        $source = implode("\n", $sections['languages'] ?? []);
+        $source = implode("\n", array_merge($sections['languages'] ?? [], $this->languageHints));
         $confidence = 'high';
         if (trim($source) === '') {
             // Languages written with a proficiency anywhere (e.g. "English: Native / French: Fluent" under Skills).
@@ -1248,7 +1573,7 @@ class ResumeParser {
         $sep = $allowSpace ? '(?:[:\-–|]|\s)' : '(?:[:\-–|]|\s{2,})';
         foreach ($labels as $label) {
             $l = preg_quote($label, '/');
-            if (preg_match('/(?:^|\n|\|)[^\S\n]*[•]?[^\S\n]*' . $l . '[^\S\n]*' . $sep . '[^\S\n]*([^\n|]{2,200})/iu', $text, $m)) {
+            if (preg_match('/(?:^|\n|\|)[^\S\n]*[•]?[^\S\n]*' . $l . '[^\S\n]*' . $sep . '[^\S\n]*(?:\|[^\S\n]*)?([^\n|]{2,200})/iu', $text, $m)) {
                 $value = trim($m[1], " \t:-–");
                 if ($value !== '') return $value;
             }

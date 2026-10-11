@@ -19,3 +19,8 @@
 </IfModule>
 
 Options -Indexes
+
+# Some hosts do not know .mjs; browsers only run JavaScript modules sent as JavaScript.
+<IfModule mod_mime.c>
+    AddType text/javascript .js .mjs
+</IfModule>

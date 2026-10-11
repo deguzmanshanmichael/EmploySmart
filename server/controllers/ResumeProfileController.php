@@ -311,13 +311,42 @@ class ResumeProfileController {
             ] : null,
             'has_legacy_resume' => $hasLegacyResume,
             'resume_path' => $resumePath,
-            'extracted' => $row && $row['parsed_data'] ? json_decode($row['parsed_data'], true) : null,
-            'confirmed' => $row && $row['confirmed_data'] ? json_decode($row['confirmed_data'], true) : null,
+            'extracted' => $row ? $this->currentExtraction($userId, $row) : null,
+            'confirmed' => $row && $row['confirmed_data'] ? $this->withCleanSkills(json_decode($row['confirmed_data'], true)) : null,
             'current_profile' => $profile,
             'current_skills' => $this->userSkills($userId),
             'limits' => ['max_size_mb' => (int)(ResumeProcessor::maxBytes() / 1024 / 1024), 'max_pages' => ResumeProcessor::maxPages(), 'types' => ['pdf', 'docx']],
             'ai_enabled' => ResumeAiExtractor::enabled(),
         ];
+    }
+
+    /**
+     * The stored extraction, read again from the saved resume text when it was produced by an
+     * older parser version (e.g. one that listed years as skills). AI-assisted results are kept
+     * and only their skill list is cleaned.
+     */
+    private function currentExtraction(int $userId, array $row): ?array {
+        $parsed = $row['parsed_data'] ? json_decode($row['parsed_data'], true) : null;
+        if (!is_array($parsed) || (int)($parsed['parser_version'] ?? 1) >= ResumeProcessor::PARSER_VERSION) return $parsed;
+        if (!empty($row['ai_used']) || trim((string)($row['raw_text'] ?? '')) === '') return $this->withCleanSkills($parsed);
+        try {
+            $fromImage = in_array($row['extraction_method'] ?? '', ['ocr_browser', 'ai_vision'], true);
+            $parsed = (new ResumeProcessor())->parseText((string)$row['raw_text'], $this->accountHints($userId), $this->catalog(), null, $fromImage);
+            $json = json_encode($parsed, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+            $stmt = $this->db()->prepare("UPDATE resume_profiles SET parsed_data = ? WHERE user_id = ?");
+            $stmt->bind_param('si', $json, $userId);
+            $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('Resume re-parse failed: ' . $e->getMessage());
+            $parsed = $this->withCleanSkills($parsed);
+        }
+        return $parsed;
+    }
+
+    private function withCleanSkills($resume): ?array {
+        if (!is_array($resume)) return null;
+        $resume['skills'] = SkillNormalizer::cleanList((array)($resume['skills'] ?? []));
+        return $resume;
     }
 
     private function profileRow(int $userId): ?array {
@@ -440,10 +469,11 @@ class ResumeProfileController {
         $out['total_experience_months'] = $this->totalMonths($out['experience']);
         $seen = [];
         foreach ($list($r['skills'] ?? [], 100) as $s) {
-            $name = $this->clean(is_array($s) ? ($s['name'] ?? null) : $s, 60);
-            if ($name === null || mb_strlen($name) < 2) continue;
-            $key = SkillNormalizer::key($name);
-            if (isset($seen[$key])) continue; // duplicates collapse to one skill
+            // Years, ratings and sentences are never saved as skills, whatever the client sends.
+            $name = SkillNormalizer::acceptable($this->clean(is_array($s) ? ($s['name'] ?? null) : $s, 60));
+            if ($name === null) continue;
+            $key = SkillNormalizer::normalize($name);
+            if (isset($seen[$key])) continue; // the same skill written twice collapses to one
             $seen[$key] = true;
             $out['skills'][] = ['name' => $name, 'category' => SkillNormalizer::categorize($name)];
         }

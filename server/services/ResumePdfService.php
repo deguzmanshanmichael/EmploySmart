@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/resume/SkillNormalizer.php';
 
 /**
  * Builds the system-generated resume (PDF) in the EmploySmart design:
@@ -105,8 +106,8 @@ class ResumePdfService {
 
         // Skills confirmed from the uploaded resume that are not in the catalog list.
         $known = array_map('mb_strtolower', $skills);
-        foreach ((array)($resume['skills'] ?? []) as $s) {
-            $name = trim((string)($s['name'] ?? ''));
+        foreach (SkillNormalizer::cleanList((array)($resume['skills'] ?? [])) as $s) {
+            $name = trim((string)(is_array($s) ? ($s['name'] ?? '') : $s));
             if ($name !== '' && !in_array(mb_strtolower($name), $known, true)) { $skills[] = $name; $known[] = mb_strtolower($name); }
         }
 

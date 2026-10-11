@@ -183,13 +183,14 @@ No code changes are needed. Log in as admin → **Municipality Settings** and se
 3. Correct anything that is wrong → **Confirm & Update Profile** → check **My Profile** and **My Skills**.
 4. Recommendations labelled **"Based on Your Uploaded Resume"** should appear on **My Resume**, the **Dashboard** and **Recommended**. **Apply Now** opens the normal application form.
 5. Upload a profile photo, click **Deploy** again in hPanel, and confirm the photo and resume are still there.
-6. Upload a scanned PDF → **Recognise Text** should run in the browser.
+6. Upload a scanned PDF → **Recognise Text** should run in the browser. On **My Profile → Documents**, **Generate & Preview Resume** should show the resume pages on both a computer and a phone.
 7. **Delete** the resume → the file and extracted data are removed.
 8. Security checks: opening `https://YOUR_DOMAIN/api/storage/`, `https://YOUR_DOMAIN/api/vendor/composer.json` and `https://YOUR_DOMAIN/.env` must return **403** or **404**.
 
 Automated tests (local or **[SSH]**, never against the production database):
 ```bash
 php server/tests/resume_parsing_test.php
+php server/tests/resume_layouts_test.php      # real template layouts; DOCX cases need the zip extension
 php server/tests/resume_contact_test.php
 php server/tests/resume_matching_test.php
 php server/tests/job_matching_service_test.php

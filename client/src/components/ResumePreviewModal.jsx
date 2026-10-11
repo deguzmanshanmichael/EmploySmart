@@ -1,14 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
-import { FiDownload, FiX } from 'react-icons/fi'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { FiDownload, FiExternalLink, FiX } from 'react-icons/fi'
+import { openPdf } from '../utils/pdfjs'
 
 /**
  * Shows a generated resume PDF page by page so the jobseeker can review it before
- * deciding to download. Pages are drawn with pdf.js, which also works on phones where
- * embedded PDF viewers are often unavailable.
+ * deciding to download. Pages are drawn with PDF.js, which also works on phones where
+ * embedded PDF viewers are unavailable; browsers with a built-in PDF viewer use that
+ * if PDF.js cannot run.
  */
 export default function ResumePreviewModal({ blob, filename, onClose }) {
   const pagesRef = useRef(null)
   const [status, setStatus] = useState('loading')
+  const [detail, setDetail] = useState('')
+  const blobUrl = useMemo(() => window.URL.createObjectURL(blob), [blob])
+
+  useEffect(() => () => window.URL.revokeObjectURL(blobUrl), [blobUrl])
 
   useEffect(() => {
     let cancelled = false
@@ -17,27 +23,30 @@ export default function ResumePreviewModal({ blob, filename, onClose }) {
 
     ;(async () => {
       try {
-        const pdfjs = await import('pdfjs-dist')
-        const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default
-        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
-        doc = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise
+        doc = await openPdf(new Uint8Array(await blob.arrayBuffer()))
         const width = Math.min(container.clientWidth || 800, 820)
-        const ratio = window.devicePixelRatio || 1
+        // Very dense phone screens would need huge canvases; twice the size is sharp enough.
+        const ratio = Math.min(window.devicePixelRatio || 1, 2)
         for (let n = 1; n <= doc.numPages && !cancelled; n++) {
           const page = await doc.getPage(n)
           const viewport = page.getViewport({ scale: (width / page.getViewport({ scale: 1 }).width) * ratio })
           const canvas = document.createElement('canvas')
-          canvas.width = viewport.width
-          canvas.height = viewport.height
+          canvas.width = Math.floor(viewport.width)
+          canvas.height = Math.floor(viewport.height)
           canvas.style.width = `${viewport.width / ratio}px`
           canvas.className = 'block mx-auto bg-white shadow-md rounded-sm max-w-full h-auto'
+          canvas.setAttribute('role', 'img')
           canvas.setAttribute('aria-label', `Resume page ${n} of ${doc.numPages}`)
           await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
           if (!cancelled) container.appendChild(canvas)
         }
         if (!cancelled) setStatus('ready')
-      } catch {
-        if (!cancelled) setStatus('error')
+      } catch (error) {
+        console.error('Resume preview failed', error)
+        if (cancelled) return
+        setDetail(error?.message || String(error))
+        // Desktop browsers can still show the PDF with their own viewer.
+        setStatus(container.childElementCount === 0 && navigator.pdfViewerEnabled ? 'embed' : 'error')
       }
     })()
 
@@ -55,14 +64,12 @@ export default function ResumePreviewModal({ blob, filename, onClose }) {
   }, [onClose])
 
   const handleDownload = () => {
-    const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
-    link.href = url
+    link.href = blobUrl
     link.download = filename
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    setTimeout(() => window.URL.revokeObjectURL(url), 1000)
   }
 
   return (
@@ -80,10 +87,17 @@ export default function ResumePreviewModal({ blob, filename, onClose }) {
 
         <div className="flex-1 overflow-y-auto bg-slate-100 p-3 sm:p-6">
           {status === 'loading' && <p className="text-center text-sm text-gray-500 py-10">Preparing preview…</p>}
+          {status === 'embed' && (
+            <iframe src={blobUrl} title="Resume preview" className="w-full h-[70vh] bg-white rounded shadow-md" />
+          )}
           {status === 'error' && (
-            <p className="text-center text-sm text-gray-600 py-10">
-              The preview could not be shown on this device. You can still download the resume to view it.
-            </p>
+            <div className="text-center text-sm text-gray-600 py-8 space-y-3">
+              <p>The preview could not be drawn here. You can open the PDF or download it instead.</p>
+              <a href={blobUrl} target="_blank" rel="noopener" className="btn-outline btn-sm inline-flex items-center gap-2">
+                <FiExternalLink /> Open PDF
+              </a>
+              {detail && <p className="text-xs text-gray-400">Details: {detail}</p>}
+            </div>
           )}
           <div ref={pagesRef} className="space-y-4" />
         </div>

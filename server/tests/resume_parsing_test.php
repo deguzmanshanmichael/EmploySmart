@@ -158,5 +158,85 @@ check(SkillNormalizer::canonicalize('ReactJS') === 'React', 'framework alias');
 check(SkillNormalizer::related('Cashiering', 'Sales') && !SkillNormalizer::related('Teamwork', 'Sales'), 'transferable vs soft skills');
 check(!isset(SkillNormalizer::findInText('Following instructions from the hosting team')['Teaching']), 'no false positives from prose');
 
+echo "Skills are never dates, numbers or ratings\n";
+$s = $processor->parseText(<<<TXT
+Ana Reyes
+SKILLS
+Bookkeeping | 5 years
+MS Excel | Advanced
+Adobe Photoshop 95%
+Canva ★★★★★
+Driving (8 years)
+Welding (SMAW)
+2019
+March 2019 - Present
+Computer literate (MS Word, Excel, PowerPoint)
+QuickBooks, Illustrator, Figma
+Project Management
+Basic knowledge in C++ and Java
+TXT, [], $catalog);
+$names = skillNames($s);
+$bad = array_values(array_filter($names, fn($n) => preg_match('/\b(19|20)\d{2}\b|\d\s*%|\d+\s*years?|[★●]|^(advanced|present)$/iu', $n) || substr_count($n, '(') !== substr_count($n, ')')));
+check(!$bad, 'no years, durations, percentages, ratings or cut-off brackets', $bad);
+foreach (['Bookkeeping', 'MS Excel', 'Adobe Photoshop', 'Canva', 'Driving', 'Welding (SMAW)', 'Computer literate', 'MS Word', 'PowerPoint', 'QuickBooks', 'Illustrator', 'Figma', 'Project Management', 'C++', 'Java'] as $want) {
+    check(in_array($want, $names, true), "keeps \"$want\"", $names);
+}
+check(empty($s['projects']), '"Project Management" is a skill, not a Projects heading', $s['projects']);
+
+echo "Headings with dates, compound and look-alike headings\n";
+$h = $processor->parseText(<<<TXT
+Mark Anthony Villanueva
+markanthony.villanueva@example.com
+Skills & Interests
+Technical: Payroll, SAP
+Interests: Basketball, Chess
+PROFESSIONAL EXPERIENCE (2015 - 2024)
+Payroll Officer, Northern Rice Mills Inc.
+March 2019 - March 2024
+Software Developer
+Bright Ideas Technologies
+June 2015 - February 2019
+TRAININGS
+Food Safety Seminar - DOH, 2021
+Leadership Training - 2022
+TECHNICAL SKILLS
+Languages: Java, PHP
+TXT, [], $catalog);
+check(val($h, 'full_name') === 'Mark Anthony Villanueva', 'surname containing "nueva" is a name', val($h, 'full_name'));
+check(count($h['experience']) === 2 && $h['experience'][1]['company'] === 'Bright Ideas Technologies', 'dated heading recognised; "...Technologies" employer is not a heading', array_map(fn($e) => [$e['title'], $e['company']], $h['experience']));
+check(in_array('Payroll', skillNames($h), true) && !in_array('Basketball', skillNames($h), true), '"Skills & Interests" is skills; interests are not skills', skillNames($h));
+check(count($h['trainings']) === 2, 'training items ending in "Seminar"/"Training" stay items', array_column($h['trainings'], 'name'));
+check(in_array('Java', skillNames($h), true) && !in_array('Java', array_column($h['languages'], 'name'), true), '"Languages: Java, PHP" are technical skills', [skillNames($h), $h['languages']]);
+
+echo "Forms, tables and narrow columns\n";
+$f = $processor->parseText(<<<TXT
+MARIA CLARA D. REYES, RN
+Birthday | : | August 3, 1990
+Sex | : | Female
+mariaclara.reyes@example.co
+m
+Brgy. Kapitan Pepe, Cabanatuan City
+EDUCATIONAL BACKGROUND
+Level | School | Course | Year
+Tertiary | Wesleyan University Philippines | Bachelor of Science in Nursing | 2013 - 2017
+Secondary | Talavera National High School | 2009 - 2013
+WORK EXPERIENCE
+Position | Company / Agency | Inclusive Dates
+Staff Nurse | Nueva Ecija Medical Center | Feb 2020 - Present
+Nursing Attendant | Premiere Medical Center | 2017 - 2019
+ON-THE-JOB TRAINING
+IT Support Intern | Gapan City Hall | February - May 2023
+LANGUAGES
+Mother tongue(s) | Filipino
+Other language(s) | English
+TXT, [], $catalog);
+check(val($f, 'full_name') === 'Maria Clara D. Reyes' && val($f, 'last_name') === 'Reyes', 'credentials after the name removed', [val($f, 'full_name'), val($f, 'last_name')]);
+check(val($f, 'birth_date') === '1990-08-03' && val($f, 'sex') === 'female', 'tab-aligned "Label | : | value" rows', [val($f, 'birth_date'), val($f, 'sex')]);
+check(val($f, 'email') === 'mariaclara.reyes@example.com', 'email wrapped onto the next line rejoined', val($f, 'email'));
+check(array_column($f['education'], 'level') === ['college', 'high_school'] && $f['education'][0]['degree'] === 'Bachelor of Science in Nursing', 'education table rows (header row ignored)', $f['education']);
+check(count($f['experience']) === 3 && $f['experience'][0]['company'] === 'Nueva Ecija Medical Center' && $f['experience'][1]['title'] === 'Nursing Attendant', 'one job per table row', array_map(fn($e) => [$e['title'], $e['company']], $f['experience']));
+check(($f['experience'][2]['start_date'] ?? null) === '2023-02' && ($f['experience'][2]['end_date'] ?? null) === '2023-05', '"February - May 2023" range', $f['experience'][2] ?? null);
+check(array_column($f['languages'], 'name') === ['English', 'Filipino'] || array_column($f['languages'], 'name') === ['Filipino', 'English'], 'Europass mother tongue / other languages', $f['languages']);
+
 echo "\n$passes passed, $failures failed\n";
 exit($failures > 0 ? 1 : 0);

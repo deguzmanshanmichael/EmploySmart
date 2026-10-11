@@ -264,6 +264,117 @@ class SkillNormalizer {
         return null;
     }
 
+    private const PROFICIENCY = 'beginner|basic|elementary|novice|intermediate|advanced|expert|proficient|competent|fluent|native|conversational|good|very good|excellent|strong|average|fair|high|medium|low|master|working knowledge|limited';
+    private const MONTH_WORDS = 'jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?';
+
+    /**
+     * Tidy a skill as written in a resume: remove rating symbols, percentages, durations, years
+     * and proficiency labels ("Driving (8 years)" → "Driving", "Excel – Advanced" → "Excel",
+     * "Photoshop 95%" → "Photoshop"). Returns null when nothing usable remains.
+     */
+    public static function cleanName(string $item): ?string {
+        $s = trim(preg_replace('/\s+/u', ' ', $item));
+        $months = self::MONTH_WORDS;
+        $s = preg_replace('/[\x{2605}\x{2606}\x{2729}-\x{2730}\x{25A0}-\x{25FF}\x{2B24}\x{26AA}\x{26AB}\x{2022}\x{00B7}]+/u', ' ', $s); // ★☆●○■□ ratings
+        $s = preg_replace('/[(\[]?\s*\b\d{1,3}(?:\.\d+)?\s*%\s*[)\]]?|[(\[]?\s*\b\d+(?:\.\d+)?\s*(?:\/|out of)\s*\d+\s*[)\]]?/iu', ' ', $s);
+        $s = preg_replace('/[(\[]?\s*(?:over\s+|more than\s+|about\s+|almost\s+)?\d+(?:\.\d+)?\s*\+?\s*(?:years?|yrs?\.?|months?|mos?\.?)(?:\s+(?:of\s+)?(?:experience|exp\.?))?\s*[)\]]?/iu', ' ', $s);
+        $s = preg_replace('/[(\[]?\s*(?:since\s+)?(?:(?:' . $months . ')\.?\s*)?(?:19|20)\d{2}\s*(?:(?:-|–|—|to)\s*(?:(?:(?:' . $months . ')\.?\s*)?(?:19|20)\d{2}|present|current|now|date))?\s*[)\]]?/iu', ' ', $s);
+        $s = preg_replace('/\s*[(\[]\s*(?:' . self::PROFICIENCY . ')(?:\s+level)?\s*[)\]]/iu', ' ', $s);
+        $s = preg_replace('/\s*[-–—:|]\s*(?:' . self::PROFICIENCY . ')(?:\s+level)?\s*$/iu', '', $s);
+        // "Proficient in MS Word", "Knowledge of bookkeeping"
+        $s = preg_replace('/^(?:(?:very\s+)?(?:good|strong|excellent|basic|advanced|working|solid|extensive)\s+)?(?:knowledge|proficiency|skills?|experience|expertise|background)\s+(?:of|in|with|on)\s+/iu', '', $s);
+        $s = preg_replace('/^(?:highly\s+)?(?:proficient|skilled|knowledgeable|experienced|familiar|competent|adept|well[- ]versed|trained)\s+(?:in|with|at|on)\s+/iu', '', $s);
+        $s = preg_replace('/[(\[]\s*[)\]]/u', ' ', $s);
+        $s = self::trimEdges(trim(preg_replace('/\s+/u', ' ', $s)));
+        return $s === '' ? null : $s;
+    }
+
+    /** Multibyte-safe trim of separators, plus brackets left unbalanced by splitting. */
+    public static function trimEdges(string $s): string {
+        $s = preg_replace('/^[\s\-–—•·:;,.\/|*+]+|[\s\-–—•·:;,\/|*]+$/u', '', $s) ?? $s;
+        $s = rtrim($s, '.');
+        if (substr_count($s, '(') < substr_count($s, ')')) $s = preg_replace('/^\(|\)$/u', '', $s) ?? $s;
+        if (substr_count($s, '(') > substr_count($s, ')')) $s = preg_replace('/\s*\([^)]*$/u', '', $s) ?? $s;
+        return trim($s);
+    }
+
+    /**
+     * Whether a (cleaned) item can be a skill: not a date or year, number, rating, proficiency
+     * word, contact detail, heading or sentence.
+     */
+    public static function isPlausible(string $name): bool {
+        $s = trim($name);
+        $len = mb_strlen($s, 'UTF-8');
+        if ($len > 60 || ($len < 2 && !in_array($s, ['C', 'R'], true))) return false;
+        if (!preg_match('/\p{L}/u', $s)) return false;
+        if (preg_match('/\b(?:19|20)\d{2}\b/', $s)) return false;
+        if (preg_match('/^(?:' . self::MONTH_WORDS . ')\.?$|^(?:present|current|to date|now|ongoing)$/iu', $s)) return false;
+        if (preg_match('/@|https?:|www\.|\.(?:com|net|org|ph)\b/i', $s)) return false;
+        if (preg_match('/\d{3,}/', $s) && self::canonicalize($s) === null) return false; // IDs and phone fragments, not "Office 365"
+        if (preg_match('/^(?:' . self::PROFICIENCY . ')(?:\s+level)?$/iu', $s)) return false;
+        $words = preg_split('/\s+/u', $s);
+        if (count($words) > 6 || (preg_match('/[.!?]$/u', $s) && count($words) > 3)) return false;
+        $generic = ['skills', 'skill', 'tools', 'software', 'others', 'other', 'etc', 'n/a', 'na', 'none', 'languages', 'language', 'technical', 'soft skills', 'hard skills',
+            'interests', 'hobbies', 'level', 'proficiency', 'years', 'year', 'rating', 'and', 'or', 'with', 'in', 'of', 'the', 'native', 'mother tongue', 'computer skills:'];
+        return !in_array(mb_strtolower($s, 'UTF-8'), $generic, true);
+    }
+
+    /** The tidied skill name, or null when the text is not a usable skill (a year, rating, sentence...). */
+    public static function acceptable(?string $name): ?string {
+        $clean = self::cleanName((string)$name);
+        return $clean !== null && self::isPlausible($clean) ? $clean : null;
+    }
+
+    /**
+     * Clean a stored skill list (strings or ['name' => ...] rows): invalid entries are dropped,
+     * names tidied, and identical names merged. Distinct skills of one family are kept apart.
+     */
+    public static function cleanList(array $skills): array {
+        $out = [];
+        $seen = [];
+        foreach ($skills as $skill) {
+            $name = self::acceptable(is_array($skill) ? ($skill['name'] ?? null) : (is_string($skill) ? $skill : null));
+            if ($name === null) continue;
+            $key = self::normalize($name);
+            if (isset($seen[$key])) continue;
+            $seen[$key] = true;
+            $out[] = is_array($skill) ? ['name' => $name] + $skill : $name;
+        }
+        return $out;
+    }
+
+    /**
+     * Split a run-together list ("Customer Service Cash Handling MS Excel") into the known
+     * skills it is made of, keeping the words as written. Returns null unless the text is
+     * clearly a list of known skills.
+     */
+    public static function splitKnownList(string $text): ?array {
+        $tokens = preg_split('/\s+/u', trim($text));
+        $n = count($tokens);
+        if ($n < 3) return null;
+        $normalized = array_map(fn($t) => self::normalize($t), $tokens);
+        $index = self::index();
+        $parts = [];
+        $pending = [];
+        $matched = 0;
+        $covered = 0;
+        for ($i = 0; $i < $n;) {
+            $length = 0;
+            for ($len = min(5, $n - $i); $len >= 1; $len--) {
+                $phrase = trim(implode(' ', array_slice($normalized, $i, $len)));
+                if ($phrase !== '' && isset($index[$phrase]) && (mb_strlen($phrase) > 3 || in_array($phrase, ['sql', 'php', 'css', 'pos', 'seo', 'cad', 'cpr', 'bls', 'cnc', 'git', 'c++', 'c#'], true))) { $length = $len; break; }
+            }
+            if ($length === 0) { $pending[] = $tokens[$i++]; continue; }
+            if ($pending) { $parts[] = implode(' ', $pending); $pending = []; }
+            $parts[] = implode(' ', array_slice($tokens, $i, $length));
+            $matched++;
+            $covered += $length;
+            $i += $length;
+        }
+        if ($pending) $parts[] = implode(' ', $pending);
+        return ($matched >= 2 && $covered / $n >= 0.7) ? $parts : null;
+    }
+
     /** Canonical form used for comparing skills (canonical name or the normalized phrase). */
     public static function key(string $skill): string {
         $canonical = self::canonicalize($skill);
