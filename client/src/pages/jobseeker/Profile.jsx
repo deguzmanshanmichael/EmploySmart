@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import PasswordField from '../../components/PasswordField'
 import Avatar from '../../components/Avatar'
+import ResumePreviewModal from '../../components/ResumePreviewModal'
 import { Link } from 'react-router-dom'
 import { userService, resumeProfileService } from '../../services/index'
 import toast from 'react-hot-toast'
@@ -17,6 +18,8 @@ export default function Profile() {
   const [errors, setErrors] = useState({})
   const [otherDocuments, setOtherDocuments] = useState([])
   const otherDocsInputRef = useRef(null)
+  const [resumePreview, setResumePreview] = useState(null)
+  const [generating, setGenerating] = useState(false)
   const [form, setForm] = useState({
     first_name: user?.first_name || '',
     middle_name: user?.middle_name || '',
@@ -131,20 +134,22 @@ export default function Profile() {
   }
 
   const handleGenerateResume = async () => {
+    setGenerating(true)
     try {
       const res = await userService.generateResume(user.id)
-      const blob = new Blob([res.data], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `employsmart_resume_${user.id}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      toast.success('Resume generated and downloaded!')
+      const name = /filename="?([^";]+)"?/i.exec(res.headers?.['content-disposition'] || '')?.[1]
+      setResumePreview({
+        blob: new Blob([res.data], { type: 'application/pdf' }),
+        filename: name || `EmploySmart_Resume_${user.id}.pdf`,
+      })
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Unable to generate resume')
+      let message = err.response?.data?.message
+      if (!message && err.response?.data instanceof Blob) {
+        try { message = JSON.parse(await err.response.data.text()).message } catch { /* not JSON */ }
+      }
+      toast.error(message || 'Unable to generate resume')
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -289,8 +294,8 @@ export default function Profile() {
               <Link to="/jobseeker/resume" className="btn-outline inline-flex items-center gap-2">
                 <FiUploadCloud /> {user?.resume_path ? 'Manage Resume & Recommendations' : 'Upload & Analyze Resume'}
               </Link>
-              <button onClick={handleGenerateResume} className="btn-primary btn-sm inline-flex items-center gap-2">
-                🧾 Generate Resume
+              <button onClick={handleGenerateResume} disabled={generating} className="btn-primary btn-sm inline-flex items-center gap-2">
+                🧾 {generating ? 'Generating…' : 'Generate & Preview Resume'}
               </button>
               {user?.resume_path && (
                 <button type="button" onClick={handleViewResume} className="btn-success btn-sm inline-flex">
@@ -328,7 +333,13 @@ export default function Profile() {
         </div>
       )}
 
-
+      {resumePreview && (
+        <ResumePreviewModal
+          blob={resumePreview.blob}
+          filename={resumePreview.filename}
+          onClose={() => setResumePreview(null)}
+        />
+      )}
     </div>
   )
 }
