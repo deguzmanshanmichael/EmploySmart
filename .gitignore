@@ -68,3 +68,15 @@ server/storage/resumes/*
 !server/uploads/resumes/
 server/uploads/resumes/*
 !server/uploads/resumes/.htaccess
+
+# The committed build copy never carries uploaded or generated files either
+# (resumes, photos, seals, documents); only folder placeholders and access guards.
+client/dist/api/uploads/**
+!client/dist/api/uploads/**/
+!client/dist/api/uploads/**/.gitkeep
+!client/dist/api/uploads/**/.keep
+!client/dist/api/uploads/**/.htaccess
+client/dist/api/storage/**
+!client/dist/api/storage/**/
+!client/dist/api/storage/**/.gitkeep
+!client/dist/api/storage/**/.htaccess

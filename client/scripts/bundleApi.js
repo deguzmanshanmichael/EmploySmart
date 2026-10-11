@@ -4,15 +4,16 @@
  * Hostinger's GitHub deployment publishes only the build output to public_html and
  * replaces what was there, so the API must be part of the build or it is deleted on
  * every redeploy. Secrets and user data are never copied: .env files, tests, logs,
- * and uploaded resumes stay out of the build. Persistent data lives outside
- * public_html (see server/config/paths.php).
+ * and every uploaded or generated file (resumes, photos, seals, documents) stay out
+ * of the build. Persistent data lives outside public_html (see server/config/paths.php).
  */
 import fs from 'node:fs'
 import path from 'node:path'
 
 const EXCLUDED_DIRS = new Set(['tests', 'logs', 'node_modules', '.git'])
-// Uploaded resumes are personal data; only the folder guards are shipped.
-const PRIVATE_DIRS = ['storage/resumes', 'storage/generated', 'storage/fonts', 'uploads/resumes']
+// Uploads and storage hold personal data; only the folders and their access guards are shipped.
+const PRIVATE_DIRS = ['storage', 'uploads']
+const PLACEHOLDERS = new Set(['.htaccess', '.gitkeep', '.keep'])
 
 export function copyApi(serverDir, outDir) {
   const target = path.join(outDir, 'api')
@@ -26,10 +27,9 @@ export function copyApi(serverDir, outDir) {
       const name = path.basename(source)
       if (name === '.env' || name.startsWith('.env.') || name.endsWith('.log')) return false
       if (EXCLUDED_DIRS.has(rel.split('/')[0])) return false
-      for (const dir of PRIVATE_DIRS) {
-        if (rel.startsWith(dir + '/') && name !== '.htaccess') return false
-      }
-      if (fs.statSync(source).isFile()) files++
+      const isFile = fs.statSync(source).isFile()
+      if (isFile && PRIVATE_DIRS.some((dir) => rel.startsWith(dir + '/')) && !PLACEHOLDERS.has(name)) return false
+      if (isFile) files++
       return true
     },
   })
