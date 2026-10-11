@@ -12,7 +12,7 @@ import path from 'node:path'
 
 const EXCLUDED_DIRS = new Set(['tests', 'logs', 'node_modules', '.git'])
 // Uploaded resumes are personal data; only the folder guards are shipped.
-const PRIVATE_DIRS = ['storage/resumes', 'storage/generated', 'uploads/resumes']
+const PRIVATE_DIRS = ['storage/resumes', 'storage/generated', 'storage/fonts', 'uploads/resumes']
 
 export function copyApi(serverDir, outDir) {
   const target = path.join(outDir, 'api')
