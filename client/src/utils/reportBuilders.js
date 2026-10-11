@@ -141,6 +141,8 @@ function monthSections(months, headers, toRow, subtotalNoun) {
   }))
 }
 
+const withBadges = (sections, columns) => sections.map((s) => ({ ...s, badgeColumns: columns }))
+
 function totalLine(label, months) {
   const total = months.reduce((s, m) => s + m.items.length, 0)
   // Long ranges list only the months that have records, so the line stays readable.
@@ -153,7 +155,7 @@ const monthBars = (months) => months.map((m) => ({ label: m.short, value: m.item
 const countBy = (items, key) => items.reduce((acc, i) => { const k = i[key] || 'unspecified'; acc[k] = (acc[k] || 0) + 1; return acc }, {})
 const sexSplit = (items) => {
   const by = countBy(items, 'sex')
-  return [{ label: 'Male', value: by.male || 0, color: C.orange }, { label: 'Female', value: by.female || 0, color: C.red }]
+  return [{ label: 'Male', value: by.male || 0, color: C.blue }, { label: 'Female', value: by.female || 0, color: C.purple }]
 }
 const titleRange = (from, to) => {
   const a = parts(from), b = parts(to)
@@ -189,10 +191,10 @@ export function employmentSummaryReport(data) {
     subtitle: `Summary report - ${period}`,
     dateRange: rangeLabel(from, to),
     stats: [
-      { label: 'New jobseekers', value: data.jobseekers.length },
-      { label: 'Job postings', value: data.jobs.length },
-      { label: 'Applications', value: data.applications.length },
-      { label: 'Placements (hired)', value: placed.length },
+      { label: 'New jobseekers', value: data.jobseekers.length, icon: 'users', color: C.blue },
+      { label: 'Job postings', value: data.jobs.length, icon: 'briefcase', color: C.purple },
+      { label: 'Applications', value: data.applications.length, icon: 'file', color: C.orange },
+      { label: 'Placements (hired)', value: placed.length, icon: 'check', color: C.green },
     ],
     charts: [
       { type: 'bar', title: 'Applications by month', data: monthBars(apps) },
@@ -241,10 +243,10 @@ export function newJobseekersReport(data) {
     dateRange: rangeLabel(from, to),
     groupedBy: 'Registration Month',
     stats: [
-      { label: 'Registered this period', value: data.jobseekers.length },
-      { label: 'Total jobseekers', value: data.totals.all_jobseekers },
-      { label: 'Male', value: split[0].value },
-      { label: 'Female', value: split[1].value },
+      { label: 'Registered this period', value: data.jobseekers.length, icon: 'users', color: C.blue },
+      { label: 'Total jobseekers', value: data.totals.all_jobseekers, icon: 'users', color: C.green },
+      { label: 'Male', value: split[0].value, icon: 'male', color: C.blue },
+      { label: 'Female', value: split[1].value, icon: 'female', color: C.purple },
     ],
     charts: [
       { type: 'bar', title: 'New registrations by month', data: monthBars(months) },
@@ -271,10 +273,10 @@ export function jobPostingsReport(data) {
     dateRange: rangeLabel(from, to),
     groupedBy: 'Posting Month',
     stats: [
-      { label: 'Job postings', value: data.jobs.length },
-      { label: 'Vacancies', value: vacancies },
-      { label: 'Approved', value: byStatus.approved || 0 },
-      { label: 'Pending approval', value: byStatus.pending || 0 },
+      { label: 'Job postings', value: data.jobs.length, icon: 'briefcase', color: C.blue },
+      { label: 'Vacancies', value: vacancies, icon: 'users', color: C.purple },
+      { label: 'Approved', value: byStatus.approved || 0, icon: 'check', color: C.green },
+      { label: 'Pending approval', value: byStatus.pending || 0, icon: 'clock', color: C.orange },
     ],
     charts: [
       { type: 'bar', title: 'Job postings by month', data: monthBars(months) },
@@ -284,9 +286,9 @@ export function jobPostingsReport(data) {
       months, noun: 'job postings', nounSingular: 'job posting', period,
       closing: data.jobs.length ? `The postings offer ${plural(vacancies, 'vacancy', 'vacancies')} from ${plural(new Set(data.jobs.map((j) => j.company_name)).size, 'employer')}.` : '',
     }),
-    sections: monthSections(months, ['#', 'Job Title', 'Employer', 'Posted On', 'Vacancies', 'Status'], (j, i) => [
+    sections: withBadges(monthSections(months, ['#', 'Job Title', 'Employer', 'Posted On', 'Vacancies', 'Status'], (j, i) => [
       i + 1, j.title, j.company_name, longDate(j.date), j.vacancies || 1, statusLabel(status(j)),
-    ]),
+    ]), [5]),
     grandTotal: totalLine('Total job postings', months),
   }
 }
@@ -302,10 +304,10 @@ export function applicationsReport(data) {
     dateRange: rangeLabel(from, to),
     groupedBy: 'Application Month',
     stats: [
-      { label: 'Applications', value: data.applications.length },
-      { label: 'Placements (accepted)', value: byStatus.accepted || 0 },
-      { label: 'Pending / reviewed', value: (byStatus.pending || 0) + (byStatus.reviewed || 0) },
-      { label: 'Declined', value: byStatus.rejected || 0 },
+      { label: 'Applications', value: data.applications.length, icon: 'file', color: C.blue },
+      { label: 'Placements (accepted)', value: byStatus.accepted || 0, icon: 'check', color: C.green },
+      { label: 'Pending / reviewed', value: (byStatus.pending || 0) + (byStatus.reviewed || 0), icon: 'clock', color: C.orange },
+      { label: 'Declined', value: byStatus.rejected || 0, icon: 'file', color: C.red },
     ],
     charts: [
       { type: 'bar', title: 'Applications by month', data: monthBars(months) },
@@ -315,9 +317,9 @@ export function applicationsReport(data) {
       months, noun: 'applications', nounSingular: 'application', period,
       closing: data.applications.length ? `${pct(byStatus.accepted || 0, data.applications.length)}% of these applications resulted in a placement.` : '',
     }),
-    sections: monthSections(months, ['#', 'Applicant', 'Job Applied For', 'Employer', 'Applied On', 'Status'], (a, i) => [
+    sections: withBadges(monthSections(months, ['#', 'Applicant', 'Job Applied For', 'Employer', 'Applied On', 'Status'], (a, i) => [
       i + 1, a.applicant, a.job_title, a.company_name, longDate(a.date), statusLabel(a.status),
-    ]),
+    ]), [5]),
     grandTotal: totalLine('Total applications', months),
   }
 }
@@ -341,24 +343,24 @@ export function trainingProgramsReport(data) {
     dateRange: rangeLabel(from, to),
     groupedBy: 'Start Month',
     stats: [
-      { label: 'Programs', value: data.programs.length },
-      { label: 'Participants enrolled', value: enrolled },
-      { label: 'Completed', value: completed },
-      { label: 'Completion rate', value: `${pct(completed, enrolled)}%` },
+      { label: 'Programs', value: data.programs.length, icon: 'book', color: C.blue },
+      { label: 'Participants enrolled', value: enrolled, icon: 'users', color: C.purple },
+      { label: 'Completed', value: completed, icon: 'award', color: C.green },
+      { label: 'Completion rate', value: `${pct(completed, enrolled)}%`, icon: 'percent', color: C.orange },
     ],
     charts: [
       { type: 'bar', title: 'Participants per program', data: top.map((p) => ({ label: p.program_name, value: Number(p.enrolled) })) },
-      { type: 'donut', title: 'Program status', centerLabel: 'programs', data: Object.entries(byStatus).map(([k, v]) => ({ label: titleCase(k), value: v, color: { upcoming: C.blue, ongoing: C.orange, completed: C.green }[k] })) },
+      { type: 'donut', title: 'Program status', centerLabel: 'programs', data: Object.entries(byStatus).map(([k, v]) => ({ label: titleCase(k), value: v, color: { upcoming: C.orange, ongoing: C.blue, completed: C.green }[k] })) },
     ],
     insight: data.programs.length
       ? `${plural(data.programs.length, 'training program')} ran during ${period}, with ${plural(enrolled, 'participant')} enrolled and ${completed} completion(s) (${pct(completed, enrolled)}%). `
         + (top[0] ? `${top[0].program_name} had the most participants (${top[0].enrolled}). ` : '')
         + (data.programs.filter((p) => p.max_participants && Number(p.enrolled) >= Number(p.max_participants)).length ? `${data.programs.filter((p) => p.max_participants && Number(p.enrolled) >= Number(p.max_participants)).length} program(s) reached full capacity; consider additional batches.` : '')
       : `No training programs ran during ${period}.`,
-    sections: monthSections(months, ['#', 'Program', 'Location', 'Schedule', 'Enrolled / Capacity', 'Completed', 'Status'], (p, i) => [
+    sections: withBadges(monthSections(months, ['#', 'Program', 'Location', 'Schedule', 'Enrolled / Capacity', 'Completed', 'Status'], (p, i) => [
       i + 1, p.program_name, p.location || '—', `${longDate(p.start_date)}${p.end_date ? ` - ${longDate(p.end_date)}` : ''}`,
       `${p.enrolled} / ${p.max_participants || '∞'}`, p.completed, titleCase(p.status),
-    ], 'program(s)'),
+    ], 'program(s)'), [6]),
     grandTotal: `Total programs: ${data.programs.length}  |  Participants: ${enrolled}  |  Completed: ${completed}`,
   }
 }
@@ -375,19 +377,19 @@ export function trainingCompletionsReport(data) {
     dateRange: rangeLabel(from, to),
     groupedBy: 'Completion Month',
     stats: [
-      { label: 'Completions', value: data.completions.length },
-      { label: 'Graduates (unique)', value: new Set(data.completions.map((c) => c.participant)).size },
-      { label: 'Programs', value: new Set(data.completions.map((c) => c.program_name)).size },
-      { label: 'With certificate', value: withCert },
+      { label: 'Completions', value: data.completions.length, icon: 'award', color: C.green },
+      { label: 'Graduates (unique)', value: new Set(data.completions.map((c) => c.participant)).size, icon: 'users', color: C.blue },
+      { label: 'Programs', value: new Set(data.completions.map((c) => c.program_name)).size, icon: 'book', color: C.purple },
+      { label: 'With certificate', value: withCert, icon: 'file', color: C.orange },
     ],
     charts: [
       { type: 'bar', title: 'Completions by month', data: monthBars(months) },
       { type: 'donut', title: 'Graduates by sex', centerLabel: 'completions', data: split },
     ],
     insight: monthlyInsight({ months, noun: 'completions', nounSingular: 'completion', period, split: Object.assign(split, { title: 'Completion by sex' }), closing: data.completions.length && withCert < data.completions.length ? `${data.completions.length - withCert} completion(s) have no certificate on file yet.` : '' }),
-    sections: monthSections(months, ['#', 'Participant', 'Training Program', 'Completed On', 'Certificate'], (c, i) => [
+    sections: withBadges(monthSections(months, ['#', 'Participant', 'Training Program', 'Completed On', 'Certificate'], (c, i) => [
       i + 1, c.participant, c.program_name, longDate(c.date), Number(c.has_certificate) ? 'On file' : 'Not yet uploaded',
-    ]),
+    ]), [4]),
     grandTotal: totalLine('Total completions', months),
   }
 }
@@ -401,7 +403,7 @@ export function systemLogsReport(data, filters = {}) {
   const byRole = countBy(data.logs, 'role')
   const users = new Set(data.logs.map((l) => l.name).filter(Boolean)).size
   const topRole = Object.entries(byRole).sort((a, b) => b[1] - a[1])[0]
-  const roleColors = { admin: C.navy, peso: C.blue, clcdo: C.green, employer: C.orange, jobseeker: C.red, unspecified: C.gray }
+  const roleColors = { admin: C.navy, peso: C.blue, clcdo: C.green, employer: C.orange, jobseeker: C.purple, unspecified: C.gray }
   return {
     office: 'admin',
     title: 'System Activity Logs',
@@ -409,19 +411,19 @@ export function systemLogsReport(data, filters = {}) {
     dateRange: rangeLabel(from, to),
     groupedBy: 'Activity Month',
     stats: [
-      { label: 'Log entries', value: data.logs.length },
-      { label: 'Active users', value: users },
-      { label: 'Most active role', value: topRole ? titleCase(topRole[0] === 'unspecified' ? 'system' : topRole[0]) : '—' },
-      { label: 'Months covered', value: months.length },
+      { label: 'Log entries', value: data.logs.length, icon: 'activity', color: C.blue },
+      { label: 'Active users', value: users, icon: 'users', color: C.green },
+      { label: 'Most active role', value: topRole ? titleCase(topRole[0] === 'unspecified' ? 'system' : topRole[0]) : '—', icon: 'shield', color: C.purple },
+      { label: 'Months covered', value: months.length, icon: 'calendar', color: C.orange },
     ],
     charts: [
       { type: 'bar', title: 'Activity by month', data: monthBars(months) },
       { type: 'donut', title: 'Activity by role', centerLabel: 'entries', data: Object.entries(byRole).map(([k, v]) => ({ label: k === 'unspecified' ? 'System' : titleCase(k), value: v, color: roleColors[k] })) },
     ],
     insight: monthlyInsight({ months, noun: 'logged activities', nounSingular: 'logged activity', period, closing: data.logs.length >= 5000 ? 'Only the first 5,000 entries are included; narrow the date range for a complete listing.' : '' }),
-    sections: monthSections(months, ['#', 'User', 'Role', 'Activity', 'Date and Time'], (l, i) => [
+    sections: withBadges(monthSections(months, ['#', 'User', 'Role', 'Activity', 'Date and Time'], (l, i) => [
       i + 1, l.name || 'System', l.role ? titleCase(l.role) : 'System', l.action, dateTime(l.date),
-    ]),
+    ]), [3]),
     grandTotal: totalLine('Total log entries', months),
   }
 }

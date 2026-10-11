@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { settingsService } from '../../services/index'
 import toast from 'react-hot-toast'
+import ReportSealSettings from '../../components/ReportSealSettings'
+import { refreshMunicipality } from '../../hooks/useMunicipality'
 
 const initialState = {
   municipality_name: '',
@@ -24,6 +26,12 @@ const initialState = {
   landing_hero_image: '',
   landing_logo_image: '',
   landing_office_image: '',
+  landing_seal_lgu_image: '',
+  landing_seal_peso_image: '',
+  landing_seal_clcdo_image: '',
+  report_seal_lgu_caption: '',
+  report_seal_peso_caption: '',
+  report_seal_clcdo_caption: '',
   landing_primary_color: '#047857',
   landing_accent_color: '#f59e0b',
   landing_primary_light_color: '#34d399',
@@ -57,14 +65,17 @@ export default function MunicipalitySettings() {
 
   const setValue = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
 
-  const handleSave = async () => {
+  const handleSave = async ({ silent = false } = {}) => {
     setSaving(true)
     try {
       await settingsService.updateMunicipality(form)
+      refreshMunicipality()
       window.dispatchEvent(new Event('employsmart-theme-updated'))
-      toast.success('Municipality settings updated')
+      if (!silent) toast.success('Municipality settings updated')
+      return true
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to save settings')
+      return false
     } finally {
       setSaving(false)
     }
@@ -92,7 +103,7 @@ export default function MunicipalitySettings() {
     setUploading(imageType)
     try {
       const res = await settingsService.uploadLandingImage(imageType, file)
-      const key = { hero: 'landing_hero_image', logo: 'landing_logo_image', office: 'landing_office_image' }[imageType]
+      const key = { hero: 'landing_hero_image', logo: 'landing_logo_image' }[imageType]
       setValue(key, res.data?.data?.[key] || '')
       toast.success(`${imageType === 'hero' ? 'Hero' : 'Logo'} image uploaded`)
     } catch (error) {
@@ -158,6 +169,8 @@ export default function MunicipalitySettings() {
         </div>
       </div>
 
+      <ReportSealSettings form={form} setValue={setValue} onSave={handleSave} />
+
       <div className="card-flat space-y-4 max-w-3xl">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Public Landing Page</h2>
@@ -196,7 +209,6 @@ export default function MunicipalitySettings() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="form-group"><label className="label">Hero Image URL</label><input className="input" placeholder="https://..." value={form.landing_hero_image} onChange={(e) => setValue('landing_hero_image', e.target.value)} /><p className="text-xs text-gray-500">Recommended: 1920 × 900 px, landscape, JPG/PNG/WebP, maximum 5 MB.</p><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('hero', e)} disabled={!!uploading} />{uploading === 'hero' ? 'Uploading...' : 'Upload from computer'}</label></div>
           <div className="form-group"><label className="label">Logo Image URL</label><input className="input" placeholder="https://..." value={form.landing_logo_image} onChange={(e) => setValue('landing_logo_image', e.target.value)} /><p className="text-xs text-gray-500">Recommended: 512 × 512 px, square, transparent PNG/WebP, maximum 5 MB.</p><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('logo', e)} disabled={!!uploading} />{uploading === 'logo' ? 'Uploading...' : 'Upload from computer'}</label></div>
-          <div className="form-group"><label className="label">Report Seal (Office Logo)</label><input className="input" placeholder="https://..." value={form.landing_office_image} onChange={(e) => setValue('landing_office_image', e.target.value)} /><p className="text-xs text-gray-500">Shown on the right of every printed report (e.g. the PESO or CLCDO seal). The LGU logo above is shown on the left. Square PNG/WebP, maximum 5 MB.</p><label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-blue-700"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => handleImageUpload('office', e)} disabled={!!uploading} />{uploading === 'office' ? 'Uploading...' : 'Upload from computer'}</label></div>
           <div className="form-group"><label className="label">Primary Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_primary_color} onChange={(e) => setValue('landing_primary_color', e.target.value)} /></div>
           <div className="form-group"><label className="label">Accent Theme Color</label><input type="color" className="h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white p-1" value={form.landing_accent_color} onChange={(e) => setValue('landing_accent_color', e.target.value)} /></div>
         </div>
@@ -210,7 +222,7 @@ export default function MunicipalitySettings() {
         </div>
         <div className="form-group"><label className="label">Footer Text</label><input className="input" value={form.landing_footer_text} onChange={(e) => setValue('landing_footer_text', e.target.value)} /></div>
         <div className="flex flex-wrap gap-3">
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Configuration'}</button>
+          <button className="btn-primary" onClick={() => handleSave()} disabled={saving}>{saving ? 'Saving...' : 'Save Configuration'}</button>
           <button className="btn-secondary" onClick={handleReset} disabled={saving}>Back to Defaults</button>
         </div>
       </div>

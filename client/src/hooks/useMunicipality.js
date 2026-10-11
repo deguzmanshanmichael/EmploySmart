@@ -19,7 +19,14 @@ const FALLBACK = {
 let cached = null
 let pending = null
 
-export function loadMunicipality() {
+/** Forget the cached settings (call after the admin saves them). */
+export function refreshMunicipality() {
+  cached = null
+  pending = null
+}
+
+export function loadMunicipality({ fresh = false } = {}) {
+  if (fresh) refreshMunicipality()
   if (cached) return Promise.resolve(cached)
   if (!pending) {
     pending = settingsService.getLanding()

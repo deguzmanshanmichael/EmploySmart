@@ -152,6 +152,29 @@ try {
     check($r['status'] === 200 && in_array($trainingId, array_map('intval', array_column($r['json']['data']['programs'] ?? [], 'id')), true), 'training report lists programs running in range', $r['json']);
     check(http('GET', "$base/reports/logs", $admin)['status'] === 200 && http('GET', "$base/reports/logs", $peso)['status'] === 403, 'log report is admin only');
 
+    echo "Report seals\n";
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+    $uploadSeal = function (string $type, string $token) use ($base, $png) {
+        $tmp = tempnam(sys_get_temp_dir(), 'seal'); file_put_contents($tmp, $png);
+        $ch = curl_init("$base/settings/municipality/upload");
+        curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['X-Requested-With: XMLHttpRequest', "Authorization: Bearer $token"],
+            CURLOPT_POSTFIELDS => ['image_type' => $type, 'image' => new CURLFile($tmp, 'image/png', 'seal.png')]]);
+        $raw = curl_exec($ch); $status = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch); @unlink($tmp);
+        return ['status' => $status, 'json' => json_decode((string)$raw, true)];
+    };
+    $savedSeals = q("SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE 'landing_seal_%' OR setting_key LIKE 'report_seal_%'");
+    $r = $uploadSeal('seal_peso', $admin);
+    $sealPath = $r['json']['data']['landing_seal_peso_image'] ?? '';
+    check($r['status'] === 200 && str_contains($sealPath, 'uploads/landing/landing_seal_peso_'), 'admin uploads the PESO seal', $r['json']);
+    check($uploadSeal('seal_clcdo', $peso)['status'] === 403, 'only admin can upload seals');
+    check($uploadSeal('seal_unknown', $admin)['status'] === 422, 'unknown seal type rejected');
+    http('POST', "$base/settings/municipality", $admin, ['report_seal_peso_caption' => 'PESO Talavera', 'report_seal_lgu_caption' => 'Municipality of Talavera']);
+    $pub = http('GET', "$base/settings/landing", null)['json']['data'] ?? [];
+    check(($pub['landing_seal_peso_image'] ?? '') === $sealPath && ($pub['report_seal_peso_caption'] ?? '') === 'PESO Talavera' && array_key_exists('landing_seal_clcdo_image', $pub), 'print layout receives seal images and captions', $pub);
+    if ($sealPath && is_file(dataDir() . '/' . $sealPath)) @unlink(dataDir() . '/' . $sealPath);
+    q("DELETE FROM system_settings WHERE setting_key LIKE 'landing_seal_%' OR setting_key LIKE 'report_seal_%'");
+    foreach ($savedSeals as $s) q("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)", 'ss', $s['setting_key'], $s['setting_value']);
+
     echo "Municipality configuration\n";
     $r = http('POST', "$base/settings/municipality", $peso, ['municipality_name' => 'Talavera', 'municipality_province' => 'Nueva Ecija', 'contact_address' => 'Municipal Hall, Talavera', 'office_hours' => 'Mon–Fri 8–5']);
     check($r['status'] === 200, 'PESO saves municipality settings');
